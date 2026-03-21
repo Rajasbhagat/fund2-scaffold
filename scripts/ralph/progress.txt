@@ -17,6 +17,8 @@ Phase: 1 — Foundation & Environment
 - scripts/extract-docs.ts: run with `npx ts-node --skip-project --compiler-options '{"module":"commonjs"}' scripts/extract-docs.ts`
 - server-only package throws when imported outside Next.js context (even in ts-node) — cannot use ts-node to verify modules that import server-only; verify via file size checks instead
 - Context loader: import from `@/lib/context`, function `getSystemContext()` returns all docs joined with `\n\n---KNOWLEDGE BASE DOCUMENT---\n\n`
+- ai v6: `toDataStreamResponse()` renamed to `toTextStreamResponse()`; `prompt` and `messages` are mutually exclusive in `streamText`
+- @ai-sdk/google-vertex v4: use `createVertex({ project, location })` — exports `createVertex` named export
 - Vertex AI model on socratoys project: use `gemini-2.5-flash` — gemini-2.0-flash and gemini-1.5-flash return 404; gemini-2.5-flash is available
 - Vertex AI ADC: use GOOGLE_CLOUD_PROJECT=socratoys, GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS pointing to ADC json
 - All Vertex AI Route Handlers MUST have `export const runtime = 'nodejs'` — edge runtime breaks gcloud ADC auth
@@ -108,4 +110,15 @@ Phase: 1 — Foundation & Environment
   - Server → Client Component prop boundary: Prisma Date objects must be serialized to strings (`.toISOString()`) before passing as props
   - Optimistic UI pattern: Server Component fetches initial data; Client wrapper manages local state array; child callbacks mutate state without page reload
   - ProjectList acts as the state manager; ProjectCard and CreateProjectForm are purely controlled via callbacks
+---
+
+## 2026-03-21 - Phase 3 US-001
+- What was implemented: Installed `ai` (v6.0.134) and `@ai-sdk/google-vertex` (v4.0.93). Created `src/app/api/chat/[projectId]/route.ts` with Path A streaming using `streamText` + `createVertex`. Route returns streaming response with X-Accel-Buffering, Cache-Control, and X-Content-Type-Options headers.
+- Files changed: src/app/api/chat/[projectId]/route.ts (new), package.json, package-lock.json
+- **Learnings for future iterations:**
+  - @ai-sdk/google-vertex is version 4.x (not 1.x) — major version differs from PRD expectation
+  - ai v6: `toDataStreamResponse()` is renamed to `toTextStreamResponse()` — use the latter
+  - ai v6: cannot pass both `prompt` and `messages` to `streamText` — they are mutually exclusive
+  - createVertex takes `{ project, location }` options; exports `createVertex` and `vertex` (default instance)
+  - Prisma generated client not in git — must run `npx prisma generate` before tsc passes
 ---
