@@ -35,7 +35,7 @@
         "`npm run build` completes without errors"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
     }
   ]

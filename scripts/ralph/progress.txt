@@ -23,3 +23,15 @@ Started: Sat Mar 21 16:53:00 CET 2026
   - Run `npx prisma generate` before typecheck in a fresh worktree — generated client is not committed
   - The integration branch has `ralph/phase-3-merged` as its base; both share the same starting commit
 ---
+
+## 2026-03-21 - US-006
+- Wired project chat page end-to-end with Server Component history hydration
+- `src/app/projects/[projectId]/page.tsx`: fetches messages from DB, passes as `initialMessages` to `<ChatWindow>`, removed placeholder
+- `src/components/ChatWindow.tsx`: fixed fetch body from `{ message: userText }` to `{ messages: [{ role: 'user', content: userText }] }` to match route handler expectation
+- `npm run build` passes; `npx tsc --noEmit` passes
+- Files changed: `src/app/projects/[projectId]/page.tsx`, `src/components/ChatWindow.tsx`
+- **Learnings for future iterations:**
+  - The worktree has no dev.db tables by default — run `DATABASE_URL="file:./dev.db" npx prisma db push` to create them before build
+  - ChatWindow already had `disabled={isStreaming}` wired to ChatInput, which shows 'Thinking...' — no changes needed there
+  - Route handler expects `{ messages: [{ role, content }] }` array format, not a plain `message` string
+---
