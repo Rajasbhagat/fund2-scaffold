@@ -15,9 +15,9 @@ This roadmap delivers MVP v1.0 of the FUND II Trend Mapper — a multi-project w
 ## Phases
 
 - [x] **Phase 1: Foundation & Environment** - Scaffold the Next.js project, extract megatrend docs to plain text, wire Vertex AI ADC, and confirm the system context loads and the LLM responds *(completed 2026-03-21)*
-- [ ] **Phase 2: Project Management** - Build the dashboard and all project CRUD so students can create, rename, delete, and open named projects *(4/5 stories complete — in progress)*
-- [ ] **Phase 3: Streaming Chat Pipeline** - Wire the core AI pipeline: Route Handler, streaming Vertex AI responses, full context injection, chat history persistence, and rolling window
-- [ ] **Phase 4: UI Polish & Agent Verification** - Markdown rendering, loading/error states, responsive layout, and manual QA of all pedagogical guardrails
+- [x] **Phase 2: Project Management** - Build the dashboard and all project CRUD so students can create, rename, delete, and open named projects *(completed 2026-03-21)*
+- [x] **Phase 3: Streaming Chat Pipeline** - Wire the core AI pipeline: Route Handler, streaming Vertex AI responses, full context injection, chat history persistence, and rolling window *(completed 2026-03-21)*
+- [ ] **Phase 4: UI Polish & Agent Verification** - Markdown rendering, loading/error states, responsive layout, and manual QA of all pedagogical guardrails *(implementation complete — awaiting manual QA)*
 
 ---
 
@@ -111,9 +111,9 @@ Plans:
 | Phase | Stories Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Environment | 5/5 | ✅ Complete | 2026-03-21 |
-| 2. Project Management | 4/5 | 🔄 In Progress | - |
-| 3. Streaming Chat Pipeline | 0/6 | ○ Pending | - |
-| 4. UI Polish & Agent Verification | 0/6 | ○ Pending | - |
+| 2. Project Management | 5/5 | ✅ Complete | 2026-03-21 |
+| 3. Streaming Chat Pipeline | 6/6 | ✅ Complete | 2026-03-21 |
+| 4. UI Polish & Agent Verification | 5/6 | 🔄 Awaiting manual QA | - |
 
 ---
 

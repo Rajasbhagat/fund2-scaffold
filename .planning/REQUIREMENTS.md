@@ -18,27 +18,27 @@
 - [x] **PROJ-02**: User can view all projects on a dashboard
 - [x] **PROJ-03**: User can rename a project
 - [x] **PROJ-04**: User can delete a project (with confirmation)
-- [ ] **PROJ-05**: User can open a project and enter its chat view *(in progress)*
+- [x] **PROJ-05**: User can open a project and enter its chat view
 
 ### Chat
 
-- [ ] **CHAT-01**: Each project has its own isolated chat thread
-- [ ] **CHAT-02**: Chat streams responses from Vertex AI Gemini in real time
-- [ ] **CHAT-03**: Chat history persists per project across browser sessions (stored in SQLite)
-- [ ] **CHAT-04**: Full system prompt (from FUND_II_Trend_Mapper_System_Prompt.txt) is injected on every request
-- [ ] **CHAT-05**: All three megatrend documents are injected as knowledge base context on every request
-- [ ] **CHAT-06**: Chat history rolling window is applied to avoid exceeding token limits
-- [ ] **CHAT-07**: Agent responses render markdown (bold, lists, headers)
-- [ ] **CHAT-08**: Loading state is shown while agent is responding
-- [ ] **CHAT-09**: Error state is shown if Vertex AI call fails
+- [x] **CHAT-01**: Each project has its own isolated chat thread
+- [x] **CHAT-02**: Chat streams responses from Vertex AI Gemini in real time
+- [x] **CHAT-03**: Chat history persists per project across browser sessions (stored in SQLite)
+- [x] **CHAT-04**: Full system prompt (from FUND_II_Trend_Mapper_System_Prompt.txt) is injected on every request
+- [x] **CHAT-05**: All three megatrend documents are injected as knowledge base context on every request
+- [x] **CHAT-06**: Chat history rolling window is applied to avoid exceeding token limits
+- [x] **CHAT-07**: Agent responses render markdown (bold, lists, headers)
+- [x] **CHAT-08**: Loading state is shown while agent is responding
+- [x] **CHAT-09**: Error state is shown if Vertex AI call fails
 
 ### Agent Behavior
 
-- [ ] **AGENT-01**: Agent operates in Pre-Class mode (structured 6-slide scaffolding workflow)
-- [ ] **AGENT-02**: Agent operates in In-Class mode (S-curve, 2x2 grid, trend-to-problem mapping)
-- [ ] **AGENT-03**: Agent uses Vertex AI Grounding (web search) to find real data and cite sources
-- [ ] **AGENT-04**: All guardrails are enforced (no complete slide decks, no invented data, no course logistics, redirects to Value Designer for JTBD questions)
-- [ ] **AGENT-05**: Terminology discipline enforced — "problems" not "pain points"
+- [x] **AGENT-01**: Agent operates in Pre-Class mode (structured 6-slide scaffolding workflow)
+- [x] **AGENT-02**: Agent operates in In-Class mode (S-curve, 2x2 grid, trend-to-problem mapping)
+- [x] **AGENT-03**: Agent uses Vertex AI Grounding (web search) to find real data and cite sources
+- [ ] **AGENT-04**: All guardrails are enforced — *pending manual QA (GUARDRAIL_QA.md)*
+- [ ] **AGENT-05**: Terminology discipline enforced — *pending manual QA (GUARDRAIL_QA.md)*
 
 ## v2 Requirements
 
@@ -87,21 +87,21 @@
 | PROJ-02 | Phase 2 | ✅ Complete |
 | PROJ-03 | Phase 2 | ✅ Complete |
 | PROJ-04 | Phase 2 | ✅ Complete |
-| PROJ-05 | Phase 2 | 🔄 In Progress |
-| CHAT-01 | Phase 3 | Pending |
-| CHAT-02 | Phase 3 | Pending |
-| CHAT-03 | Phase 3 | Pending |
-| CHAT-04 | Phase 3 | Pending |
-| CHAT-05 | Phase 3 | Pending |
-| CHAT-06 | Phase 3 | Pending |
-| CHAT-07 | Phase 4 | Pending |
-| CHAT-08 | Phase 4 | Pending |
-| CHAT-09 | Phase 4 | Pending |
-| AGENT-01 | Phase 3 | Pending |
-| AGENT-02 | Phase 3 | Pending |
-| AGENT-03 | Phase 3 | Pending |
-| AGENT-04 | Phase 3 | Pending |
-| AGENT-05 | Phase 3 | Pending |
+| PROJ-05 | Phase 2 | ✅ Complete |
+| CHAT-01 | Phase 3 | ✅ Complete |
+| CHAT-02 | Phase 3 | ✅ Complete |
+| CHAT-03 | Phase 3 | ✅ Complete |
+| CHAT-04 | Phase 3 | ✅ Complete |
+| CHAT-05 | Phase 3 | ✅ Complete |
+| CHAT-06 | Phase 3 | ✅ Complete |
+| CHAT-07 | Phase 4 | ✅ Complete |
+| CHAT-08 | Phase 4 | ✅ Complete |
+| CHAT-09 | Phase 4 | ✅ Complete |
+| AGENT-01 | Phase 3 | ✅ Complete |
+| AGENT-02 | Phase 3 | ✅ Complete |
+| AGENT-03 | Phase 3 | ✅ Complete |
+| AGENT-04 | Phase 3 | 🔄 Pending manual QA |
+| AGENT-05 | Phase 3 | 🔄 Pending manual QA |
 
 **Coverage:**
 - v1 requirements: 23 total
