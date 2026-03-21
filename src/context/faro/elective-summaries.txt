@@ -1,0 +1,48 @@
+=== ELECTIVE COURSE SUMMARIES ===
+
+NOTE: All elective syllabi in the ENTRE syllabi folder are in PDF format and have not yet been extracted to plain text. The following elective courses are available at IESE for MBA students in the Entrepreneurship track (based on PDF filenames in the syllabi folder):
+
+--- Entrepreneurial Finance 1 & 2 ---
+Entrepreneurial Finance courses covering financing strategies for early-stage ventures. Focuses on valuation, deal structuring, term sheets, and working with investors. Part of the IESE MBA entrepreneurship curriculum.
+
+--- Venture Capital Investment Competition (VCIC) Course 1 & 2 ---
+Hands-on venture capital simulation where students act as VC fund managers evaluating real startup pitches. Topics include due diligence, portfolio construction, VC fund mechanics, and investment decision-making. Two-course sequence building from foundational VC skills to live competition.
+
+--- Business Model Canvas (BMC) ---
+Intensive course focused on applying the Business Model Canvas framework to venture design and analysis. Students practice mapping value propositions, customer segments, revenue streams, and key partnerships for new and existing ventures.
+
+--- Business Model Innovation (BMI) ---
+Advanced course on redesigning and innovating business models in response to market disruption. Covers strategic pivots, platform models, ecosystem thinking, and sustainability-driven business model transformation.
+
+--- Entrepreneurship in the Corporation (CorpEnt) ---
+Explores intrapreneurship and corporate entrepreneurship strategies. Topics include building internal innovation units, managing entrepreneurial teams within large organizations, and corporate venturing.
+
+--- Search Funds and Entrepreneurial Acquisitions (SEARCH 1 & 2) ---
+Two-course sequence covering the search fund model for entrepreneurship through acquisition. Topics include deal sourcing, business valuation, due diligence, acquisition financing, and post-acquisition management.
+
+--- Sports Management (Sports 1 & 2) ---
+Two-course sequence covering the business of sports — sponsorship, media rights, athlete representation, venue management, and sports entrepreneurship. Includes real-world case studies and industry guest speakers.
+
+--- African Experience ---
+Experiential learning course exploring entrepreneurship and business development in African markets. Includes field visits, guest speakers from the African startup ecosystem, and project work focused on emerging market challenges.
+
+--- Corporate Governance and Family Business ---
+Covers governance structures for family-owned businesses, succession planning, professionalizing management, and balancing family and business interests in entrepreneurial contexts.
+
+--- Creativity and Laboratory of Ideas ---
+Studio-style course fostering creative thinking and innovation methodologies. Students apply design thinking, lateral thinking, and ideation frameworks to generate novel venture concepts.
+
+--- Entrepreneurship New Ventures 2 ---
+Advanced new venture creation course building on foundational entrepreneurship concepts. Focus on scaling, go-to-market strategy, hiring for early-stage startups, and navigating the growth stage.
+
+--- Managing the Growing Business ---
+Course on managing the transition from startup to growth-stage company. Topics include organizational design, leadership challenges, managing investor relationships, and building scalable operations.
+
+--- Nairobi: Fundamentals of Entrepreneurial Management 1 ---
+International immersion course held in Nairobi exploring entrepreneurship in East African contexts. Covers opportunity identification in emerging markets, social entrepreneurship, and impact investing.
+
+--- Sustainable Entrepreneurship and Innovation (SEI) ---
+Course at the intersection of entrepreneurship and sustainability. Covers green business models, circular economy principles, ESG considerations for startups, and social impact measurement.
+
+--- New Venture for AI & Emerging Technologies (NAVEI) ---
+Focused on launching ventures in AI, deeptech, and emerging technology sectors. Topics include technology validation, AI product development, regulatory landscape, and investor expectations for deep tech startups.

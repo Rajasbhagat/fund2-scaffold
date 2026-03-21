@@ -1,0 +1,486 @@
+3rd Term MBA-2027
+
+1/2 credit
+
+
+
+
+
+Prof. [Professor’s Name]
+
+email@iese.edu
+
+
+
+
+
+Assistant: [Professor Assitant’s Name]
+
+email@iese.edu
+
+Office: B-400 Phone: XXX
+
+
+
+
+
+Fundamentals of Entrepreneurial Management-2 
+
+(FUNDII)
+
+
+
+
+
+Introduction
+
+This course is designed to immerse participants in the entrepreneurial journey through a hackathon-based experiential learning format. Participants will explore the early-stage process of entrepreneurship, from identifying emerging trends and defining problems to tackle, to building prototypes, testing assumptions, and pitching their concepts to stakeholders. The integration of AI tools throughout the course enhances creativity, productivity, and decision-making, preparing students to thrive in dynamic, technology-driven environments.
+
+
+
+Objectives
+
+By the end of the course, participants will:
+
+Understand and apply entrepreneurial frameworks to identify opportunities and solve problems.
+
+Develop and test Minimum Viable Products (MVPs) based on validated assumptions.
+
+Leverage AI tools to enhance ideation, prototyping, and pitching.
+
+Gain hands-on experience in pivoting, iteration, and feedback integration.
+
+Deliver compelling venture pitches to diverse stakeholders.
+
+Content
+
+The course will cover the following topics:
+
+Entrepreneurship as a Process: Understanding the iterative nature of entrepreneurship and team dynamics.
+
+Trend Analysis & Opportunity Identification: Exploring macro/micro trends and weak signals to frame strategic opportunities.
+
+Problem Discovery: Utilizing frameworks like Jobs-to-be-Done (JTBD) and friction mapping to define impactful problem statements.
+
+Value Proposition Design: Crafting customer-centric solutions using personas, hypothesis mapping, and value canvases.
+
+Prototyping & Assumption Testing: Building and testing MVPs to validate critical assumptions.
+
+Feedback Integration: Extracting insights from stakeholders to refine ideas and pivot effectively.
+
+Business Model Development: Structuring monetization strategies and understanding key metrics like CLV (Customer Lifetime Value) and CAC (Customer Acquisition Cost).
+
+Pitching & Storytelling: Developing and delivering persuasive venture pitches.
+
+Live Pitch Day: Presenting ideas to a jury and audience for real-time feedback and evaluation.
+
+
+
+Course Outline
+
+Session 1 – Welcome to the Hackathon: Process, Playbooks, and Possibilities
+
+Introduce FUND II as a process-driven, team-based venture creation experience. Prime students for team formation through builder type awareness and trend exploration. Introduce the GPT Hackathon Guide.
+
+
+
+This session kickstarts the course with an engaging icebreaker, introduces students to entrepreneurship as an iterative process, and outlines the FUND II structure. Students take the Builder Type survey to better understand their role in a startup team and begin using the AI-powered GPT Hackathon Guide. The session closes by assigning a trend-spotting activity that sets the foundation for team formation in the next session.
+
+
+
+
+
+Expected Learning Outcomes:
+
+Understand the hackathon structure of FUND II and how it differs from FUND I
+
+Recognize the entrepreneurial process mindset (Effectuation, Lean Startup)
+
+Complete a builder type self-assessment and reflect on team dynamics
+
+Onboard themselves with the GPT Hackathon Guide assistant
+
+Begin trend scouting in preparation for team formation in Session 2
+
+
+
+🤖 AI Co-Pilot - GPT Hackathon Guide: An interactive AI assistant that helps students define their team roles, write self-contracts, and navigate the course with contextual prompts.
+
+
+
+Mandatory Readings:
+
+Spina, C., Camuffo, A., & Gambardella, A. (2020). Apply the scientific method to your startup. Harvard Business Review.
+
+Mollick, E. (2020). The unicorn’s shadow: Combating the dangerous myths that hold back startups, founders, and investors (Chapter 2: Ideas – Searching for a Light Bulb). Wharton School Press.
+
+
+
+Optional Readings:
+
+MIT Sloan School of Management. (n.d.). Hacking for innovation playbook. MIT Sloan.
+
+Sarasvathy, S. D. (2001). Effectuation: Elements of entrepreneurial expertise. Edward Elgar Publishing.
+
+Ries, E. (2011). The lean startup. Crown Business.
+
+Wasserman, N. (2008). The founder’s dilemma. Harvard Business Review, 86(2), 102–109.
+
+
+
+Session 2 – Spotting Big Trends & Opportunity Windows
+
+Develop students’ ability to evaluate the timing and impact of trends, reason through the entrepreneurial opportunity landscape, and prepare for team formation.
+
+
+
+This session equips students with tools to identify, classify, and interpret trends as catalysts for entrepreneurial opportunities. Through theory blocks, interactive mapping, and peer-led trend presentations, students build fluency in trend timing and learn how systemic shifts generate friction points. The session ends with team preference selection based on trend alignment.
+
+
+
+Mandatory Readings:
+
+Johnson, R. (2013, April 4). Assessing a New Business Opportunity (EN-17-E). IESE/Harvard Business School Publishing.
+
+
+
+Expected Learning Outcomes:
+
+Classify trends as short- or long-term, and early- or late-stage
+
+Apply the S-curve framework to reason about timing and strategic positioning
+
+Understand how underlying shifts generate new problems and opportunities
+
+Explore peer trend submissions and select preferred domains for team formation
+
+
+
+🤖 AI Co-Pilot - GPT Trend Mapper: Supports trend classification and connects trends with emerging frictions and timing insights. Assists students in analyzing trend-stage fit and potential intersections with demographic, technological, or policy shifts.
+
+
+
+Optional Readings:
+
+McKinsey & Company. (2025). The state of AI in 2025: How organizations are rewiring to capture value. McKinsey Global Survey on AI. 
+
+Webb, A. (2016). The signals are talking: Why today’s fringe is tomorrow’s mainstream. PublicAffairs. 
+
+Hornblower, J., & Rohan, D. (2008). Identifying venture opportunities (E-323). Stanford Graduate School of Business.
+
+Kuemmerle, W. (2002). A test for the fainthearted. Harvard Business Review. R0205J.
+
+
+
+Session 3 & 4 – From Empathy to Opportunity: Crafting Early Value Propositions
+
+Transition from problem definition to solution ideation by building deep user understanding and formulating early value hypotheses grounded in real-world needs.
+
+
+
+This double session equips students with practical tools to move from empathy to action. Working in teams, participants create user personas, define core Jobs-to-Be-Done (JTBD), and build testable value hypotheses. With the help of the AI co-pilot, students map outcomes, identify key assumptions, and engage in structured peer feedback. This session lays the foundation for the validation sprint leading to prototype design.
+
+
+
+Expected Learning Outcomes:
+
+Translate assigned trends/problems into detailed user personas
+
+Identify actionable Jobs-to-Be-Done and map job steps with outcomes
+
+Formulate a lean value hypothesis and articulate assumptions
+
+Practice giving and receiving peer feedback using structured tools
+
+Design a plan for real-world validation through user interviews
+
+
+
+🤖 AI Co-Pilot - GPT Value Designer: Supports teams in crafting personas, JTBD statements, outcome maps, and validation interview prompts. Acts as a thought partner to simulate user reactions and sharpen value hypotheses. [Also supports pivot decision-making and iteration in Session 8]
+
+
+
+Mandatory Reading:
+
+Eisenmann, T. R., Ries, E., & Dillard, S. (2012). Hypothesis-driven entrepreneurship: The lean startup. Harvard Business School Note (812-095).
+
+
+
+Optional Readings:
+
+Ulwick, A. W. (2016). Jobs to be done: Theory to practice (selected chapters). IdeaBite Press.
+
+Constable, G. (2014). Talking to humans: Success starts with understanding your customers. Giff Constable.
+
+Osterwalder, A., Pigneur, Y., Bernarda, G., Smith, A., & Papadakos, T. (2014). Value proposition design: How to create products and services customers want (Ch. 1–3). Wiley.
+
+Blank, S., & Eckhardt, J. T. (2024). The lean startup as an actionable theory of entrepreneurship. Journal of Management, 50(8), 1793–1817. 
+
+
+
+Session 5 & 6 – From Field to Form: Prototyping to Learn
+
+Enable students to build functional MVPs that test critical assumptions derived from user validation and iterate based on structured peer feedback.
+
+
+
+In this double session, students shift from insights to action by developing a prototype that embodies their value hypothesis. Teams work collaboratively to map assumptions, design MVP flows using tools like Figma, and participate in guided walkthroughs to gather structured feedback. This session emphasizes the MVP as a learning vehicle, not a final product, and prepares students for real-world testing in the next phase.
+
+Expected Learning Outcomes
+
+Translate validation sprint insights into prototype priorities
+
+Map assumptions to MVP components using a structured canvas
+
+Build a low-fidelity prototype (digital or analog) to test a core user journey
+
+Deliver and receive feedback through live interactive walkthroughs
+
+Draft an MVP explainer for external testing
+
+
+
+🤖 AI Co-Pilot - GPT MVP Builder: Provides structure, copywriting, and simulation support to prototype MVPs. Helps generate onboarding flows, UI text, and simulate user responses to validate design assumptions. [Also supports pivot decision-making and iteration in Session 8]
+
+
+
+Mandatory Reading:
+
+Blank, S. (2013). Why the lean startup changes everything. Harvard Business Review, 91(5), 63–72.
+
+
+
+Optional Readings:
+
+Ries, E. (2011). The lean startup: How today’s entrepreneurs use continuous innovation to create radically successful businesses (MVP & prototyping chapters). Crown Business.
+
+IDEO. (2015). The field guide to human-centered design (optional excerpt). IDEO.org.
+
+McGrath, R. G. (2024). Who learns fastest, wins: Lean startup and discovery driven growth. Journal of Management, 50(8), 3162–3182. https://doi.org/10.1177/01492063241256558
+
+Sarasvathy, S. D. (2001). Effectuation: Elements of entrepreneurial expertise (selected excerpts). Edward Elgar Publishing.
+
+
+
+Session 7 – Observing Real Feedback in Action
+
+Enable students to observe and analyze real user behavior during MVP testing, recognizing the gap between what users say and what they actually do.
+
+
+
+This session introduces students to the practice of behavioral testing through live peer simulations. Each student alternates between observing and acting out a target user persona, capturing emotional and cognitive responses in a Behavioral Feedback Tracker. The focus is on learning through behavior rather than verbal feedback, and identifying opportunities for refinement before testing with real users.
+
+
+
+Expected Learning Outcomes:
+
+Understand the limitations of prompted feedback and the value of observational testing
+
+Simulate user personas with emotional realism
+
+Use structured tools to document behavior across MVP journey steps
+
+Identify key behavioral patterns and unexpected insights to refine their solutions
+
+
+
+🤖 AI Co-Pilot - GPT User Twist + Mom Test: Generates emotionally rich and contextually unusual user profiles to simulate diverse testing scenarios. Helps bring MVP walkthroughs closer to real-world variability, and coaches students in asking objective, testable questions based on The Mom Test.
+
+[Also supports pivot decision-making and iteration in Session 8]
+
+
+
+Mandatory Reading:
+
+Leonard, D., & Rayport, J. F. (1997). Spark innovation through empathic design. Harvard Business Review, 75(6), 102–113.
+
+
+
+Optional Readings:
+
+IDEO. (2015). The little book of design research ethics (optional excerpt). IDEO.org.
+
+Constable, G. (2014). Talking to humans: Success starts with understanding your customers (Feedback Observation section). Giff Constable.
+
+Norman, D. A. (2013). The design of everyday things. Basic Books.
+
+Houston, D. (2011). Dropbox: MVP testing and early validation (case example). Dropbox, Inc. 
+
+
+
+Session 8 – Adapt or Persevere: Pivoting & Iteration
+
+Enable students to analyze validation insights and make evidence-based decisions to pivot or refine their venture idea.
+
+
+
+This session helps students turn feedback into strategic direction. Using real validation data and MVP testing insights, teams will determine whether to pivot or persevere. Through theory blocks, guided frameworks, and AI support, students will build a pivot plan and iterate on their MVP. The session normalizes pivoting as a learning outcome and builds decision-making confidence.
+
+
+
+
+
+
+
+Expected Learning Outcomes:
+
+Distinguish between different types of pivots (zoom-in, customer segment, tech, etc.)
+
+Identify pivot trigger events and analyze signals from user tests
+
+Apply a structured framework to guide pivot or perseverance decisions
+
+Articulate and justify a pivot plan aligned with user feedback and assumptions
+
+
+
+Mandatory Reading:
+
+McDonald, R., & Bremner, R. (2023). When it’s time to pivot, what’s your story? Harvard Business Review.
+
+
+
+Optional Readings:
+
+Harvard Business Review: Pivot or Persevere?
+
+Blank, S. & Dorf, B. The Startup Owner’s Manual (Pivot Chapter)
+
+
+
+Session 9 – From Economics to Story: Business Model + Pitch Foundations
+
+Support students in refining the economic logic of their venture, building a coherent business model and preparing for persuasive pitch delivery.
+
+
+
+In this final preparatory session, teams focus on aligning their solution with a viable business model and reinforcing its economic foundation. They explore monetization strategies and venture metrics, particularly Customer Lifetime Value and Customer Acquisition Cost. The session ends with a short lecture on effective pitch structure and delivery, introducing the GPT-based Pitch Academy tool to support their preparation for the upcoming class-wide pitch presentation.
+
+
+
+Expected Learning Outcomes:
+
+Understand and define key business model components, including revenue logic and value capture
+
+Analyze and improve venture economics, with a focus on CLV > CAC
+
+Summarize learnings across the venture journey in a structured narrative
+
+Structure a compelling pitch using clear storytelling principles and AI support
+
+
+
+🤖 AI Co-Pilot - GPT Pitch Academy: Guides teams in structuring persuasive pitch narratives. Offers support on framing, slide content, transitions, and delivery messaging tailored to startup audiences.
+
+Mandatory Material:
+
+Mollick, E. (2020). The unicorn’s shadow: Combating the dangerous myths that hold back startups, founders, and investors (Chapter 4: Talking your startup into existence). Wharton School Press.
+
+HIVE. (2022). HIVE x i-lab Pitch Deck Workshop with Pete Gladstone [Video]. Vimeo. https://vimeo.com/678887542/1e8f41d270
+
+HBS. (2024). Pitching with Impact: Your Startup's First Pitch with pitching expert Debi Kleiman [Video]. YouTube. https://www.youtube.com/watch?v=cKxhETEKU9M
+
+
+
+Optional Readings:
+
+Amit, R., & Zott, C. (2021). Business model innovation strategy: Transformational concepts and tools for entrepreneurial leaders (Chapter 1). Wiley.
+
+Green, F. J., & Hopp, C. (2017). Writing a business plan makes your startup more likely to succeed. Harvard Business Review.
+
+Balachandra, L. (2017). How venture capitalists really assess a pitch. Harvard Business Review. 
+
+Sequoia Capital. (n.d.). Sequoia pitch deck template. Sequoia Capital. https://www.sequoiacap.com/article/pitch-deck/
+
+
+
+Session 10 – Section Finals: Venture Pitch Presentations
+
+Provide students the opportunity to deliver a polished pitch of their venture idea to their section peers and jury, and receive feedback based on clarity, persuasiveness, and venture potential.
+
+
+
+In this milestone session, each team presents its venture pitch to the full section. Presentations are followed by Q&A and feedback. A jury composed of faculty and/or invited guests selects the most promising venture from each section. These winning teams will advance to the Final Pitch Competition in Sessions 11 & 12.
+
+
+
+Expected Learning Outcomes:
+
+Deliver a coherent and compelling venture pitch
+
+Respond effectively to live Q&A from peers and faculty
+
+Demonstrate narrative clarity, evidence-based reasoning, and economic logic
+
+Learn from the pitch styles and strategies of other teams
+
+
+
+Optional Material:
+
+Sequoia Capital. (n.d.). Sequoia pitch deck template. Sequoia Capital. https://www.sequoiacap.com/article/pitch-deck/
+
+Y Combinator Demo Day Videos
+
+
+
+Session 11 & 12: Pitch Day - Final Presentations
+
+Showcase the top venture ideas from each section in a high-stakes, school-wide pitch event. Provide finalists with an opportunity to present in front of a broader jury and audience.
+
+
+
+These final sessions bring together the winning teams from each section for a live pitch event in Aula Magna. Each team delivers a final version of their venture pitch to a jury of professors, entrepreneurs, and investors. The audience votes and jury feedback close the course on a celebratory and high-energy note. Awards may be given for categories such as Most Viable Venture, Most Creative Idea, and Best Delivery.
+
+
+
+Expected Learning Outcomes
+
+Present their venture with confidence and precision to a large, external audience
+
+Demonstrate the ability to synthesize feedback and refine their pitch under pressure
+
+Learn from observing top-tier presentations across sections
+
+Celebrate the culmination of their entrepreneurial journey
+
+
+
+
+
+Evaluation
+
+The course evaluation will be based on the following components:
+
+Class Participation (10%): Active engagement in discussions, peer activities, and teamwork across all sessions.
+
+Miro Assignment (30%): Designed to ensure students come to class ready to engage, each session includes a short, individual or team assignment 
+
+MVP Development (30%): Quality, creativity, and functionality of the MVP using tools like Firebase Studio, plus its alignment with validated assumptions and user needs.
+
+Final Pitch (30%): Clarity, coherence, and persuasive strength of the pitch deck and live delivery.
+
+Overall venture viability and business model logic
+
+Innovation and relevance to real-world problems
+
+Strength of the value proposition and business model
+
+Presentation delivery and storytelling impact
+
+Clarity and structure of the problem-solution narrative
+
+Responsiveness to feedback and questions
+
+
+
+Course Policies and Principles
+
+Late Work: Assignments must be submitted on time. Late work will only be accepted if prior arrangements have been made before the deadline.
+
+In-Class Use of Laptops: Laptops and phones can be distracting during discussions, so please avoid using them unless they are required for workshop activities or teamwork. Make sure to bring your laptop fully charged, as power outlets in the classroom are limited.
+
+Entrepreneurship, Creativity, and Fun: This course embraces the spirit of entrepreneurship by fostering a creative, hands-on, and enjoyable learning environment. Approach the class as a space to experiment, build, and strengthen the entrepreneurial skills you will rely on in the real world.
+
+
+
