@@ -1,20 +1,19 @@
 import { prisma } from '@/lib/prisma'
+import ProjectList from '@/components/ProjectList'
 
 export default async function Home() {
   const projects = await prisma.project.findMany({ orderBy: { updatedAt: 'desc' } })
 
+  const serialized = projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    updatedAt: p.updatedAt.toISOString(),
+  }))
+
   return (
     <main>
       <h1>FUND II Trend Mapper</h1>
-      {projects.length === 0 ? (
-        <p>No projects yet</p>
-      ) : (
-        <ul>
-          {projects.map((project) => (
-            <li key={project.id}>{project.name}</li>
-          ))}
-        </ul>
-      )}
+      <ProjectList initialProjects={serialized} />
     </main>
   )
 }
