@@ -25,7 +25,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   const { projectId } = await params;
-  const { messages: incomingMessages } = await request.json();
+  const { messages: incomingMessages, agentType = 'trend-mapper' } = await request.json();
 
   // Extract text from the last incoming message (new user message)
   const lastIncoming = Array.isArray(incomingMessages)
@@ -38,7 +38,7 @@ export async function POST(
 
   // Load history from DB ordered oldest first
   const dbMessages = await prisma.message.findMany({
-    where: { projectId },
+    where: { projectId, agentType },
     orderBy: { createdAt: 'asc' },
   });
 
@@ -47,7 +47,7 @@ export async function POST(
 
   // Persist user message to DB BEFORE streaming to avoid losing it on errors
   await prisma.message.create({
-    data: { projectId, role: 'user', content: userMessageContent },
+    data: { projectId, agentType, role: 'user', content: userMessageContent },
   });
 
   // Format DB history for ai SDK ('model' -> 'assistant')
@@ -69,7 +69,7 @@ export async function POST(
       ],
       onFinish: async (event) => {
         await prisma.message.create({
-          data: { projectId, role: 'model', content: event.text },
+          data: { projectId, agentType, role: 'model', content: event.text },
         });
       },
     });
