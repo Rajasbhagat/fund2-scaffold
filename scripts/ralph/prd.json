@@ -1,48 +1,44 @@
 {
-  "project": "FUND II Trend Mapper",
-  "branchName": "ralph/phase-4-group-a",
-  "description": "Phase 4 Group A (New Files Track) — MessageBubble component and GUARDRAIL_QA checklist. Creates ONLY new files with zero risk of conflicting with Group B or Group C. Runs in parallel with Groups B and C. Base branch: ralph/phase-3-streaming-chat.",
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-5-wave1-02",
+  "description": "Phase 5 Wave 1 — Plan 02: Session tracker API (GET/PATCH /api/settings/session), SessionContext React Context, and session selector widget in the project sidebar. Base branch: ralph/phase-4-ui-polish.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Install react-markdown + remark-gfm and implement MessageBubble.tsx with prose styling",
-      "description": "As a student, I need chat messages to render with proper markdown formatting — headers, bold text, bullet lists, tables, and code blocks — so I can read the agent's structured pedagogical responses clearly.",
+      "title": "Session API route handler + SessionContext provider",
+      "description": "As a student, I need a global session number (1-10) that persists across page refreshes and is accessible to all agent components, so that agents can adapt their responses to the current point in the course.",
       "acceptanceCriteria": [
-        "Install `react-markdown` and `remark-gfm` via npm: `npm install react-markdown remark-gfm`",
-        "Create `src/components/MessageBubble.tsx` as a Client Component (`'use client'`)",
-        "MessageBubble accepts props: `role: 'user' | 'model'` and `content: string`",
-        "Model/assistant messages render `content` through `<ReactMarkdown remarkPlugins={[remarkGfm]}>` wrapped in a `<div>` with Tailwind `prose prose-sm max-w-none` classes for readable typography",
-        "User messages render `content` as plain text (no markdown processing needed)",
-        "Model bubble uses a light background (e.g. `bg-gray-100`) aligned left; user bubble uses a colored background (e.g. `bg-blue-600 text-white`) aligned right",
-        "Rendered output: `## Header` produces a visually larger header element, `**bold**` produces bold text, `- item` produces an indented bullet, code fenced blocks use monospace font",
-        "Note: ChatWindow will be updated to use MessageBubble in the integration commit after all Phase 4 groups merge — do NOT modify ChatWindow.tsx in this story",
+        "Create directory `src/app/api/settings/session/` and file `route.ts`",
+        "Route has `export const dynamic = 'force-dynamic'` at top (prevents GET caching)",
+        "GET handler: `prisma.appSettings.findUnique({ where: { id: 1 } })` and returns `{ sessionNumber: settings?.sessionNumber ?? 1 }` (defensive fallback to 1 if row missing)",
+        "PATCH handler: validates `sessionNumber` is an integer 1-10 inclusive, returns 400 with error message if invalid, uses `prisma.appSettings.upsert` (not update) to handle missing row gracefully, returns `{ sessionNumber: updated.sessionNumber }`",
+        "Create directory `src/contexts/` and file `SessionContext.tsx` as a Client Component ('use client')",
+        "SessionContext.tsx exports `SessionProvider` component and `useSession()` hook",
+        "SessionProvider fetches current session on mount via GET /api/settings/session and updates state",
+        "SessionProvider.setSessionNumber does optimistic update then PATCHes API, reverts on failure",
+        "Uses React 19 context syntax: `<SessionContext value={...}>` NOT `<SessionContext.Provider value={...}>`",
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "This story creates only a NEW file. Do not modify ChatWindow.tsx — that is done in the integration step after all Phase 4 groups merge. The MessageBubble component must accept role 'user' | 'model' (Vertex AI convention) not 'user' | 'assistant'."
+      "notes": "Read src/app/api/chat/[projectId]/route.ts for route handler patterns used in this codebase. IMPORTANT: AppSettings model is being created by the parallel wave1-01 branch. This route must be defensive — the GET handler must NOT crash if AppSettings row doesn't exist yet. Use `settings?.sessionNumber ?? 1` fallback. The PATCH upsert handles this too. Check node_modules/next/dist/docs/ for Next.js 16 Route Handler guidance if needed."
     },
     {
-      "id": "US-006",
-      "title": "Create GUARDRAIL_QA.md checklist for manual pedagogical verification against FUND II spec",
-      "description": "As a FUND II faculty member or QA reviewer, I need a structured checklist of specific test prompts and expected behaviors so I can manually verify the agent never violates its pedagogical guardrails.",
+      "id": "US-002",
+      "title": "Wire SessionProvider into ProjectLayout + add session selector widget",
+      "description": "As a student, I need to see and change the current FUND II session (1-10) from a dropdown in the sidebar, so I can tell the agents which session we're in and get session-appropriate guidance.",
       "acceptanceCriteria": [
-        "Create `GUARDRAIL_QA.md` in the project root",
-        "The file documents the exact agent spec source: `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`",
-        "The file contains a section for Guardrail 1 — 'Never output a complete 6-slide deck': includes a specific test prompt and expected behavior (agent refuses and scaffolds one slide at a time)",
-        "The file contains a section for Guardrail 2 — 'Never use pain point language': includes a test prompt and expected behavior (agent uses 'problems' not 'pain points')",
-        "The file contains a section for Guardrail 3 — 'Never invent statistics without citation': includes a test prompt asking for stats and expected behavior (agent cites a source or declines to state an unverified stat)",
-        "The file contains a section for Guardrail 4 — 'Session 3 bridge signal': test prompt simulating end of trend analysis workflow, expected behavior (agent signals transition to Value Designer)",
-        "The file contains Pre-Class Mode verification section: 6-slide scaffolding workflow prompts and expected step-by-step behavior",
-        "The file contains In-Class Mode verification section: S-curve, 2x2 grid, and trend-to-problem mapping interactions with test prompts",
-        "Each section has a `[ ] PASS` / `[ ] FAIL` checkbox and a Notes field for the human reviewer",
-        "The file includes setup instructions: start dev server with `npm run dev`, navigate to a project, confirm system prompt loads",
-        "`npm run dev` starts without errors (verify then stop the server)",
+        "In `src/components/ProjectLayout.tsx`, import `SessionProvider` and `useSession` from `@/contexts/SessionContext`",
+        "Create a `SessionSelector` function component inside ProjectLayout.tsx that uses `useSession()` hook",
+        "SessionSelector renders a `<select>` with label 'FUND II Session' and 10 `<option>` elements (Session 1 through Session 10)",
+        "SessionSelector is placed AFTER the `<nav>` block (project list) and BEFORE the closing `</aside>` tag",
+        "Wrap the entire ProjectLayout return JSX with `<SessionProvider>` as the outermost element — wraps BOTH sidebar and {children} so useSession() works in any child",
+        "ALL existing ProjectLayout functionality is preserved: sidebar toggle, Dashboard link, project list, mobile header, responsive behavior",
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
       "passes": false,
-      "notes": "HUMAN VERIFICATION REQUIRED. Ralph creates the GUARDRAIL_QA.md checklist and confirms `npm run dev` starts cleanly. The actual pedagogical QA sign-off must be done by a human reviewer (FUND II faculty or project lead). Do NOT set passes: true on this story autonomously — only a human reviewer should mark this complete after conducting the manual QA session. Read `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt` to extract the exact guardrail rules and terminology."
+      "notes": "Read src/components/ProjectLayout.tsx and src/app/projects/[projectId]/layout.tsx first. Keep ALL existing code intact — only ADD the SessionProvider wrapper and SessionSelector component. The SessionSelector must call useSession() which means it must be rendered INSIDE <SessionProvider>. This is why SessionProvider wraps the entire return."
     }
   ]
 }

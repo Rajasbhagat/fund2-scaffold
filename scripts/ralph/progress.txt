@@ -1,28 +1,23 @@
+## Codebase Patterns
+- All Vertex AI routes use `export const runtime = 'nodejs'`
+- Prisma client imported from `@/lib/prisma` (singleton)
+- Route handlers use `NextResponse.json()` from `next/server`
+- React 19 context syntax: `<MyContext value={...}>` (no `.Provider`)
+- Worktree has no node_modules — symlink from main repo for tsc: `ln -s /Users/rajas/Desktop/AntiGravity/Fund2Updated/node_modules /private/tmp/<worktree>/node_modules`
+- Generated Prisma client lives in `src/generated/prisma` (gitignored) — run `cd /Users/rajas/Desktop/AntiGravity/Fund2Updated && npx prisma generate --schema=<worktree>/prisma/schema.prisma` from main repo
+
 # Ralph Progress Log
-Started: Sat Mar 21 17:02:14 CET 2026
+Started: Sat Mar 21 20:33:26 CET 2026
 ---
 
 ## 2026-03-21 - US-001
-- Installed `react-markdown@^10.1.0` and `remark-gfm@^4.0.1` via npm
-- Created `src/components/MessageBubble.tsx` as a Client Component
-- User messages render as plain text with right-aligned blue bubble
-- Model messages render through ReactMarkdown with prose-sm styling, left-aligned gray bubble
-- `npx tsc --noEmit` shows no errors in MessageBubble (pre-existing errors in route.ts, page.tsx, prisma.ts are unrelated)
-- Files changed: `src/components/MessageBubble.tsx`, `package.json`, `package-lock.json`
+- Implemented GET/PATCH `/api/settings/session` route handler with defensive fallback
+- Created `src/contexts/SessionContext.tsx` with `SessionProvider` and `useSession()` hook
+- Updated `prisma/schema.prisma` to add `AppSettings` model and `agentType` on `Message` (mirrors wave1-01 changes needed for type generation)
+- **Files changed**: `prisma/schema.prisma`, `src/app/api/settings/session/route.ts`, `src/contexts/SessionContext.tsx`
 - **Learnings for future iterations:**
-  - Work in the worktree `/private/tmp/fund2-p4-group-a` (on `ralph/phase-4-group-a`), not in `/Users/rajas/Desktop/AntiGravity/Fund2Updated` (on `ralph/phase-3-streaming-chat`)
-  - Worktrees don't share node_modules — run `npm install` in the worktree directory
-  - `ralph/phase-4-group-a` is checked out as a worktree; cannot checkout it in the main repo
----
-
-## 2026-03-21 - US-006
-- Created `GUARDRAIL_QA.md` in project root with 4 guardrail sections + Pre-Class + In-Class verification sections
-- Guardrail rules extracted directly from `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`
-- Each section includes: exact rule quote, specific test prompt, expected behaviour, failure indicators, PASS/FAIL checkbox and Notes field
-- Confirmed `npm run dev` starts (✓ Ready in 339ms) — pre-existing Prisma generated client error exists in this worktree (unrelated to this story)
-- Files changed: `GUARDRAIL_QA.md`
-- **passes: false intentionally** — PRD notes require human reviewer (FUND II faculty or project lead) to conduct the actual QA session before marking complete
-- **Learnings for future iterations:**
-  - US-006 must NOT be set to passes: true by Ralph — human sign-off required
-  - The Prisma generated client (`@/generated/prisma/client`) is missing in this worktree — needs `npx prisma generate` to fix if server testing is needed
+  - Worktrees don't have node_modules — must symlink from main repo before running tsc
+  - Prisma generate must be run from the main repo dir using `--schema=<worktree>/prisma/schema.prisma` since prisma.config.ts imports dotenv which isn't available in worktree context
+  - React 19: use `<SessionContext value={...}>` NOT `<SessionContext.Provider value={...}>`
+  - PATCH body validation: check `typeof n === 'number' && Number.isInteger(n)` — JSON numbers can be floats
 ---
