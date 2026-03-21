@@ -1,37 +1,25 @@
-# Ralph Progress Log
-Started: Sat Mar 21 16:53:00 CET 2026
----
-
 ## Codebase Patterns
-- All Vertex AI routes use `export const runtime = 'nodejs'`
-- Prisma client imported from `@/lib/prisma` (singleton), generated to `@/generated/prisma/client`
-- Context loaded via `getSystemContext()` from `@/lib/context`
-- Vertex AI grounding: `tools: { google_search: vertex.tools.googleSearch({}) }` in streamText call
-- `vertex` instance created with `createVertex()` has `.tools.googleSearch()` available
-- Run `npx prisma generate` before typecheck if `@/generated/prisma/client` errors appear
-- This is a git worktree — work in `/private/tmp/fund2-p3-integration`, NOT the main working dir
+- Prisma client imported from `@/lib/prisma` (singleton with PrismaBetterSqlite3 adapter)
+- Prisma types from `@/generated/prisma/client`
+- Run `prisma generate` before `tsc --noEmit` in fresh worktrees — generated client won't exist
+- Run `prisma migrate deploy` before `npm run build` in fresh worktrees — requires `.env` (not `.env.local`) since dotenv/config in prisma.config.ts loads `.env` by default
+- Layout files own `h-screen`; page components inside them should use `h-full`
 
-## 2026-03-21 - US-003
-- Implemented Vertex AI web search grounding on the chat route
-- Added `tools: { google_search: vertex.tools.googleSearch({}) }` to the `streamText` call
-- Verified using `@ai-sdk/google-vertex` SDK docs at `node_modules/@ai-sdk/google-vertex/docs/16-google-vertex.mdx`
-- The `createVertex()` return value has `.tools.googleSearch()` — confirmed in type definitions
-- Files changed: `src/app/api/chat/[projectId]/route.ts`
-- **Learnings for future iterations:**
-  - The grounding API in `@ai-sdk/google-vertex` v4 uses `vertex.tools.googleSearch({})` as a tool, NOT `googleSearchRetrieval` config
-  - The worktree at `/private/tmp/fund2-p3-integration` is the `ralph/phase-3-integration` branch — always cd here, not to the main `/Users/rajas/Desktop/AntiGravity/Fund2Updated` working dir
-  - Run `npx prisma generate` before typecheck in a fresh worktree — generated client is not committed
-  - The integration branch has `ralph/phase-3-merged` as its base; both share the same starting commit
 ---
 
-## 2026-03-21 - US-006
-- Wired project chat page end-to-end with Server Component history hydration
-- `src/app/projects/[projectId]/page.tsx`: fetches messages from DB, passes as `initialMessages` to `<ChatWindow>`, removed placeholder
-- `src/components/ChatWindow.tsx`: fixed fetch body from `{ message: userText }` to `{ messages: [{ role: 'user', content: userText }] }` to match route handler expectation
-- `npm run build` passes; `npx tsc --noEmit` passes
-- Files changed: `src/app/projects/[projectId]/page.tsx`, `src/components/ChatWindow.tsx`
+# Ralph Progress Log
+Started: Sat Mar 21 17:02:31 CET 2026
+---
+
+## 2026-03-21 - US-005
+- Implemented responsive two-panel layout with collapsible sidebar
+- Files changed:
+  - `src/app/projects/[projectId]/layout.tsx` (new) — Server Component; fetches all projects from Prisma and renders `<ProjectLayout>`
+  - `src/components/ProjectLayout.tsx` (new) — Client Component; `usePathname` for active highlight, `useState` for mobile sidebar toggle; `lg:flex` shows sidebar on ≥1024px, hidden by default on smaller screens
+  - `src/app/projects/[projectId]/page.tsx` — changed `h-screen` → `h-full`, removed `<Link>` back to dashboard (layout handles navigation)
 - **Learnings for future iterations:**
-  - The worktree has no dev.db tables by default — run `DATABASE_URL="file:./dev.db" npx prisma db push` to create them before build
-  - ChatWindow already had `disabled={isStreaming}` wired to ChatInput, which shows 'Thinking...' — no changes needed there
-  - Route handler expects `{ messages: [{ role, content }] }` array format, not a plain `message` string
+  - Fresh worktrees have empty `dev.db` and no Prisma client generated — must run `prisma generate` then `prisma migrate deploy` before build
+  - dotenv/config (used by prisma.config.ts) loads `.env`, not `.env.local` — create a separate `.env` with `DATABASE_URL` for Prisma CLI
+  - `.env` and `.env.local` are gitignored — don't try to stage them; they're per-environment
+  - The correct worktree for this phase is `/private/tmp/fund2-p4-group-c`, not the main repo at `/Users/rajas/Desktop/AntiGravity/Fund2Updated`
 ---
