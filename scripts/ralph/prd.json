@@ -33,7 +33,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Touches both route.ts (server error response) and ChatWindow.tsx (client error display). Must run after US-004 within this group."
     },
     {

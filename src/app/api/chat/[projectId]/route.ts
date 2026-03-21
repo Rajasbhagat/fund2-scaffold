@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 
 import { streamText, type ModelMessage } from 'ai';
 import { createVertex } from '@ai-sdk/google-vertex';
+import { NextResponse } from 'next/server';
 import { getSystemContext } from '@/lib/context';
 import { prisma } from '@/lib/prisma';
 
@@ -57,30 +58,38 @@ export async function POST(
 
   const systemContext = getSystemContext();
 
-  const result = streamText({
-    model: vertex('gemini-2.5-flash'),
-    system: systemContext,
-    tools: { google_search: vertex.tools.googleSearch({}) },
-    messages: [
-      ...historyMessages,
-      { role: 'user' as const, content: userMessageContent },
-    ],
-    onFinish: async (event) => {
-      await prisma.message.create({
-        data: { projectId, role: 'model', content: event.text },
-      });
-    },
-  });
+  try {
+    const result = streamText({
+      model: vertex('gemini-2.5-flash'),
+      system: systemContext,
+      tools: { google_search: vertex.tools.googleSearch({}) },
+      messages: [
+        ...historyMessages,
+        { role: 'user' as const, content: userMessageContent },
+      ],
+      onFinish: async (event) => {
+        await prisma.message.create({
+          data: { projectId, role: 'model', content: event.text },
+        });
+      },
+    });
 
-  const response = result.toTextStreamResponse();
+    const response = result.toTextStreamResponse();
 
-  const headers = new Headers(response.headers);
-  headers.set('X-Accel-Buffering', 'no');
-  headers.set('Cache-Control', 'no-cache');
-  headers.set('X-Content-Type-Options', 'nosniff');
+    const headers = new Headers(response.headers);
+    headers.set('X-Accel-Buffering', 'no');
+    headers.set('Cache-Control', 'no-cache');
+    headers.set('X-Content-Type-Options', 'nosniff');
 
-  return new Response(response.body, {
-    status: response.status,
-    headers,
-  });
+    return new Response(response.body, {
+      status: response.status,
+      headers,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json(
+      { error: message, code: 'AI_ERROR' },
+      { status: 500 }
+    );
+  }
 }

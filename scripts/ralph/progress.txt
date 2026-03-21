@@ -8,6 +8,22 @@
 Started: Sat Mar 21 17:02:22 CET 2026
 ---
 
+## 2026-03-21 - US-003
+- Wrapped Vertex AI `streamText` call in try/catch in route.ts; on error returns `NextResponse.json({ error, code: 'AI_ERROR' }, { status: 500 })`
+- Added `NextResponse` import from `next/server` to route.ts
+- Added `isError?: boolean` to Message interface in ChatWindow.tsx
+- On non-2xx response, ChatWindow attempts to parse JSON error body for message, falls back to generic message
+- Error messages rendered with red border/background bubble and a "Retry" button
+- `lastUserText` state tracks most recent submission for retry
+- `handleRetry` removes the last error message then re-sends the last user text
+- `isStreaming` is reset in `finally` block, ensuring UI is never stuck
+- `npx tsc --noEmit` passes
+- Files changed: src/app/api/chat/[projectId]/route.ts, src/components/ChatWindow.tsx, scripts/ralph/prd.json, scripts/ralph/progress.txt
+- **Learnings for future iterations:**
+  - Retry pattern: store `lastUserText`, strip the last error message from state, then re-invoke `sendMessage`
+  - Error display uses `isError` flag on message rather than a separate state to keep the message list unified
+---
+
 ## 2026-03-21 - US-004
 - Verified HTTP headers already present in route.ts (lines 77-85): X-Content-Type-Options: nosniff, X-Accel-Buffering: no, Cache-Control: no-cache
 - Set up worktree: ran npm install, npx prisma generate, and prisma migrate deploy
