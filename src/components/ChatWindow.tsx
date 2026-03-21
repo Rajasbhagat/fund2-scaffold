@@ -14,6 +14,7 @@ interface Message {
 interface ChatWindowProps {
   projectId: string
   initialMessages: Message[]
+  showDeepResearch?: boolean
 }
 
 function roleLabel(role: string): string {
@@ -35,7 +36,7 @@ function ThinkingIndicator() {
   )
 }
 
-export default function ChatWindow({ projectId, initialMessages }: ChatWindowProps) {
+export default function ChatWindow({ projectId, initialMessages, showDeepResearch: _showDeepResearch }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)

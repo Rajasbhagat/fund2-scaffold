@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import ChatWindow from '@/components/ChatWindow'
+import AgentWorkspace from '@/components/AgentWorkspace'
 
 export default async function ProjectPage({
   params,
@@ -14,10 +14,32 @@ export default async function ProjectPage({
     notFound()
   }
 
-  const messages = await prisma.message.findMany({
-    where: { projectId },
-    orderBy: { createdAt: 'asc' },
-  })
+  const [trendMapperMessages, valueDesignerMessages, spiMessages, faroMessages] =
+    await Promise.all([
+      prisma.message.findMany({
+        where: { projectId, agentType: 'trend-mapper' },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.message.findMany({
+        where: { projectId, agentType: 'value-designer' },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.message.findMany({
+        where: { projectId, agentType: 'spi' },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.message.findMany({
+        where: { projectId, agentType: 'faro' },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ])
+
+  const initialMessagesByAgent = {
+    'trend-mapper': trendMapperMessages,
+    'value-designer': valueDesignerMessages,
+    spi: spiMessages,
+    faro: faroMessages,
+  }
 
   return (
     <main className="flex flex-col h-full">
@@ -25,7 +47,7 @@ export default async function ProjectPage({
         <h1 className="text-xl font-bold">{project.name}</h1>
       </div>
       <div className="flex-1 overflow-hidden">
-        <ChatWindow projectId={projectId} initialMessages={messages} />
+        <AgentWorkspace projectId={projectId} initialMessagesByAgent={initialMessagesByAgent} />
       </div>
     </main>
   )
