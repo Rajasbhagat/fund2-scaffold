@@ -37,7 +37,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Read src/components/ProjectLayout.tsx and src/app/projects/[projectId]/layout.tsx first. Keep ALL existing code intact — only ADD the SessionProvider wrapper and SessionSelector component. The SessionSelector must call useSession() which means it must be rendered INSIDE <SessionProvider>. This is why SessionProvider wraps the entire return."
     }
   ]

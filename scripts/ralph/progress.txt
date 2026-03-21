@@ -21,3 +21,14 @@ Started: Sat Mar 21 20:33:26 CET 2026
   - React 19: use `<SessionContext value={...}>` NOT `<SessionContext.Provider value={...}>`
   - PATCH body validation: check `typeof n === 'number' && Number.isInteger(n)` — JSON numbers can be floats
 ---
+
+## 2026-03-21 - US-002
+- Wired `SessionProvider` into `ProjectLayout.tsx` as outermost wrapper
+- Added `SessionSelector` component with "FUND II Session" label and options 1-10
+- Placed `SessionSelector` after `<nav>` block, before `</aside>` close tag
+- All existing sidebar/toggle/mobile/responsive behavior preserved
+- **Files changed**: `src/components/ProjectLayout.tsx`
+- **Learnings for future iterations:**
+  - `SessionSelector` must be INSIDE `<SessionProvider>` to call `useSession()` — that's why provider wraps everything
+  - React 19 Fragment-free: `<SessionProvider>` can be outermost without extra wrapping div
+---
