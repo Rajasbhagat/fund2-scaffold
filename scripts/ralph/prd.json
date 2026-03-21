@@ -31,8 +31,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Prisma 7 + better-sqlite3 driver adapter. PrismaClient imported from @/generated/prisma/client. Singleton in src/lib/prisma.ts. WAL mode set via src/instrumentation.ts on nodejs runtime. Migration: 20260321150637_init. db file at ./dev.db (gitignored)."
     },
     {
       "id": "US-003",
