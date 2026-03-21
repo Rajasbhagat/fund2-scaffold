@@ -52,7 +52,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Follow the same fs.readFileSync pattern as existing context loaders. The function should concatenate all three files with appropriate section headers. Use path.join(process.cwd(), 'src/context/faro/...') for file paths."
     }
   ]

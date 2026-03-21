@@ -20,6 +20,17 @@ Started: Sat Mar 21 20:58:40 CET 2026
   - 3 pre-existing TS errors exist on baseline (not introduced by this story)
 ---
 
+## 2026-03-21 - US-003
+- Added `export function getFAROContext(): string` to `src/lib/context.ts`
+- Reads faro-system-prompt.txt + fund2-syllabus.txt + elective-summaries.txt from `src/context/faro/`
+- Assembles context in order: (1) system prompt, (2) knowledge base header, (3) FUND II syllabus with `=== FUND II SYLLABUS ===` header, (4) elective summaries
+- tsc passes with 0 errors
+- Files changed: `src/lib/context.ts` (modified)
+- **Learnings for future iterations:**
+  - Pattern matches existing `getSystemContext()` — use `fs.readFileSync` with `path.join(process.cwd(), 'src', 'context', 'faro', ...)`
+  - String concatenation used instead of array join to preserve exact header ordering
+---
+
 ## 2026-03-21 - US-002
 - Copied `ENTRE syllabi - FUND I II and Electives/FUND_II_Syllabus.txt` to `src/context/faro/fund2-syllabus.txt` (full syllabus, 487 lines)
 - Created `src/context/faro/elective-summaries.txt` with `=== ELECTIVE COURSE SUMMARIES ===` header and summaries of all electives derived from PDF filenames (no .txt elective files exist — all PDFs)
