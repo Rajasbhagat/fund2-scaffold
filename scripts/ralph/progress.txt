@@ -17,6 +17,9 @@ Phase: 1 — Foundation & Environment
 - scripts/extract-docs.ts: run with `npx ts-node --skip-project --compiler-options '{"module":"commonjs"}' scripts/extract-docs.ts`
 - server-only package throws when imported outside Next.js context (even in ts-node) — cannot use ts-node to verify modules that import server-only; verify via file size checks instead
 - Context loader: import from `@/lib/context`, function `getSystemContext()` returns all docs joined with `\n\n---KNOWLEDGE BASE DOCUMENT---\n\n`
+- Vertex AI model on socratoys project: use `gemini-2.5-flash` — gemini-2.0-flash and gemini-1.5-flash return 404; gemini-2.5-flash is available
+- Vertex AI ADC: use GOOGLE_CLOUD_PROJECT=socratoys, GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS pointing to ADC json
+- All Vertex AI Route Handlers MUST have `export const runtime = 'nodejs'` — edge runtime breaks gcloud ADC auth
 
 ## 2026-03-21 - US-001
 - What was implemented: Scaffolded Next.js 14 App Router project with TypeScript, Tailwind, ESLint. Replaced default boilerplate in src/app/page.tsx with `<h1>FUND II Trend Mapper</h1>`. Restored Trend Mapper source docs and scripts/ralph directory.
@@ -59,3 +62,14 @@ Phase: 1 — Foundation & Environment
   - getSystemContext() uses fs.readFileSync with process.cwd() for path resolution — works in Next.js server context
 ---
 
+
+## 2026-03-21 - US-005
+- What was implemented: Installed @google-cloud/vertexai, created src/app/api/smoke-test/route.ts with nodejs runtime. Created .env.local with GOOGLE_CLOUD_PROJECT=socratoys, GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS path. Route hits Vertex AI with gemini-2.5-flash and returns {ok:true, response:'READY'}.
+- Files changed: src/app/api/smoke-test/route.ts (new), .env.local (new, gitignored), package.json, package-lock.json
+- **Learnings for future iterations:**
+  - gemini-2.0-flash returns 404 on socratoys project — use gemini-2.5-flash for all Vertex AI calls
+  - gemini-1.5-flash is also unavailable on socratoys; gemini-2.5-flash is the working model
+  - @google-cloud/vertexai is deprecated (warns at import) but still functional; @google/genai is the future replacement
+  - @google/genai free-tier API keys hit limit:0 for gemini-2.0-flash (gen-lang-client projects have no billing) — use Vertex AI ADC instead
+  - GOOGLE_APPLICATION_CREDENTIALS must be explicitly set in .env.local for ADC to resolve correctly in Next.js server context
+---

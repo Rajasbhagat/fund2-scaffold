@@ -82,8 +82,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": "MUST have `export const runtime = 'nodejs'` — edge runtime breaks gcloud ADC auth. If ADC fails, set GOOGLE_APPLICATION_CREDENTIALS in .env.local pointing to ~/.config/gcloud/application_default_credentials.json"
+      "passes": true,
+      "notes": "Uses @google-cloud/vertexai with ADC on socratoys project. Model: gemini-2.5-flash (gemini-2.0-flash returns 404 on this project; gemini-2.5-flash works). GOOGLE_APPLICATION_CREDENTIALS set in .env.local. Route returns {ok:true, response:'READY'}."
     }
   ]
 }
