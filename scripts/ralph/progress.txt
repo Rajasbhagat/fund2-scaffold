@@ -1,37 +1,28 @@
 # Ralph Progress Log
-Started: Sat Mar 21 16:53:00 CET 2026
+Started: Sat Mar 21 17:02:14 CET 2026
 ---
 
-## Codebase Patterns
-- All Vertex AI routes use `export const runtime = 'nodejs'`
-- Prisma client imported from `@/lib/prisma` (singleton), generated to `@/generated/prisma/client`
-- Context loaded via `getSystemContext()` from `@/lib/context`
-- Vertex AI grounding: `tools: { google_search: vertex.tools.googleSearch({}) }` in streamText call
-- `vertex` instance created with `createVertex()` has `.tools.googleSearch()` available
-- Run `npx prisma generate` before typecheck if `@/generated/prisma/client` errors appear
-- This is a git worktree — work in `/private/tmp/fund2-p3-integration`, NOT the main working dir
-
-## 2026-03-21 - US-003
-- Implemented Vertex AI web search grounding on the chat route
-- Added `tools: { google_search: vertex.tools.googleSearch({}) }` to the `streamText` call
-- Verified using `@ai-sdk/google-vertex` SDK docs at `node_modules/@ai-sdk/google-vertex/docs/16-google-vertex.mdx`
-- The `createVertex()` return value has `.tools.googleSearch()` — confirmed in type definitions
-- Files changed: `src/app/api/chat/[projectId]/route.ts`
+## 2026-03-21 - US-001
+- Installed `react-markdown@^10.1.0` and `remark-gfm@^4.0.1` via npm
+- Created `src/components/MessageBubble.tsx` as a Client Component
+- User messages render as plain text with right-aligned blue bubble
+- Model messages render through ReactMarkdown with prose-sm styling, left-aligned gray bubble
+- `npx tsc --noEmit` shows no errors in MessageBubble (pre-existing errors in route.ts, page.tsx, prisma.ts are unrelated)
+- Files changed: `src/components/MessageBubble.tsx`, `package.json`, `package-lock.json`
 - **Learnings for future iterations:**
-  - The grounding API in `@ai-sdk/google-vertex` v4 uses `vertex.tools.googleSearch({})` as a tool, NOT `googleSearchRetrieval` config
-  - The worktree at `/private/tmp/fund2-p3-integration` is the `ralph/phase-3-integration` branch — always cd here, not to the main `/Users/rajas/Desktop/AntiGravity/Fund2Updated` working dir
-  - Run `npx prisma generate` before typecheck in a fresh worktree — generated client is not committed
-  - The integration branch has `ralph/phase-3-merged` as its base; both share the same starting commit
+  - Work in the worktree `/private/tmp/fund2-p4-group-a` (on `ralph/phase-4-group-a`), not in `/Users/rajas/Desktop/AntiGravity/Fund2Updated` (on `ralph/phase-3-streaming-chat`)
+  - Worktrees don't share node_modules — run `npm install` in the worktree directory
+  - `ralph/phase-4-group-a` is checked out as a worktree; cannot checkout it in the main repo
 ---
 
 ## 2026-03-21 - US-006
-- Wired project chat page end-to-end with Server Component history hydration
-- `src/app/projects/[projectId]/page.tsx`: fetches messages from DB, passes as `initialMessages` to `<ChatWindow>`, removed placeholder
-- `src/components/ChatWindow.tsx`: fixed fetch body from `{ message: userText }` to `{ messages: [{ role: 'user', content: userText }] }` to match route handler expectation
-- `npm run build` passes; `npx tsc --noEmit` passes
-- Files changed: `src/app/projects/[projectId]/page.tsx`, `src/components/ChatWindow.tsx`
+- Created `GUARDRAIL_QA.md` in project root with 4 guardrail sections + Pre-Class + In-Class verification sections
+- Guardrail rules extracted directly from `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`
+- Each section includes: exact rule quote, specific test prompt, expected behaviour, failure indicators, PASS/FAIL checkbox and Notes field
+- Confirmed `npm run dev` starts (✓ Ready in 339ms) — pre-existing Prisma generated client error exists in this worktree (unrelated to this story)
+- Files changed: `GUARDRAIL_QA.md`
+- **passes: false intentionally** — PRD notes require human reviewer (FUND II faculty or project lead) to conduct the actual QA session before marking complete
 - **Learnings for future iterations:**
-  - The worktree has no dev.db tables by default — run `DATABASE_URL="file:./dev.db" npx prisma db push` to create them before build
-  - ChatWindow already had `disabled={isStreaming}` wired to ChatInput, which shows 'Thinking...' — no changes needed there
-  - Route handler expects `{ messages: [{ role, content }] }` array format, not a plain `message` string
+  - US-006 must NOT be set to passes: true by Ralph — human sign-off required
+  - The Prisma generated client (`@/generated/prisma/client`) is missing in this worktree — needs `npx prisma generate` to fix if server testing is needed
 ---
