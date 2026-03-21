@@ -21,7 +21,7 @@ const AGENTS = ['trend-mapper', 'value-designer', 'spi', 'faro']
 
 export default function AgentWorkspace({ projectId, initialMessagesByAgent }: AgentWorkspaceProps) {
   const [activeAgent, setActiveAgent] = useState('trend-mapper')
-  const { sessionNumber: _sessionNumber } = useSession()
+  const { sessionNumber } = useSession()
 
   return (
     <div className="flex flex-col h-full">
@@ -35,6 +35,8 @@ export default function AgentWorkspace({ projectId, initialMessagesByAgent }: Ag
             <ChatWindow
               projectId={projectId}
               initialMessages={initialMessagesByAgent[agent] ?? []}
+              agentType={agent}
+              currentSession={sessionNumber}
               showDeepResearch={agent === 'trend-mapper'}
             />
           </div>

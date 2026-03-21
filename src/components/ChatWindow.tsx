@@ -14,18 +14,23 @@ interface Message {
 interface ChatWindowProps {
   projectId: string
   initialMessages: Message[]
-  showDeepResearch?: boolean
+  agentType: string
+  currentSession: number
+  showDeepResearch: boolean
 }
 
-function roleLabel(role: string): string {
-  return role === 'user' ? 'You' : 'Trend Mapper'
+const AGENT_DISPLAY_NAMES: Record<string, string> = {
+  'trend-mapper': 'Trend Mapper',
+  'value-designer': 'Value Designer',
+  spi: 'SPI',
+  faro: 'FARO',
 }
 
-function ThinkingIndicator() {
+function ThinkingIndicator({ agentDisplayName }: { agentDisplayName: string }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-        Trend Mapper
+        {agentDisplayName}
       </span>
       <div className="flex items-center gap-1 py-1">
         <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
@@ -36,12 +41,25 @@ function ThinkingIndicator() {
   )
 }
 
-export default function ChatWindow({ projectId, initialMessages, showDeepResearch: _showDeepResearch }: ChatWindowProps) {
+export default function ChatWindow({
+  projectId,
+  initialMessages,
+  agentType,
+  currentSession,
+  showDeepResearch,
+}: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [lastUserText, setLastUserText] = useState<string>('')
+  const [deepResearch, setDeepResearch] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const agentDisplayName = AGENT_DISPLAY_NAMES[agentType] ?? 'Agent'
+
+  function roleLabel(role: string): string {
+    return role === 'user' ? 'You' : agentDisplayName
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -63,7 +81,12 @@ export default function ChatWindow({ projectId, initialMessages, showDeepResearc
       const res = await fetch(`/api/chat/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'user', content: userText }] }),
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: userText }],
+          agentType,
+          currentSession,
+          deepResearch,
+        }),
       })
 
       if (!res.ok || !res.body) {
@@ -164,10 +187,16 @@ export default function ChatWindow({ projectId, initialMessages, showDeepResearc
             )}
           </div>
         ))}
-        {isLoading && <ThinkingIndicator />}
+        {isLoading && <ThinkingIndicator agentDisplayName={agentDisplayName} />}
         <div ref={bottomRef} />
       </div>
-      <ChatInput onSubmit={handleSubmit} disabled={isLoading || isStreaming} />
+      <ChatInput
+        onSubmit={handleSubmit}
+        disabled={isLoading || isStreaming}
+        deepResearch={deepResearch}
+        onDeepResearchToggle={() => setDeepResearch((prev) => !prev)}
+        showDeepResearch={showDeepResearch}
+      />
     </div>
   )
 }
