@@ -35,7 +35,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "List the ENTRE syllabi folder first with Bash to find all .txt files. Skip PDF files — only process .txt files. The FUND II syllabus goes in full. Each elective gets a 200-400 word summary. If there are no .txt elective files (only PDFs), create a minimal elective-summaries.txt with a note that elective syllabi are in PDF format and not yet extracted."
     },
     {
