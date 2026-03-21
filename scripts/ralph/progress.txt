@@ -12,6 +12,9 @@ Phase: 1 — Foundation & Environment
 - Prisma 7: PrismaClient generated to `src/generated/prisma/client.ts` — import from `@/generated/prisma/client` (not `@prisma/client`)
 - Prisma 7: config in `prisma.config.ts` (not schema.prisma) — datasource URL set via `process.env["DATABASE_URL"]` loaded by `dotenv/config`
 - SQLite db file lands at `./dev.db` (project root) — add `*.db` to .gitignore
+- pdf-parse v2: use `PDFParse` class with `{ url: absolutePath }` constructor → `.load()` → `.getText()` (returns `{ pages: [{text, num}] }`)
+- ts-node scripts with tsconfig `"module":"esnext"`: run with `--compiler-options '{"module":"commonjs"}'` to avoid ESM require() errors
+- scripts/extract-docs.ts: run with `npx ts-node --skip-project --compiler-options '{"module":"commonjs"}' scripts/extract-docs.ts`
 
 ## 2026-03-21 - US-001
 - What was implemented: Scaffolded Next.js 14 App Router project with TypeScript, Tailwind, ESLint. Replaced default boilerplate in src/app/page.tsx with `<h1>FUND II Trend Mapper</h1>`. Restored Trend Mapper source docs and scripts/ralph directory.
@@ -33,5 +36,15 @@ Phase: 1 — Foundation & Environment
   - PrismaClient must be imported from `@/generated/prisma/client` (the generated output path), not from `@prisma/client`
   - `npx prisma generate` must be run after `prisma init` — migrate dev does NOT auto-generate the client in Prisma 7
   - instrumentation.ts lives in `src/` (not root) because this project uses src-dir; gates WAL PRAGMA behind `NEXT_RUNTIME === 'nodejs'` check
+---
+
+## 2026-03-21 - US-003
+- What was implemented: Extraction script for all 4 megatrend source docs. Installed mammoth + pdf-parse v2. Created scripts/extract-docs.ts. Generated src/context/megatrend-{1-4}.txt (all non-empty).
+- Files changed: scripts/extract-docs.ts (new), src/context/megatrend-1.txt through megatrend-4.txt (new), package.json, package-lock.json
+- **Learnings for future iterations:**
+  - pdf-parse v2 is a complete API change from v1: use `new PDFParse({ url: absPath })` → `.load()` → `.getText()` which returns `{ pages: [{text, num}] }`
+  - tsconfig has `"module":"esnext"` so ts-node scripts can't use `require()` — must pass `--compiler-options '{"module":"commonjs"}'`
+  - @types/pdf-parse was written for v1 so types are wrong for v2; use `require()` with manual type casting in script
+  - mammoth.extractRawText works as expected with `{ path: string }`
 ---
 

@@ -48,8 +48,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": "Source files: 'Deep Research Report ChaqtGPT.docx', 'Global_Megatrends_Impact_Impulse_Matrix_2025-2050 (Claude).docx', 'Spotting_Big_Trends_Megatrends_Handout.pdf', 'The Great Fragmentation GEMINI Deep Research.docx' — all in 'Trend Mapper/MEGATRENDS Docs for TrendMapper/'"
+      "passes": true,
+      "notes": "Installed mammoth, pdf-parse v2, @types/pdf-parse. pdf-parse v2 uses PDFParse class with { url } constructor + .load() + .getText() (returns { pages: [{text}] }). Script must run with --compiler-options '{\"module\":\"commonjs\"}' due to tsconfig esnext. Output: src/context/megatrend-{1-4}.txt (all non-empty, 18k-34k chars each)."
     },
     {
       "id": "US-004",
