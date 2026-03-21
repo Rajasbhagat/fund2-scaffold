@@ -122,3 +122,24 @@ Phase: 1 — Foundation & Environment
   - createVertex takes `{ project, location }` options; exports `createVertex` and `vertex` (default instance)
   - Prisma generated client not in git — must run `npx prisma generate` before tsc passes
 ---
+
+## 2026-03-21 - Phase 3 US-002
+- What was implemented: Imported `getSystemContext` from `@/lib/context` in chat route. Calls `getSystemContext()` on each request and passes result as `system` param to `streamText`. Also switched from hardcoded `prompt` to `messages` from request body (ai v6 allows `system` + `messages` together).
+- Files changed: src/app/api/chat/[projectId]/route.ts
+- **Learnings for future iterations:**
+  - ai v6: `system` param is orthogonal to `prompt`/`messages` — can use `system` + `messages` together freely
+  - Total context: ~128K chars (system-prompt + megatrend-1 through megatrend-4)
+  - `getSystemContext()` is server-only (has `import 'server-only'`) — works fine in route handlers (nodejs runtime)
+---
+
+## 2026-03-21 - Phase 3 US-004
+- What was implemented: Full chat history persistence in chat route. Loads DB messages, applies rolling window (first 4 + last 40 messages = 44 cap), persists user message to DB before streaming, uses onFinish callback to persist assistant response. DB role 'model' converted to 'assistant' for ai SDK format.
+- Files changed: src/app/api/chat/[projectId]/route.ts
+- **Learnings for future iterations:**
+  - ai v6 ModelMessage roles: 'user' and 'assistant' (not 'model') — DB uses 'user'/'model' (Vertex AI convention), must convert on read
+  - onFinish callback receives OnFinishEvent which has `event.text` containing the full generated text
+  - Persist user message BEFORE streamText call to avoid losing it on connection errors
+  - Rolling window: slice(0, FIRST_KEEP) + slice(length - LAST_KEEP) — never drop from end
+  - params is a Promise in Next.js 15+ patterns — must `await params` before destructuring
+  - `as const` needed on role string literals to satisfy the union type discriminant
+---

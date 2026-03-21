@@ -37,7 +37,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Vertex AI convention: system prompt goes in `systemInstruction` (Path B) or `system` param of `streamText` (Path A) — NOT in the `contents` array. `@/lib/context` is server-only (has `import 'server-only'`). Prisma client at `@/generated/prisma/client` (Prisma 7 — not `@prisma/client`)."
     },
     {
@@ -56,7 +56,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Role values are 'user' and 'model' for Vertex AI — not 'assistant'. Persist user message BEFORE streaming starts to avoid losing it on stream errors. Persist assistant message AFTER stream closes. Rolling window: keep first 2 turns + last 20 turns. Import prisma from `@/lib/prisma` (singleton). PRISMA 7 NOTE: generated client is at `@/generated/prisma/client` — not `@prisma/client`."
     }
   ]
