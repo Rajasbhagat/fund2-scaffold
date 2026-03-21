@@ -5,5 +5,17 @@ Phase: 1 — Foundation & Environment
 ---
 
 ## Codebase Patterns
-(populated as stories complete)
+- Next.js scaffold: use temp dir (create-next-app rejects capital letters in cwd name), then cp -r /tmp/scaffold/. . then rm -rf node_modules && npm install (to fix symlinks)
+- Branch setup: create-next-app overwrites .git — always run git checkout -b <branch> AFTER copying scaffold files
+- Typecheck: `npx tsc --noEmit` (requires node_modules symlinks to be correct)
+
+## 2026-03-21 - US-001
+- What was implemented: Scaffolded Next.js 14 App Router project with TypeScript, Tailwind, ESLint. Replaced default boilerplate in src/app/page.tsx with `<h1>FUND II Trend Mapper</h1>`. Restored Trend Mapper source docs and scripts/ralph directory.
+- Files changed: src/app/page.tsx, scripts/ralph/prd.json, scripts/ralph/progress.txt, scripts/ralph/CLAUDE.md, Trend Mapper/* (all source docs added)
+- **Learnings for future iterations:**
+  - create-next-app rejects dirs with capital letters — scaffold in /tmp then copy
+  - Copying scaffold with `cp -r . dest/` also copies .git, overwriting project git — always run scaffold then branch, not the other way around
+  - After cp -r node_modules, symlinks in .bin/ break — always `rm -rf node_modules && npm install` after copying
+  - git clean -fd removes ALL untracked files including important source files — never use on ralph branch without checking what's untracked
+---
 
