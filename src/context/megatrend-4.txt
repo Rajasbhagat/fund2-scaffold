@@ -1,0 +1,321 @@
+SPOTTING BIG TRENDS
+Deep Research Handout
+Global megatrends, subtrends, signals, and worksheets (2026-2035)
+Prepared for classroom use
+Date: 9 Feb 2026 (Europe/Madrid)
+Note: Educational material synthesized from public sources. Not investment advice.
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 2
+Table of contents
+3	How to use this handout
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3	A simple classroom loop
+4	Executive summary
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4	What is structurally different now
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4	10 cross-trend intersections to watch
+5	Megatrend 1: Geopolitical and economic fragmentation
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5	Key subtrends
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5	Signals to track
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5	Opportunity patterns
+6	Megatrend 2: Climate emergency and the great transition
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6	Key subtrends
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6	Signals to track
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6	Opportunity patterns
+7	Megatrend 3: Accelerating technological disruption
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7	Key subtrends
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7	Signals to track
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7	Opportunity patterns
+8	Megatrend 4: Demographic divergence and societal shifts
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8	Key subtrends
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8	Signals to track
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8	Opportunity patterns
+9	Scenario set (2030-2035)
+10	Signal dashboard: 25 indicators to track
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10	Fragmentation
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10	Climate transition
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10	Tech disruption
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10	Demographics and society
+11	Worksheets
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11	Worksheet 1: Trend card
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12	Worksheet 2: Monitoring plan
+13	Selected sources (for further reading)
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 3
+How to use this handout
+This handout is designed to help you move from broad megatrends to actionable trend theses. Use
+it as a repeatable workflow for research, discussion, and idea generation.
+A simple classroom loop
+• Map: megatrend -> subtrend -> local effects (customers, regulation, infrastructure).
+• Instrument: choose 3-7 measurable signals to track each subtrend.
+• Stress-test: write disconfirming evidence and scenario signposts.
+• Translate: derive opportunity patterns (who pays, what changes, what breaks).
+The meta-insight for 2026-2035
+Track the new scarcity stack: electricity + compute + critical minerals + trust.
+Most second-order opportunities sit at the intersections of these constraints.
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 4
+Executive summary
+Four megatrends remain the best high-level map, but the most important dynamics are their
+interactions. Fragmentation changes the global operating model; climate transition adds physical
+and financial constraints; technology moves from tools to autonomy; demographics reshape labor,
+care, and trust.
+What is structurally different now
+• Globalization is shifting from optimize to secure + comply + duplicate.
+• Resilience (energy, supply chains, infrastructure) becomes a core cost category.
+• AI value shifts from model quality alone to workflow integration, governance, and reliability.
+• Aging societies face labor scarcity, while youth-bulge regions face a jobs race.
+10 cross-trend intersections to watch
+Intersection What changes
+AI x Energy Compute advantage becomes power advantage (grids, siting, cooling).
+Climate x Insurance Risk repricing changes real estate and municipal finance.
+Minerals x Geopolitics Refining and processing chokepoints shape alliances and industrial policy.
+Fragmentation x Standards Compliance becomes a product feature (AI, ESG, supply chain).
+Aging x Automation Workforce augmentation shifts from optional to necessary.
+Youth bulge x Platforms Skills-to-income rails and SME enablement become stability tools.
+AI x Trust Provenance and verification become critical infrastructure online.
+Circularity x Regulation Repairability and durability become market access conditions.
+De-risking x Costs Resilience premium increases demand for efficiency and visibility tools.
+Governance erosion x Private rules Mini-lateral agreements and private standards proliferate.
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 5
+Megatrend 1: Geopolitical and economic
+fragmentation
+The global economy is moving from a single, integrated operating environment to multiple rule-sets,
+regional supply networks, and heavier use of economic tools as strategic instruments (export
+controls, subsidies, screening, standards).
+Key subtrends
+• Transactional middle powers: issue-by-issue coalitions and shifting alignments.
+• Supply chain regionalization: near-shoring, friend-shoring, and resilience premiums.
+• Weaponized interdependence: export controls, sanctions, and investment screening as design
+constraints.
+• Industrial policy competition: subsidies and local content rules reshape capex decisions.
+• Governance workarounds: mini-lateral deals and private standards fill multilateral gaps.
+Signals to track
+• Trade-restrictive coverage in monitoring reports and frequency of new measures.
+• Export control rule updates, controlled categories, and licensing timelines.
+• Greenfield FDI announcements and capacity builds in connector geographies.
+• Standards divergence across blocs (AI, cybersecurity, ESG, product safety).
+Opportunity patterns
+• Compliance-native products: audit trails, geo-fenced features, and modular architectures.
+• Supply chain visibility: provenance, tier-n mapping, and disruption simulations.
+• Industrial policy translation: tooling that helps firms qualify, report, and audit programs.
+Discussion prompts
+• Where in your industry does compliance become a product feature rather than a back-office
+cost?
+• If supply chains must be duplicated, what becomes the scarcest input: parts, permits, capital,
+or talent?
+• What would it take to provide credible provenance for a product at tier-n (not just tier-1)?
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 6
+Megatrend 2: Climate emergency and the great
+transition
+The transition is not only decarbonization. It is also adaptation, critical minerals security, and a
+financial system repricing risk through disclosure, insurance, and capital costs.
+Key subtrends
+• Adaptation economy: resilience capex grows (heat, flood, water, grid hardening).
+• New geopolitics of minerals: mining, refining, and recycling capacity become strategic.
+• Climate risk in finance: disclosures, transition plans, and liability pressures.
+• Circular economy imperative: repairability, durability, and product passports.
+Signals to track
+• Adaptation finance gap measures and growth in resilience spending.
+• Insurance pricing and coverage availability in high-risk regions.
+• Critical mineral concentration metrics and export restrictions.
+• Repairability and durability requirements in major markets.
+Opportunity patterns
+• Resilience-as-a-service: engineering + monitoring + finance/insurance partnerships.
+• Traceability and material intelligence: compliance plus supply security.
+• Distributed repair infrastructure: diagnostics, parts logistics, and certified networks.
+Discussion prompts
+• Which climate risks are becoming price signals (insurance, capital costs) in your region?
+• What assets are at risk of becoming stranded - and what replaces them (retrofit, repurpose,
+retire)?
+• Where could circularity (repair, reuse, recycling) reduce dependence on fragile supply chains?
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 7
+Megatrend 3: Accelerating technological disruption
+Technology is shifting from tools to autonomy. Agentic AI, robotics, biotech, and spatial computing
+converge, while physical constraints (electricity, chips, cooling) and governance constraints
+(regulation, trust) shape adoption.
+Key subtrends
+• Agentic AI: systems that plan and act across workflows, not just generate content.
+• Compute and infrastructure arms race: chips, data centers, power, and grid queues.
+• AI governance and safety: evaluation, monitoring, and auditability become mandatory in many
+contexts.
+• Bio-digital convergence: AI-accelerated R&D;, lab automation, and personalized medicine.
+• Spatial computing and digital twins: simulation and training become routine in regulated
+industries.
+Signals to track
+• Enterprise spend shifts from pilots to governed, production-grade agent platforms.
+• Data center power demand growth, interconnection delays, and siting constraints.
+• Regulatory milestones (phased AI rules, enforcement guidance, audits).
+• R&D; cycle time reductions in drug discovery and lab automation adoption.
+Opportunity patterns
+• Agent reliability infrastructure: sandboxing, permissions, rollback, simulation testing.
+• Energy-aware compute: scheduling and optimization around grid and carbon constraints.
+• Authenticity and provenance: verification for synthetic media and digital commerce.
+Discussion prompts
+• What workflow would you automate first if agents were reliable and permissioned - and what
+stops you today?
+• Where does electricity availability (not model quality) become the binding constraint for AI
+adoption?
+• Which decisions in your domain require provable outputs (audit trails, citations,
+reproducibility)?
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 8
+Megatrend 4: Demographic divergence and societal
+shifts
+The world is splitting into aging, low-fertility regions with labor scarcity and youth-bulge regions
+where job creation determines stability. In parallel, trust is fragmenting and well-being is becoming
+an economic variable.
+Key subtrends
+• Silver economy: healthcare, care coordination, accessible housing, and longevity services.
+• Labor shortage era: productivity tools and automation to augment scarce workers.
+• Youth bulge and jobs race: skills-to-income pathways, fintech, and SME enablement.
+• Crisis of trust and insularity: smaller trusted communities, creator influence, verification demand.
+• Redefinition of well-being: evidence-based mental health, chronic care prevention, and financial
+resilience.
+Signals to track
+• Vacancy rates in care, health, skilled trades, and education.
+• Policy shifts on retirement, migration, and caregiver support.
+• Youth NEET rates and formal job creation pace by region.
+• Trust metrics and adoption of verification tools in media/commerce.
+Opportunity patterns
+• Care infrastructure platforms: scheduling, documentation automation, remote monitoring.
+• Skills-to-income rails: credentialing linked to verified work outcomes.
+• Trust brokers: reputation, dispute resolution, and authenticity tooling for communities.
+Discussion prompts
+• Which services break first under labor scarcity - and what is the minimum viable automation?
+• Where can better care coordination reduce total cost (and caregiver burnout) without lowering
+quality?
+• What would it take to make trust portable across platforms (identity, reputation, verification)?
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 9
+Scenario set (2030-2035)
+Use these four teachable scenarios as a discussion tool. Each scenario is a combination of (A)
+cooperation vs fragmentation and (B) fast vs slow/chaotic transition (energy + AI governance).
+Scenario Description What to look for (signposts)
+Green Tech Cold War Fragmentation + fast buildout. Blocs race to
+secure minerals, chips, and grid capacity.
+Rules diverge; compliance becomes a moat.
+Export control expansion; mineral
+stockpiling; subsidy escalation; standards
+divergence.
+Cooperative
+Acceleration
+Cooperation + fast buildout. Some standard
+harmonization and faster capital formation
+for grids and adaptation.
+Interoperability standards; aligned
+disclosure baselines; more joint
+infrastructure financing.
+Fortress Patchworks Fragmentation + slow transition.
+Underinvestment in grids and adaptation;
+higher disaster losses; trust fractures.
+Widening adaptation finance gaps;
+insurance withdrawals; rising polarization
+and misinformation.
+Resilience
+Pragmatism
+Mixed cooperation + uneven but practical
+transition. Local resilience grows fastest;
+repair and circularity expand.
+Repair obligations expand; resilience
+procurement grows; regional growth poles
+around power availability.
+How to use scenarios
+• Pick one scenario and rewrite your trend thesis: what accelerates, what stalls, what breaks?
+• List 3 signposts you could observe within 6-12 months that would indicate you are moving into
+that world.
+• Identify one strategy that is robust across all four scenarios (a no-regrets move).
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 10
+Signal dashboard: 25 indicators to track
+Assign each student team one megatrend and require: (1) five signals, (2) a target range or
+threshold, (3) a disconfirming signal, and (4) a monthly update cadence.
+Fragmentation
+• Trade-restrictive coverage and new measures frequency (WTO monitoring).
+• Export control updates and entity list changes (semiconductors, compute, tools).
+• FDI shifts into connector geographies (manufacturing, logistics, energy).
+• Dispute settlement reform progress vs stagnation (rule enforcement).
+• Industrial policy awards and local content rules by sector.
+Climate transition
+• Adaptation finance gap and resilience procurement growth.
+• Insured catastrophe losses and premium / coverage availability changes.
+• Critical mineral concentration, price volatility, and export restrictions.
+• Grid interconnection queue length and transmission buildout pace.
+• Repairability and durability regulations (application dates and scope).
+Tech disruption
+• Enterprise move from chat pilots to governed agent platforms.
+• Data center power demand growth and siting constraints.
+• AI regulation milestones, standards, and enforcement actions.
+• Cyber incidents in critical infrastructure and supply chain security posture.
+• R&D; cycle time reductions in bio/AI and lab automation adoption.
+Demographics and society
+• Old-age dependency ratios and labor participation trends.
+• Vacancy rates in care/health/skilled trades and wage pressure.
+• Youth NEET rates, formal job creation, and SME formation rates.
+• Trust and insularity metrics; verification tool adoption.
+• Wellness economy spending mix and evidence-based outcomes adoption.
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 11
+Worksheets
+Use the following pages as printable templates. Encourage students to write with clear assumptions
+and measurable signals.
+Worksheet 1: Trend card
+Trend name
+Megatrend anchor
+Subtrend definition (1-2 sentences)
+Why now? (drivers and constraints)
+Who feels it first? (customer segments / geographies)
+3-7 measurable signals (with data sources)
+Disconfirming evidence (what would prove this wrong?)
+Second-order effects (2-3)
+Opportunity patterns (business models)
+Risks and ethical concerns
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 12
+Worksheet 2: Monitoring plan
+Fill this in for one trend thesis and update monthly.
+Signal Metric / threshold Data source Current reading Interpretation
+
+Spotting Big Trends - Global Megatrends 2026-2035
+Page 13
+Selected sources (for further reading)
+This handout synthesizes publicly available research and institutional reporting. Titles below are
+provided to support deeper reading and classroom citation.
+1 IPCC (2023). Climate Change 2023: AR6 Synthesis Report - Summary for Policymakers.
+2 UNEP (2025). Adaptation Gap Report 2025: Running on Empty.
+3 International Energy Agency (2024/2025). AI, data centres, and electricity demand analysis (news + related
+reports).
+4 International Energy Agency (2025). Global Critical Minerals Outlook 2025.
+5 European Court of Auditors (2026). Critical raw materials for the energy transition (Special Report 2026/04).
+6 European Commission (CSRD). Corporate Sustainability Reporting Directive overview and timing (first reporting
+for FY2024 published in 2025).
+7 IFRS / ISSB (2023). IFRS S2 Climate-related Disclosures (effective for periods beginning on/after 1 Jan 2024;
+jurisdictional adoption varies).
+8 European Commission (2024). Directive (EU) 2024/1799 on common rules promoting the repair of goods (apply
+from 31 Jul 2026).
+9 WTO (2024-2025). Trade monitoring and trade measure overviews (G20 and WTO members).
+10 Gartner (2024). Top 10 Strategic Technology Trends for 2025 (press release).
+11 WHO (2025). Ageing and health (factsheet).
+12 OECD (2025). OECD Employment Outlook 2025: From job shortage to labour shortage.
+13 Edelman (2026). Edelman Trust Barometer 2026 (insularity replaces grievance).
+14 Global Wellness Institute (2024). 2024 Global Wellness Economy Monitor.
+15 McKinsey Global Institute (2025). The great trade rearrangement (rearrangement ratio and trade geometry).
+16 IMF (2023-2024). Research on geoeconomic fragmentation and the costs of de-risking (reshoring and
+friend-shoring).
+17 US Department of Commerce, Bureau of Industry and Security (BIS) (2022-2024). Export controls on advanced
+computing and semiconductor manufacturing items.
+18 Swiss Re Institute (2024). Insured losses from natural catastrophes surpass $100B for multiple consecutive
+years (press release).
+19 EU AI Act Service Desk (2024-2027). Timeline for progressive application of the EU AI Act.

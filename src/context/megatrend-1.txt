@@ -1,0 +1,774 @@
+Deep Research Report (2026): Global Megatrends → Subtrends → Signals → Opportunities
+
+Context: You already have a strong “macro → subtrend” scaffold. This report goes further by adding (1) evidence and measurable signals, (2) second‑order interactions across megatrends, and (3) entrepreneur / investor opportunity patterns you can teach and reuse in a “Spotting Big Trends” class.
+
+
+
+Executive summary
+
+Four megatrends are still the right “top-level map,” but what matters in 2026–2035 is how they reinforce each other:
+
+Fragmentation shifts the global operating model from “optimize” to “secure + comply + duplicate”. Trade restrictions and geopolitical de-risking don’t just add friction; they reshape innovation, capex, standards, and talent flows. The WTO’s monitoring shows a sharp rise in trade‑restrictive coverage in recent periods, and the dispute settlement system’s appellate paralysis continues to weaken enforcement predictability.
+
+Climate transition is no longer just “decarbonize.” It is simultaneously: adaptation, critical minerals security, and a financial system repricing risk via disclosures and insurance. IPCC AR6 frames the state of risks and urgency, while UNEP continues to flag a persistent adaptation finance gap.
+
+Tech disruption is moving from “tools” to autonomous systems (agentic AI)—and that collides with physical constraints (electricity, grids, chips) and governance constraints (regulation, trust, misinformation). Gartner’s 2025 strategic trends highlight agentic AI and governance as core enterprise priorities; the IEA is explicit that AI/data centers materially drive electricity demand growth.
+
+Demographic divergence creates a two-speed world: labor scarcity + aging in many advanced economies and youth bulges elsewhere. That divergence interacts with trust, migration, fiscal constraints, and political polarization. WHO and OECD analysis underline how rapidly aging is reshaping living standards and labor markets.
+
+Most actionable meta-insight for trend-spotting:The “new scarcity stack” is (electricity + compute + critical minerals + trust). If your students track that stack—prices, constraints, policy moves—they’ll anticipate second-order opportunities earlier than those watching only “AI” or “climate” in isolation.
+
+
+
+How to use this report in a “Spotting Big Trends” class
+
+A practical teaching loop:
+
+Map the megatrend → subtrend chain
+
+Instrument each subtrend with 3–7 measurable indicators (signals)
+
+Stress-test with scenario signposts (what would disconfirm?)
+
+Translate into opportunity patterns (business models + moats + constraints)
+
+I include a “Signal Dashboard” and “Opportunity Playbooks” you can turn directly into assignments.
+
+
+
+Megatrend 1: Geopolitical & economic fragmentation
+
+The thesis (2026–2035)
+
+We’re shifting from a single global operating environment to multiple rule-sets, multiple supply networks, and more frequent use of economic tools as strategic weapons (export controls, subsidies, screening, standards).
+
+What’s structurally different now
+
+Trade + industrial policy are fused. Countries are treating supply chains, chips, batteries, and clean tech as strategic capacity—not just market outcomes. WTO monitoring indicates rising trade-restrictive activity in recent windows.
+
+Enforcement predictability is weaker. The WTO Appellate Body’s inability to hear appeals since late 2019 undermines finality and incentivizes “appeal into the void” dynamics.
+
+De-risking has measurable macro costs. IMF modeling estimates long-run global GDP losses under reshoring and friend‑shoring scenarios (order-of-magnitude impacts, not marginal).
+
+
+
+Subtrend 1.1: The rise of “transactional middle powers”
+
+Your framing (“a la carte” coalitions) is increasingly visible in mainstream geopolitics: middle powers operate as swing states in multiple domains—energy, security, technology standards, and finance.
+
+Why it’s accelerating
+
+Great-power competition makes neutrality valuable leverage.
+
+Energy transition creates new chokepoints (minerals, refining, shipping lanes).
+
+Domestic politics pushes leaders to “win deals” rather than “join blocs.”
+
+Evidence / anchors
+
+WEF explicitly describes middle powers’ outsized role in global agenda-setting during turbulence.
+
+Foreign Affairs analysis frames a more transactional landscape where middle powers attempt to capitalize on multipolarity.
+
+What to watch (signals)
+
+Issue-based coalitions: energy corridors, digital governance coalitions, regional security pacts.
+
+Voting patterns in multilateral forums diverging from bloc expectations.
+
+Strategic investment flows into “hinge geographies” (ports, grids, cables, logistics hubs).
+
+Opportunity spaces
+
+Cross-bloc compliance + diplomacy infrastructure: services that help firms operate legally across conflicting regimes (sanctions screening, export control classification, data residency mapping).
+
+Neutral infrastructure: escrow/trust services for cross-border data and payments that satisfy multiple compliance systems.
+
+
+
+Subtrend 1.2: Supply chain regionalization and “trade rearrangement”
+
+You already captured near/friend/on-shoring. The deeper point: firms are building optionality portfolios (multiple suppliers + multiple geographies) and paying a “resilience premium.”
+
+Evidence / anchors
+
+McKinsey’s “great trade rearrangement” introduces a rearrangement ratio to quantify how hard it is to shift sourcing for specific goods, highlighting that some categories are far harder to re-route than others.
+
+Mexico’s rise as a top US goods import source illustrates nearshoring dynamics and the reconfiguration of North American production networks.
+
+What to watch (signals)
+
+Supplier concentration indices for critical inputs (chips, magnets, precursors).
+
+FDI announcements in “connector” countries (Mexico, Vietnam, India, Poland, Morocco).
+
+Freight patterns: sustained shifts in maritime lanes and port throughput.
+
+Opportunity spaces
+
+Supply chain observability: real-time risk + provenance (especially for regulated products like batteries, medical devices, aerospace).
+
+Industrial real-estate + utilities bottleneck solutions: power, water, permitting for new manufacturing clusters.
+
+
+
+Subtrend 1.3: Weaponized interdependence (export controls, sanctions, investment screening)
+
+This is now a design constraint for products, not just a legal afterthought.
+
+Evidence / anchors
+
+BIS periodically updates advanced computing semiconductor export controls and adds entities to restricted lists, explicitly framing national security goals.
+
+The WTO system’s weakened enforcement interacts with unilateral controls, increasing uncertainty.
+
+What to watch (signals)
+
+Expansion of controlled categories (compute thresholds, memory types, tooling).
+
+Licensing timelines and “case-by-case” ambiguity.
+
+Second-order controls (re-export rules, cloud compute controls, model weights governance).
+
+Opportunity spaces
+
+Export-control-native product design: “compliance by architecture” (modular features, geofenced capabilities, auditable logs).
+
+Classification + licensing automation: tools that translate technical specs into jurisdiction-specific control classifications.
+
+
+
+Subtrend 1.4: The resurgence of industrial policy and subsidy competition
+
+Industrial policy is increasingly used to localize strategic production (chips, clean tech, defense supply chains). The risk is subsidy escalation and retaliation—especially when combined with overcapacity concerns.
+
+Evidence / anchors
+
+Global Trade Alert created an Industrial Policy Observatory to track industrial policies and awards systematically.
+
+WTO monitoring and broader policy uncertainty trends reinforce a more protectionist environment.
+
+Signals
+
+Local content rules proliferating (energy, mobility, defense).
+
+Competitive “per-project” bidding wars for fabs, battery plants, electrolyzers.
+
+Trade remedies and foreign subsidy investigations becoming routine in more sectors.
+
+Opportunity spaces
+
+“Industrial policy translation”: firms that help SMEs and midcaps access/comply with industrial policy programs (reporting, audits, domestic content calculations).
+
+
+
+Subtrend 1.5: Erosion and bypassing of global governance
+
+Not collapse—workarounds: mini-lateral agreements, plurilateral deals, regional blocs, private standards.
+
+Evidence / anchors
+
+The WTO dispute settlement crisis (Appellate Body) continues to undermine binding resolution.
+
+Signals
+
+Growth of parallel standards bodies and “coalitions of the willing.”
+
+Private certification regimes substituting for global rules.
+
+Opportunity spaces
+
+Standards intelligence: products/services that track evolving technical standards across blocs (AI, ESG, batteries, cybersecurity).
+
+
+
+Megatrend 2: Climate emergency & the great transition
+
+The thesis (2026–2035)
+
+Climate is now simultaneously:
+
+a physical risk reality (heat, floods, drought),
+
+a capex + industrial transformation, and
+
+a financial repricing mechanism (disclosure, insurance, liability).
+
+Evidence / anchors
+
+IPCC AR6 Synthesis consolidates the science and risk framing.
+
+UNEP’s 2025 Adaptation Gap Report emphasizes persistent underfunding of adaptation relative to need.
+
+
+
+Subtrend 2.1: The adaptation economy (resilience becomes core capex)
+
+You noted the shift from mitigation-only to adaptation; the deeper layer is who pays and who cannot—which reshapes real estate, municipal finance, and insurance markets.
+
+Evidence / anchors
+
+UNEP continues to emphasize the adaptation finance gap and rising impacts.
+
+Reinsurers highlight sustained large insured losses; Swiss Re estimates global insured losses above $100B for multiple consecutive years, with climate change among contributing factors.
+
+Signals
+
+“Uninsurability creep”: insurers exiting regions or sharply raising premiums.
+
+Municipal bond spreads for climate-exposed areas.
+
+Public infrastructure resilience mandates (grids, water systems, hospitals).
+
+Opportunity spaces
+
+Resilience financing: products that bundle engineering + financing + insurance (performance-based).
+
+Heat and water infrastructure: building retrofits, cooling, leak detection, reuse, desalination, drought agriculture.
+
+
+
+Subtrend 2.2: The new geopolitics of energy and minerals
+
+Energy transition is becoming a minerals and refining story, not just a generation story.
+
+Evidence / anchors
+
+IEA’s Global Critical Minerals Outlook 2025 emphasizes policy and trade focus, volatility, and the need for monitoring.
+
+The European Court of Auditors reports high concentration of EU supply for multiple critical raw materials (e.g., examples like China supplying a very large share of EU magnesium; Türkiye for boron), and highlights bottlenecks in domestic production and recycling.
+
+Signals
+
+Refining capacity announcements (not just mining).
+
+Critical mineral export restrictions, strategic stockpiles.
+
+Permitting reforms and community opposition trends.
+
+Opportunity spaces
+
+Recycling + urban mining: economics improve as supply risk rises.
+
+Traceability: critical mineral provenance solutions (compliance + ethics + security).
+
+Material substitution: redesign to avoid constrained inputs.
+
+
+
+Subtrend 2.3: Climate risk moves into accounting, reporting, and capital costs
+
+You mentioned disclosure; the deeper shift is that climate becomes a language of finance with standardization efforts.
+
+Evidence / anchors
+
+ISSB’s IFRS S2 climate disclosure standard was issued June 2023 with an effective date of 1 January 2024.
+
+EU CSRD implementation: the Commission notes first in-scope companies apply the new rules for FY2024 reporting published in 2025 (with phased scope thereafter).
+
+Signals
+
+Audit/assurance requirements tightening.
+
+Higher cost of capital for high-transition-risk assets.
+
+Litigation and greenwashing enforcement trends.
+
+Opportunity spaces
+
+Carbon + climate reporting automation: but differentiated by auditability and supply-chain data integration.
+
+Transition plan execution: software + services that link capex plans to disclosures.
+
+
+
+Subtrend 2.4: Circular economy and “repairability as policy”
+
+You captured “product-as-a-service” and right-to-repair. The deeper mechanism is: regulators are turning durability and repairability into market access conditions.
+
+Evidence / anchors
+
+EU Right to Repair Directive (EU) 2024/1799 exists as binding law; the Commission notes adoption/entry into force and a required application date in 2026.
+
+Ellen MacArthur Foundation defines circular economy as keeping products/materials in circulation via maintenance, reuse, refurbishment, remanufacture, recycling—decoupling activity from finite resource extraction.
+
+The European Commission’s circular economy strategy page links repair, consumer empowerment, and related regulatory moves.
+
+Signals
+
+Repair networks and spare-parts obligations expanding.
+
+Product passports / durability labels becoming common.
+
+Opportunity spaces
+
+Distributed repair infrastructure: “repair logistics” (parts, diagnostics, certified local technicians).
+
+Design-for-repair tooling: CAD + bill-of-material choices optimized for repairability compliance.
+
+
+
+Megatrend 3: Accelerating technological disruption
+
+The thesis (2026–2035)
+
+Disruption is no longer “digital transformation.” It’s autonomy + convergence (AI + robotics + bio + spatial), constrained by energy and shaped by governance and trust.
+
+Evidence / anchors
+
+Gartner identifies “Top 10 Strategic Technology Trends for 2025,” explicitly framing AI imperatives/risks and human-machine synergy—agentic AI is prominent in this narrative.
+
+IEA describes surging electricity demand from data centers driven by AI, including projections that data centers may account for a major portion of electricity demand growth in some economies through 2030.
+
+
+
+Subtrend 3.1: Agentic AI and autonomous work
+
+The shift is from “generate content” to plan + act in multi-step workflows.
+
+Why it matters
+
+New productivity frontier—but also new failure modes (hallucinated actions, unsafe tool use, misaligned incentives).
+
+Enterprise value shifts from model quality alone → workflow integration + governance + monitoring.
+
+Evidence / anchors
+
+Gartner’s 2025 strategic trends emphasize agentic AI and governance platforms as key enterprise concerns.
+
+(If you want a more “operational” perspective) Deloitte frames agentic AI as an organizational transformation, not just a tech upgrade.
+
+Signals
+
+Procurement shifts from “chat pilots” → “agent platforms” tied to ERP/CRM.
+
+Regulation and audit demands for automated decisions.
+
+Growth of AI “observability” and evaluation tooling.
+
+Opportunity spaces
+
+AI safety + governance platforms: continuous evaluation, policy enforcement, audit trails.
+
+Agent reliability infrastructure: sandboxing, permissioning, rollback, simulation testing.
+
+
+
+Subtrend 3.2: Compute, semiconductors, and the energy bottleneck
+
+AI is a physical industry. The competitive advantage is increasingly: chips + power + cooling + permitting.
+
+Evidence / anchors
+
+IEA explicitly projects global electricity demand from data centers rising sharply, and emphasizes the need for grid investment and efficiency/flexibility of data centers.
+
+US export controls on advanced computing semiconductors are updated via BIS rules—keeping chips central to geopolitics and national security.
+
+Signals
+
+Data center siting near cheap power and grid headroom.
+
+Utility interconnection queue lengths and transmission constraints.
+
+Advanced chip export control expansions and licensing volatility.
+
+Opportunity spaces
+
+Energy-aware AI: optimization tools that reduce inference/training energy cost, scheduling around grid constraints.
+
+Cooling + water innovation: liquid cooling, waste heat reuse, water-light cooling.
+
+
+
+Subtrend 3.3: Governance, regulation, and the global “trust stack”
+
+The technical frontier collides with legitimacy: misinformation, safety, privacy, surveillance, and cross-border data.
+
+Evidence / anchors
+
+EU AI Act implementation is phased over years (Europarl brief), requiring guidelines/standards and staged obligations.
+
+Freedom House reports continued deterioration of online rights in many countries (Freedom on the Net 2024), highlighting governance and trust issues online.
+
+Edelman’s 2026 Trust Barometer describes a move from grievance toward insularity, where people narrow trust to familiar circles—directly affecting brands, institutions, and platforms.
+
+Signals
+
+AI regulation compliance deadlines and enforcement actions.
+
+Platform policies on provenance/labeling of synthetic media.
+
+Trust metrics in consumer surveys shifting toward “community/creator” vs institutions.
+
+Opportunity spaces
+
+Content authenticity infrastructure: provenance, watermarking, verification for enterprise and media.
+
+Insularity-aware brand/community models: trust built via smaller credible networks rather than mass persuasion.
+
+
+
+Subtrend 3.4: Bio-digital convergence (AI × biotech)
+
+This is not just “AI helps science.” It’s a new R&D operating system.
+
+Evidence / anchors
+
+Nature coverage of AlphaFold’s continuing evolution illustrates AI’s expanding impact on protein modeling and biological research workflows.
+
+CRISPR has crossed into “approved therapy” territory in multiple jurisdictions (first approvals in 2023–2024 timeframe), indicating biotech maturity and regulatory pathway formation.
+
+Signals
+
+AI-first drug discovery partnerships and lab automation investments.
+
+Regulatory frameworks for gene editing, AI-designed molecules.
+
+Opportunity spaces
+
+Lab automation + data infrastructure: ELNs, workflow automation, model-ready biological datasets.
+
+Compliance + ethics tooling: governance for sensitive bio-data and dual-use risk management.
+
+
+
+Subtrend 3.5: Spatial computing and digital twins
+
+The “metaverse” hype recedes; the enterprise value case grows: training, remote maintenance, design, simulation.
+
+Evidence / anchors
+
+Spatial computing and human-machine synergy themes appear in Gartner’s strategic trends framing.
+
+Signals
+
+Adoption in industrial training, healthcare simulation, field service.
+
+Integration with IoT + 3D asset pipelines.
+
+Opportunity spaces
+
+Digital twin platforms: especially where regulation and safety make simulation valuable (energy, manufacturing, aviation).
+
+
+
+Megatrend 4: Demographic divergence & societal shifts
+
+The thesis (2026–2035)
+
+The world splits into:
+
+aging + low fertility + labor scarcity regions, and
+
+young + fast-growing regions where job creation and stability become decisive.
+
+Meanwhile, trust and well-being are becoming economic variables, not just cultural ones.
+
+
+
+Subtrend 4.1: Aging societies and the labor shortage era
+
+Evidence / anchors
+
+WHO notes that between 2015 and 2050, the share of the world’s population over 60 nearly doubles (12% → 22%) and that in 2020 the number of people aged 60+ outnumbered children under five.
+
+OECD Employment Outlook 2025 frames the shift “from job shortage to labour shortage,” analyzing impacts on productivity, living standards, and social cohesion.
+
+Signals
+
+Rising vacancy rates in care, health, skilled trades.
+
+Policy shifts: retirement age, migration policy, caregiver support.
+
+Opportunity spaces
+
+Care infrastructure: home care coordination, remote monitoring, assistive robotics.
+
+Workforce augmentation: tools that raise productivity of scarce workers (automation for nurses/clinicians/technicians).
+
+
+
+Subtrend 4.2: Youth bulges, the demographic dividend, and the jobs race
+
+Evidence / anchors
+
+World Bank emphasizes the need for pathways (“ladder of opportunity”) to better jobs for African youth, tying demographics to development strategy.
+
+ILO youth employment analysis provides region-specific framing of vulnerabilities and policy measures.
+
+Signals
+
+Youth NEET rates, informal employment share.
+
+Edtech penetration tied to employability outcomes.
+
+Mobile-first financial and labor platforms scaling.
+
+Opportunity spaces
+
+Skills-to-income rails: credentialing linked to verified work (not just courses).
+
+SME enablement: fintech + logistics + compliance that makes small firms bankable and export-ready.
+
+
+
+Subtrend 4.3: Trust collapse → insularity → “micro-publics”
+
+Your “crisis of trust” subtrend is now turning into behavior: people retreat to familiar circles.
+
+Evidence / anchors
+
+Edelman 2026 describes retreat toward insularity as economic anxiety, geopolitical tension, and technological disruption intensify.
+
+Freedom House documents ongoing struggles for trust online and deterioration in many countries.
+
+Signals
+
+Fragmentation of media consumption and community identity.
+
+Higher demand for verification and provenance in digital content.
+
+Opportunity spaces
+
+Trust brokers: products that provide verification, reputation, and dispute resolution for online commerce and communities.
+
+“Authenticity ops” for brands: operational transparency, supply chain proof, credible third-party validation.
+
+
+
+Subtrend 4.4: Redefinition of well-being (and the growth of the wellness economy)
+
+Well-being is shifting from lifestyle to “risk management” (mental health, chronic disease, longevity, financial resilience).
+
+Evidence / anchors
+
+Global Wellness Institute estimates the wellness economy reached $6.3T in 2023 and projects growth to nearly $9T by 2028.
+
+Signals
+
+Employer spending on mental health and flexible work structures.
+
+Consumer willingness to pay for preventative and personalized health.
+
+Opportunity spaces
+
+Evidence-based wellness: interventions with measurable outcomes (sleep, stress, metabolic health).
+
+Longevity infrastructure: diagnostics, adherence, behavior change systems.
+
+
+
+Cross‑trend interactions: the “where value is created” map
+
+Below are 10 intersections that consistently generate second‑order opportunities:
+
+Intersection
+
+What happens
+
+Why it matters
+
+AI × Energy
+
+Data centers drive electricity demand growth; grid constraints become AI constraints
+
+“Compute advantage” becomes “power advantage”
+
+Climate × Minerals × Geopolitics
+
+Mineral supply concentration creates new chokepoints
+
+Drives industrial policy, trade disputes, recycling, substitution
+
+Fragmentation × Standards
+
+Competing rulesets (AI, ESG, trade)
+
+Compliance becomes a product feature
+
+Climate × Insurance × Real Estate
+
+Risk pricing → uninsurability and asset repricing
+
+Creates adaptation demand + “stranded property” risks
+
+Aging × Labor markets
+
+Worker scarcity pressures productivity and care systems
+
+Automation + care tech become necessities
+
+Youth bulge × Stability
+
+Jobs gap → instability or demographic dividend
+
+Edtech/fintech/logistics become nation-building tools
+
+AI × Trust
+
+Deepfakes/disinfo + insularity amplify polarization
+
+Authenticity infrastructure becomes core
+
+Circular economy × Regulation
+
+Repairability/durability become enforceable
+
+New repair networks and design-for-repair moats
+
+De-risking × Costs
+
+Reshoring/friend-shoring adds friction and macro costs
+
+Inflation/inequality pressures + demand for efficiency
+
+Governance erosion × Private rulemaking
+
+Standards shift to mini-lateral/private regimes
+
+“Standards intelligence” and audit layers grow
+
+
+
+Scenario set (2030–2035): teachable, testable futures
+
+Use two axes:
+
+Axis A: Cooperation ↔ Fragmentation
+
+Axis B: Fast transition (energy + AI governance) ↔ Slow/chaotic transition
+
+Scenario 1: “Green Tech Cold War”
+
+Fragmentation + fast tech/energy buildout.
+
+Blocs race to secure minerals, chips, grid capacity.
+
+Regulations diverge; compliance becomes a moat.
+
+Winners: firms with multi-regime architectures and localized supply.
+
+Signposts: expanded export controls, minerals stockpiling, aggressive industrial policy tracking.
+
+Scenario 2: “Cooperative Acceleration”
+
+Cooperation + fast buildout.
+
+Some standard harmonization (climate reporting, AI safety norms).
+
+Faster capital formation for adaptation and grids.
+
+Signposts: increased interoperability standards, broader adoption of global disclosure baselines.
+
+Scenario 3: “Fortress Patchworks”
+
+Fragmentation + slow/chaotic transition.
+
+Underinvestment in grids and adaptation; higher disaster losses.
+
+Insularity increases; trust fractures; politics destabilize.
+
+Signposts: persistent adaptation finance shortfalls, worsening online trust metrics.
+
+Scenario 4: “Resilience Pragmatism”
+
+Mid-level cooperation + uneven but pragmatic transition.
+
+Local resilience builds fastest; circular economy policies expand.
+
+Regional growth poles form around power availability and demographic advantage.
+
+Signposts: repair regulation expansion; regional industrial cluster formation.
+
+
+
+Opportunity playbooks (what entrepreneurs can actually build)
+
+Playbook A: Resilience as a Service
+
+Customer pain: climate volatility + insurance pressure + regulatory resilience needs.Build: bundled resilience package (assessment → retrofit → monitoring → finance/insurance partnership).Moat: data + performance guarantees + distribution via insurers/municipalities.
+
+Playbook B: Compliance-Native Products
+
+Customer pain: multi-regime export controls, AI regulation, ESG reporting complexity.Build: product architectures that produce audit trails by default (logs, model cards, data lineage, geo-fencing).Moat: switching costs in compliance workflows.
+
+Playbook C: Energy-Aware Compute
+
+Customer pain: compute growth constrained by grid headroom and interconnection.Build: orchestration that schedules workloads around electricity price/carbon intensity/grid constraints.Moat: utility partnerships + proprietary optimization + siting intelligence.
+
+Playbook D: Care Infrastructure for Aging Societies
+
+Customer pain: labor scarcity + aging + rising care needs.Build: tools that raise caregiver productivity (triage, remote monitoring, scheduling, documentation automation).Moat: clinical integration + trust + regulatory compliance.
+
+Playbook E: Trust Infrastructure for the Insularity Era
+
+Customer pain: people trust smaller circles; misinformation increases cost of persuasion.Build: verification and reputation layers for communities, marketplaces, and brands (provenance, attestations, dispute resolution).Moat: network effects + credible governance.
+
+
+
+Signal dashboard: 25 indicators to track (assignable to students)
+
+A “Trend Card” template can require students to pick 5 signals, a target range, and a disconfirming signal.
+
+Fragmentation
+
+WTO trade restrictive coverage trend
+
+Export control rule updates + entity list expansions
+
+FDI shifts into “connector” geographies
+
+WTO dispute settlement reform movement vs stagnation
+
+Industrial policy awards tracked by observatories
+
+Climate transition + adaptation
+
+Adaptation finance gap metrics (UNEP series)
+
+Insured catastrophe loss trends
+
+Critical minerals price volatility and concentration metrics
+
+Grid investment / interconnection queue lengths
+
+Repairability regulation milestones (EU)
+
+Tech disruption
+
+Enterprise adoption of AI governance platforms
+
+Data center electricity demand projections realized vs revised
+
+AI regulation enforcement actions and guidance maturity
+
+Cyber incident frequency in critical infrastructure (energy, health)
+
+Frontier bio-AI breakthroughs (protein modeling, lab automation)
+
+Demographics + societal shifts
+
+Old-age dependency ratio trend (OECD focus)
+
+Workforce participation and retirement age reforms
+
+Youth NEET rates and formal job creation pace
+
+Trust/insularity metrics
+
+Wellness economy growth and category mix
+
+
+
+Curated reading list (high-signal, class-friendly)
+
+Geopolitics & fragmentation: IMF on geoeconomic fragmentation and multilateralism; WTO trade monitoring; BIS export control press releases.
+
+Climate transition & minerals: IPCC AR6; UNEP Adaptation Gap; IEA Critical Minerals Outlook; ECA audit on critical raw materials.
+
+AI & infrastructure: Gartner tech trends; IEA on AI/data centers and electricity.
+
+Demographics & trust: WHO ageing factsheet; OECD Employment Outlook; Edelman Trust Barometer 2026; Global Wellness Institute monitor.
+
+
+
