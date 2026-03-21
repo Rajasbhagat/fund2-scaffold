@@ -20,7 +20,7 @@
         "`npm run build` completes without errors"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Prefer creating a new `layout.tsx` file rather than heavily modifying `page.tsx`. This keeps the layout concerns separate and avoids conflicts with ChatWindow changes being made in Group B. Sidebar project list is a Server Component — fetch directly from Prisma. Use `usePathname()` from `next/navigation` in a Client Component wrapper to highlight the active project. PRISMA 7: import from `@/generated/prisma/client`."
     }
   ]

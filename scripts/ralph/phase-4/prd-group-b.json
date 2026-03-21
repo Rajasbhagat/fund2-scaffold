@@ -16,7 +16,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Small targeted change to route.ts only. Must come first within this group so US-003 can build on top of it cleanly."
     },
     {
@@ -33,7 +33,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Touches both route.ts (server error response) and ChatWindow.tsx (client error display). Must run after US-004 within this group."
     },
     {
@@ -49,7 +49,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Touches ChatWindow.tsx only. Must run after US-003 within this group to avoid conflicts on ChatWindow."
     }
   ]

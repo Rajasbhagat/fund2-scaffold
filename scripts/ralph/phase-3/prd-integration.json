@@ -15,7 +15,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK TypeScript types or official docs before coding. Do not copy-paste from old examples without checking that types compile. PRISMA 7 NOTE: generated client is at `@/generated/prisma/client`."
     },
     {
@@ -35,7 +35,7 @@
         "`npm run build` completes without errors"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
     }
   ]

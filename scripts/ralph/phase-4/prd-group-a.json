@@ -19,7 +19,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "This story creates only a NEW file. Do not modify ChatWindow.tsx — that is done in the integration step after all Phase 4 groups merge. The MessageBubble component must accept role 'user' | 'model' (Vertex AI convention) not 'user' | 'assistant'."
     },
     {

@@ -93,3 +93,217 @@ Completed at iteration 1 of 10
 [16:49:44] [coordinator] Merging Phase 3 groups...
 [16:49:44] [coordinator] Merging ralph/phase-3-group-a → ralph/phase-3-merged
 [16:49:44] [coordinator] Merge conflict detected — attempting auto-resolve with ours strategy for non-code files
+Archiving previous run: ralph/phase-3-group-a
+   Archived to: /tmp/fund2-p3-integration/scripts/ralph/archive/2026-03-21-phase-3-group-a
+Starting Ralph - Tool: claude - Max iterations: 10
+
+===============================================================
+  Ralph Iteration 1 of 10 (claude)
+===============================================================
+All user stories are complete. Both US-003 and US-006 now have `passes: true`.
+
+<promise>COMPLETE</promise>
+
+Ralph completed all tasks!
+Completed at iteration 1 of 10
+P3-INTEGRATION COMPLETE
+Archiving previous run: ralph/phase-3-group-a
+   Archived to: /tmp/fund2-p4-group-a/scripts/ralph/archive/2026-03-21-phase-3-group-a
+Starting Ralph - Tool: claude - Max iterations: 10
+
+===============================================================
+  Ralph Iteration 1 of 10 (claude)
+===============================================================
+Archiving previous run: ralph/phase-3-group-a
+   Archived to: /tmp/fund2-p4-group-b/scripts/ralph/archive/2026-03-21-phase-3-group-a
+Starting Ralph - Tool: claude - Max iterations: 10
+
+===============================================================
+  Ralph Iteration 1 of 10 (claude)
+===============================================================
+Archiving previous run: ralph/phase-3-group-a
+   Archived to: /tmp/fund2-p4-group-c/scripts/ralph/archive/2026-03-21-phase-3-group-a
+Starting Ralph - Tool: claude - Max iterations: 10
+
+===============================================================
+  Ralph Iteration 1 of 10 (claude)
+===============================================================
+Here's a summary of what was done this iteration:
+
+**US-001 — MessageBubble component** ✅
+- Installed `react-markdown@^10.1.0` and `remark-gfm@^4.0.1`
+- Created `src/components/MessageBubble.tsx` as a `'use client'` component accepting `role: 'user' | 'model'` and `content: string`
+- User messages: plain text, right-aligned, blue bubble (`bg-blue-600 text-white`)
+- Model messages: `<ReactMarkdown remarkPlugins={[remarkGfm]}>` wrapped in `prose prose-sm max-w-none`, left-aligned gray bubble
+- TypeScript check passes (no errors in MessageBubble)
+- Committed to `ralph/phase-4-group-a`
+
+**US-006 — GUARDRAIL_QA.md** (created, awaiting human sign-off)
+- Created `GUARDRAIL_QA.md` in project root with all required sections:
+  - Guardrails 1–4 with test prompts, expected behaviours, PASS/FAIL checkboxes
+  - Pre-Class Mode verification (slide scaffolding workflow)
+  - In-Class Mode verification (S-curve, 2×2 grid, trend-to-problem mapping)
+  - Setup instructions and sign-off table
+- `npm run dev` confirms server starts (pre-existing Prisma client generation issue is unrelated)
+- **`passes: false` intentionally** — the PRD explicitly requires a human reviewer (FUND II faculty) to conduct the actual QA session before marking complete
+Iteration 1 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 2 of 10 (claude)
+===============================================================
+All stories have `passes: true`.
+
+<promise>COMPLETE</promise>
+
+Ralph completed all tasks!
+Completed at iteration 1 of 10
+[P4-GroupB] COMPLETE
+Both user stories have been addressed:
+
+- **US-001** (`passes: true`) — MessageBubble.tsx implemented and committed
+- **US-006** (`passes: false`) — GUARDRAIL_QA.md created and committed, but **intentionally left as `passes: false`** per PRD: human reviewer (FUND II faculty or project lead) must conduct the actual QA session before marking complete
+
+There is no remaining work Ralph can do autonomously. US-006's implementation is done; it's awaiting human sign-off.
+
+**Action required for a human reviewer:**
+1. Run `npm run dev` in `/private/tmp/fund2-p4-group-a`
+2. Open a project and test each guardrail scenario in `GUARDRAIL_QA.md`
+3. Once QA passes, set `"passes": true` for US-006 in `scripts/ralph/prd.json`
+Iteration 2 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 3 of 10 (claude)
+===============================================================
+All implementation work is complete:
+
+- **US-001** (`passes: true`): `MessageBubble.tsx` created with react-markdown + remark-gfm
+- **US-006** (`passes: false`): `GUARDRAIL_QA.md` created — implementation is done, but the PRD explicitly prohibits Ralph from setting `passes: true` autonomously. **Human QA sign-off required** from FUND II faculty or project lead.
+
+No remaining work for Ralph on this branch. US-006 is blocked on human verification, not implementation.
+Iteration 3 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 4 of 10 (claude)
+===============================================================
+Both user stories have already been implemented and committed. Here's the current state:
+
+- **US-001** (`passes: true`) — MessageBubble.tsx implemented with react-markdown + remark-gfm
+- **US-006** (`passes: false`) — GUARDRAIL_QA.md created and committed, but **intentionally held at `passes: false`**
+
+Per the PRD notes for US-006:
+> "Do NOT set passes: true on this story autonomously — only a human reviewer should mark this complete after conducting the manual QA session."
+
+All autonomous implementation work is complete. US-006 is awaiting **human sign-off** — a FUND II faculty member or project lead needs to:
+
+1. Start the dev server: `npm run dev`
+2. Navigate to a project chat page
+3. Work through the test prompts in `GUARDRAIL_QA.md`
+4. Check each `[ ] PASS` / `[ ] FAIL` checkbox
+5. Once satisfied, manually set `"passes": true` for US-006 in `scripts/ralph/prd.json`
+Iteration 4 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 5 of 10 (claude)
+===============================================================
+All work is complete:
+
+- **US-001** (`passes: true`): `MessageBubble.tsx` committed
+- **US-006** (`passes: false`, intentionally): `GUARDRAIL_QA.md` committed — awaiting **human reviewer sign-off** (FUND II faculty or project lead must conduct the manual QA session before this can be marked complete)
+
+Both files exist on branch `ralph/phase-4-group-a`. No further automated work to do — US-006 is blocked on human verification per the PRD spec.
+Iteration 5 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 6 of 10 (claude)
+===============================================================
+Both user stories have been implemented:
+
+- **US-001** (`passes: true`): `MessageBubble.tsx` created with react-markdown + remark-gfm. Committed.
+- **US-006** (`passes: false` — intentionally): `GUARDRAIL_QA.md` created and committed. Per the PRD notes, this story **must not** be marked complete by Ralph — only a human reviewer (FUND II faculty or project lead) may sign off after conducting the actual manual QA session.
+
+Since the only remaining story with `passes: false` (US-006) explicitly requires human sign-off and cannot be completed autonomously, there is no further work for this iteration.
+
+All automatable work is done. The next step is human review: open `GUARDRAIL_QA.md`, run `npm run dev`, and conduct the manual pedagogical QA session against the FUND II spec.
+Iteration 6 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 7 of 10 (claude)
+===============================================================
+All work has been completed:
+
+- **US-001** (`passes: true`) — `MessageBubble.tsx` created with react-markdown + remark-gfm, committed.
+- **US-006** (`passes: false` — by design) — `GUARDRAIL_QA.md` checklist created and committed.
+
+US-006 cannot be marked `passes: true` autonomously. The PRD explicitly requires **human sign-off** from FUND II faculty or project lead after conducting the manual QA session against the live app.
+
+**Pending human action:** Open `GUARDRAIL_QA.md`, run `npm run dev`, and work through each guardrail test section. Once satisfied, manually set `"passes": true` in `scripts/ralph/prd.json` for US-006.
+Iteration 7 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 8 of 10 (claude)
+===============================================================
+Both user stories have been handled:
+
+- **US-001** (`passes: true`) — MessageBubble.tsx is implemented and committed.
+- **US-006** (`passes: false`, **intentionally**) — `GUARDRAIL_QA.md` has been created and committed, but the PRD explicitly requires a **human reviewer** (FUND II faculty or project lead) to conduct the manual pedagogical QA session before marking it complete.
+
+Ralph cannot mark US-006 as `passes: true` autonomously. The checklist file is ready at `GUARDRAIL_QA.md` in the project root — a human needs to:
+1. Run `npm run dev`
+2. Navigate to a project with the Trend Mapper agent
+3. Work through each guardrail section in `GUARDRAIL_QA.md`
+4. Mark PASS/FAIL for each section
+5. Set `passes: true` in `prd.json` once sign-off is complete
+Iteration 8 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 9 of 10 (claude)
+===============================================================
+All stories in the PRD now have `passes: true`.
+
+<promise>COMPLETE</promise>
+
+Ralph completed all tasks!
+Completed at iteration 1 of 10
+[P4-GroupC] COMPLETE
+**Status Summary:**
+
+Both user stories have been implemented:
+
+| Story | Status | Notes |
+|-------|--------|-------|
+| US-001 | `passes: true` | `MessageBubble.tsx` complete |
+| US-006 | `passes: false` (intentional) | `GUARDRAIL_QA.md` created, awaiting human QA sign-off |
+
+**US-006 is blocked by design** — the PRD explicitly states that only a human reviewer (FUND II faculty or project lead) may mark it complete after conducting the manual QA session. Ralph must not set `passes: true` autonomously.
+
+**Action required from a human:**
+1. Start dev server: `npm run dev` in `/private/tmp/fund2-p4-group-a`
+2. Navigate to a project in the app
+3. Work through the checklist in `GUARDRAIL_QA.md`
+4. Once all sections pass, update `prd.json` → `"passes": true` for US-006
+
+There is no further implementation work for Ralph to do in this phase.
+Iteration 9 complete. Continuing...
+
+===============================================================
+  Ralph Iteration 10 of 10 (claude)
+===============================================================
+Both stories have already been implemented in previous iterations. Here's the current status:
+
+- **US-001** (`passes: true`) — `MessageBubble.tsx` created and committed.
+- **US-006** (`passes: false`) — `GUARDRAIL_QA.md` created and committed, but the PRD explicitly requires a **human reviewer** (FUND II faculty or project lead) to conduct the actual QA session before marking this complete.
+
+All Ralph-implementable work is done. US-006 is blocked on human sign-off — the implementation is complete, but the `passes` flag cannot be set autonomously per the PRD notes:
+
+> *"Do NOT set passes: true on this story autonomously — only a human reviewer should mark this complete after conducting the manual QA session."*
+
+**Action required from a human reviewer:**
+1. Start the dev server: `npm run dev`
+2. Navigate to a project in the app
+3. Work through the checklist in `GUARDRAIL_QA.md` — test each guardrail prompt and verify behavior
+4. After sign-off, update `prd.json` to set `"passes": true` for US-006
+Iteration 10 complete. Continuing...
+
+Ralph reached max iterations (10) without completing all tasks.
+Check /tmp/fund2-p4-group-a/scripts/ralph/progress.txt for status.
+[P4-GroupA] FAILED
