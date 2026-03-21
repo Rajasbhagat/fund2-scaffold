@@ -1,0 +1,67 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-5-wave2-03",
+  "description": "Phase 5 Wave 2 — Plan 03: Agent tab navigation (AgentTabs + AgentWorkspace components), ChatWindow/ChatInput refactor for agentType + session + deep research, route handler session injection and deep research model swap. Depends on wave1-01 and wave1-02 being merged. Base branch: ralph/phase-5-merged.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "AgentTabs + AgentWorkspace components + project page refactor for 4-tab layout",
+      "description": "As a student, I need to see all 4 agents (Trend Mapper, Value Designer, SPI, FARO) as tabs in the project view and switch between them without losing any chat messages, so I can use each agent without re-entering context.",
+      "acceptanceCriteria": [
+        "Create `src/components/AgentTabs.tsx` as a Client Component with 4 tab buttons: Trend Mapper, Value Designer, SPI, FARO",
+        "AgentTabs accepts props `activeAgent: string` and `onTabChange: (agent: string) => void`",
+        "Active tab has `border-blue-600 text-blue-600` styling; inactive tabs have `border-transparent text-gray-500` styling",
+        "Create `src/components/AgentWorkspace.tsx` as a Client Component ('use client')",
+        "AgentWorkspace imports and uses `useSession` from `@/contexts/SessionContext`",
+        "AgentWorkspace renders ALL 4 ChatWindow instances simultaneously using CSS `hidden`/`block h-full` (NOT conditional rendering) — this preserves in-memory state across tab switches",
+        "AgentWorkspace passes `showDeepResearch={agent === 'trend-mapper'}` to ChatWindow (only Trend Mapper gets the Deep Research toggle)",
+        "Rewrite `src/app/projects/[projectId]/page.tsx` as an async Server Component — no 'use client'",
+        "Project page loads initial messages for all 4 agents in parallel using `Promise.all` with `prisma.message.findMany({ where: { projectId, agentType }, ... })` for each agent",
+        "Project page renders `<AgentWorkspace projectId={projectId} initialMessagesByAgent={...} />`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Read src/app/projects/[projectId]/page.tsx, src/components/ChatWindow.tsx, src/contexts/SessionContext.tsx, and src/lib/prisma.ts first. IMPORTANT: The params in Next.js 16 App Router are a Promise — use `const { projectId } = await params`. The page.tsx must be async and await params. Use CSS hidden/block for tab switching — this is critical for preserving ChatWindow state. Do NOT use conditional rendering (no unmounting). Agent types are: 'trend-mapper', 'value-designer', 'spi', 'faro'."
+    },
+    {
+      "id": "US-002",
+      "title": "Update ChatWindow + ChatInput for agentType, currentSession, and Deep Research toggle",
+      "description": "As a student, I need the chat interface to send my current session and agent context with every message, and to optionally enable Deep Research mode for Trend Mapper, so the agent responses are session-aware and can use enhanced research when needed.",
+      "acceptanceCriteria": [
+        "Update ChatWindowProps interface to add: `agentType: string`, `currentSession: number`, `showDeepResearch: boolean`",
+        "ChatWindow adds `const [deepResearch, setDeepResearch] = useState(false)` state",
+        "ChatWindow includes `agentType`, `currentSession`, and `deepResearch` in the POST body JSON",
+        "Update the agent display name in ChatWindow — define `AGENT_DISPLAY_NAMES` map and use `AGENT_DISPLAY_NAMES[agentType] ?? 'Agent'` instead of hardcoded 'Trend Mapper' wherever the agent name appears (role labels, ThinkingIndicator)",
+        "The `roleLabel` function (or equivalent) must be defined inside the component function (not outside) since it now reads `agentType` from props",
+        "Update ChatInputProps interface to add: `deepResearch: boolean`, `onDeepResearchToggle: () => void`, `showDeepResearch: boolean`",
+        "ChatInput renders a 'Deep Research' button ONLY when `showDeepResearch` is true",
+        "Deep Research button shows `bg-purple-600 text-white` when active, `bg-gray-100 text-gray-600` when inactive",
+        "Deep Research button is disabled while chat is disabled (streaming)",
+        "ChatWindow passes `deepResearch`, `onDeepResearchToggle={() => setDeepResearch(prev => !prev)}`, and `showDeepResearch` to ChatInput",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Read src/components/ChatWindow.tsx and src/components/ChatInput.tsx first. Minimal changes only — only add the new props, states, and button. Keep all existing streaming, error handling, message display, and submit logic intact. The AGENT_DISPLAY_NAMES map: { 'trend-mapper': 'Trend Mapper', 'value-designer': 'Value Designer', 'spi': 'SPI', 'faro': 'FARO' }."
+    },
+    {
+      "id": "US-003",
+      "title": "Update route handler for session injection + deep research model/tools swap",
+      "description": "As a student, I need the AI agent to know which FUND II session we're currently in, and when Deep Research is enabled, I need it to use the more powerful Pro model with URL context tools, so that responses are pedagogically appropriate and research is thorough.",
+      "acceptanceCriteria": [
+        "In `src/app/api/chat/[projectId]/route.ts`, expand the request body destructure to include: `currentSession = 1, deepResearch = false`",
+        "After `const systemContext = getSystemContext()`, add: `const systemWithSession = \\`${systemContext}\\n\\n[Current FUND II Session: ${currentSession} of 10]\\``",
+        "Add conditional model selection: `const model = deepResearch ? vertex('gemini-2.5-pro') : vertex('gemini-2.5-flash')`",
+        "Add conditional tools: when deepResearch is true, add `url_context: vertex.tools.urlContext({})` alongside the existing googleSearch tool; when false, only googleSearch",
+        "Update the `streamText` call to use `model` variable (not hardcoded model), `system: systemWithSession` (not systemContext), and the `tools` variable",
+        "BEFORE using `vertex.tools.urlContext({})`, verify the TypeScript type definition at `node_modules/@ai-sdk/google-vertex/dist/index.d.ts` — if the export name differs, use the correct one",
+        "Do NOT change: rolling window logic, agentType filtering, message persistence, streaming headers, error handling",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts first. Also check node_modules/@ai-sdk/google-vertex/dist/index.d.ts to verify exact access path for urlContext (it may be vertex.tools.urlContext or a separate import). IMPORTANT: export const runtime = 'nodejs' must remain. The systemWithSession replaces systemContext only in the streamText call — keep the original getSystemContext() call. If urlContext is not available in this SDK version, implement deep research as ONLY the model swap to gemini-2.5-pro (skip urlContext) and log a comment."
+    }
+  ]
+}

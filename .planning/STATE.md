@@ -4,14 +4,14 @@
 
 See: .planning/PROJECT.md (updated 2026-03-21)
 
-**Core value:** Each project has a persistent, spec-faithful Trend Mapper conversation that guides students from fuzzy trend ideas to specific, evidence-backed opportunity framing.
-**Current focus:** Phase 4 complete — awaiting manual pedagogical QA (US-006)
+**Core value:** Each project gives the student team a persistent, spec-faithful set of AI thinking partners that adapt to where the team is in the course arc.
+**Current focus:** MVP v2.0 — Phase 5 next (multi-agent platform shell)
 
 ## Current Status
 
-**Milestone:** MVP v1.0
-**Phase:** 4 of 4 (implementation complete, manual QA pending)
-**Status:** All automated work done. One manual sign-off required.
+**Milestone:** MVP v2.0 (v1.0 complete 2026-03-21, manual QA for AGENT-04/05 still pending)
+**Phase:** 5 of 8 (next — not started)
+**Status:** v2.0 planning complete. Ready to execute Phase 5.
 
 ## Phase Overview
 
@@ -21,6 +21,10 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 | 2 | Project Management | ✅ Complete | PROJ-01–05 |
 | 3 | Streaming Chat Pipeline | ✅ Complete | CHAT-01–06, AGENT-01–05 |
 | 4 | UI Polish & Agent Verification | 🔄 Awaiting manual QA | CHAT-07–09 |
+| 5 | Multi-Agent Platform Shell | ○ Pending | PLAT-01–03, AGENT-09 |
+| 6 | Value Designer & SPI Agents | ○ Pending | AGENT-06–07 |
+| 7 | FARO Agent | ○ Pending | AGENT-08 |
+| 8 | Document Upload | ○ Pending | DOC-01–03 |
 
 ## Phase 1 Completion Notes (2026-03-21)
 - Next.js 14 scaffolded, TypeScript + Tailwind working
@@ -59,7 +63,9 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ## Next Action
 
-**Manual step required:** Run pedagogical QA session.
+**v2.0 ready to execute:** Run `/gsd:plan-phase 5` to plan Phase 5 (Multi-Agent Platform Shell).
+
+**Also outstanding (v1.0):** Manual pedagogical QA for AGENT-04/05:
 1. `npm run dev` in `/Users/rajas/Desktop/AntiGravity/Fund2Updated`
 2. Open the app and create a test project
 3. Work through `GUARDRAIL_QA.md` — test all guardrails, modes, and terminology rules
@@ -67,4 +73,4 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 
 ---
 *Initialized: 2026-03-21*
-*Last updated: 2026-03-21 after Phase 4 automation complete*
+*Last updated: 2026-03-21 after v2.0 planning complete*

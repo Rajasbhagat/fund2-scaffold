@@ -1,0 +1,43 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-5-wave1-01",
+  "description": "Phase 5 Wave 1 — Plan 01: Prisma schema migration (agentType on Message, AppSettings model) and update Trend Mapper route handler to filter/persist by agentType. Database foundation for multi-agent isolation. Base branch: ralph/phase-4-ui-polish.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Prisma schema migration — agentType on Message + AppSettings model",
+      "description": "As the system, I need a database schema that isolates messages per agent and tracks a global session number, so that switching between agents in the UI never shows the wrong chat history.",
+      "acceptanceCriteria": [
+        "Update `prisma/schema.prisma` — add `agentType  String  @default(\"trend-mapper\")` to the Message model AFTER the projectId field",
+        "Add composite index `@@index([projectId, agentType, createdAt])` to Message model (keep existing `@@index([projectId, createdAt])` too)",
+        "Add new model at bottom of schema.prisma: `model AppSettings { id Int @id @default(1); sessionNumber Int @default(1) }`",
+        "Run migration: `npx prisma migrate dev --name add_agent_type_and_app_settings`",
+        "Run `npx prisma generate` after migration",
+        "Create `scripts/seed-settings.ts` that does `prisma.appSettings.upsert({ where: { id: 1 }, create: { id: 1, sessionNumber: 1 }, update: {} })` then logs 'AppSettings seeded'",
+        "Run the seed: `npx tsx scripts/seed-settings.ts`",
+        "Verify: `npx prisma validate` exits 0",
+        "Verify: querying AppSettings returns `{\"id\":1,\"sessionNumber\":1}`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read prisma/schema.prisma and prisma.config.ts first. IMPORTANT: Prisma client is imported from '@/generated/prisma/client' (NOT '@prisma/client') — check src/lib/prisma.ts for the exact import. The seed script must import prisma from '../src/lib/prisma'. Safe migration: SQLite ADD COLUMN with DEFAULT is non-destructive — all existing Trend Mapper messages will get agentType='trend-mapper' automatically."
+    },
+    {
+      "id": "US-002",
+      "title": "Update Trend Mapper route handler to filter and persist by agentType",
+      "description": "As the system, I need the existing chat route handler to accept agentType from the POST body and use it in all DB operations, so that each agent's messages are isolated from the others.",
+      "acceptanceCriteria": [
+        "In `src/app/api/chat/[projectId]/route.ts`, destructure `agentType` from request body with default 'trend-mapper': `const { messages: incomingMessages, agentType = 'trend-mapper' } = await request.json()`",
+        "Update the `prisma.message.findMany` WHERE clause to include agentType: `where: { projectId, agentType }`",
+        "Update the user message `prisma.message.create` to include agentType: `data: { projectId, agentType, role: 'user', content: userMessageContent }`",
+        "Update the assistant message `prisma.message.create` (inside onFinish) to include agentType: `data: { projectId, agentType, role: 'model', content: event.text }`",
+        "Do NOT change: model, tools, system prompt, rolling window logic, streaming headers, or error handling",
+        "`npx tsc --noEmit` passes with no errors"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts first. Make minimal changes — only add agentType to the 4 locations specified. The route must keep export const runtime = 'nodejs'. Existing Trend Mapper behavior is unchanged because the default is 'trend-mapper'."
+    }
+  ]
+}

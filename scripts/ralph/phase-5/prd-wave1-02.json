@@ -1,0 +1,44 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-5-wave1-02",
+  "description": "Phase 5 Wave 1 — Plan 02: Session tracker API (GET/PATCH /api/settings/session), SessionContext React Context, and session selector widget in the project sidebar. Base branch: ralph/phase-4-ui-polish.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Session API route handler + SessionContext provider",
+      "description": "As a student, I need a global session number (1-10) that persists across page refreshes and is accessible to all agent components, so that agents can adapt their responses to the current point in the course.",
+      "acceptanceCriteria": [
+        "Create directory `src/app/api/settings/session/` and file `route.ts`",
+        "Route has `export const dynamic = 'force-dynamic'` at top (prevents GET caching)",
+        "GET handler: `prisma.appSettings.findUnique({ where: { id: 1 } })` and returns `{ sessionNumber: settings?.sessionNumber ?? 1 }` (defensive fallback to 1 if row missing)",
+        "PATCH handler: validates `sessionNumber` is an integer 1-10 inclusive, returns 400 with error message if invalid, uses `prisma.appSettings.upsert` (not update) to handle missing row gracefully, returns `{ sessionNumber: updated.sessionNumber }`",
+        "Create directory `src/contexts/` and file `SessionContext.tsx` as a Client Component ('use client')",
+        "SessionContext.tsx exports `SessionProvider` component and `useSession()` hook",
+        "SessionProvider fetches current session on mount via GET /api/settings/session and updates state",
+        "SessionProvider.setSessionNumber does optimistic update then PATCHes API, reverts on failure",
+        "Uses React 19 context syntax: `<SessionContext value={...}>` NOT `<SessionContext.Provider value={...}>`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts for route handler patterns used in this codebase. IMPORTANT: AppSettings model is being created by the parallel wave1-01 branch. This route must be defensive — the GET handler must NOT crash if AppSettings row doesn't exist yet. Use `settings?.sessionNumber ?? 1` fallback. The PATCH upsert handles this too. Check node_modules/next/dist/docs/ for Next.js 16 Route Handler guidance if needed."
+    },
+    {
+      "id": "US-002",
+      "title": "Wire SessionProvider into ProjectLayout + add session selector widget",
+      "description": "As a student, I need to see and change the current FUND II session (1-10) from a dropdown in the sidebar, so I can tell the agents which session we're in and get session-appropriate guidance.",
+      "acceptanceCriteria": [
+        "In `src/components/ProjectLayout.tsx`, import `SessionProvider` and `useSession` from `@/contexts/SessionContext`",
+        "Create a `SessionSelector` function component inside ProjectLayout.tsx that uses `useSession()` hook",
+        "SessionSelector renders a `<select>` with label 'FUND II Session' and 10 `<option>` elements (Session 1 through Session 10)",
+        "SessionSelector is placed AFTER the `<nav>` block (project list) and BEFORE the closing `</aside>` tag",
+        "Wrap the entire ProjectLayout return JSX with `<SessionProvider>` as the outermost element — wraps BOTH sidebar and {children} so useSession() works in any child",
+        "ALL existing ProjectLayout functionality is preserved: sidebar toggle, Dashboard link, project list, mobile header, responsive behavior",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Read src/components/ProjectLayout.tsx and src/app/projects/[projectId]/layout.tsx first. Keep ALL existing code intact — only ADD the SessionProvider wrapper and SessionSelector component. The SessionSelector must call useSession() which means it must be rendered INSIDE <SessionProvider>. This is why SessionProvider wraps the entire return."
+    }
+  ]
+}

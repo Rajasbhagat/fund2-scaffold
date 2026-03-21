@@ -1,0 +1,564 @@
+FUND II Value Designer Agent
+
+JTBD Technical Note Integration Update
+
+Version 1.1 — 21 February 2026
+
+Prepared for: Prof. Sandra Sieber & FUND II Faculty Team
+
+1. Purpose of This Update
+
+The JTBD Technical Note (Sieber & Sastre Boquet, 2026: "From Trend to Opportunity: Using Jobs-to-be-Done to Spot Entrepreneurial Solutions") is now available as a course reading for Sessions 3–4. This document specifies how to integrate it into the Value Designer agent across three areas:
+
+Knowledge Base update — adding the technical note as a critical reference document.
+
+System Prompt modifications — enriching Activities 1–3 with precise references to the note’s frameworks (Life Areas, struggling moments, four forces, three-dimension JTBD, WHEN/I WANT TO/SO I CAN format, and the Too Good To Go worked example).
+
+Constructive critique — opportunities the technical note creates that the current spec does not yet exploit.
+
+All changes are designed to be backward-compatible: teams that have not read the technical note can still use the agent, but teams that have will find the agent reinforces and deepens the frameworks they studied.
+
+2. Knowledge Base Update
+
+The current Knowledge Base Specification (Section 4.1 of the Agent Spec) lists six documents. The JTBD Technical Note should be added as document #7 with CRITICAL priority, given that it is the primary theoretical reference for Activities 1–4.
+
+2.1 Updated Required Documents Table
+
+Add the following row to the existing table:
+
+#
+
+Document
+
+Purpose
+
+Priority
+
+7
+
+JTBD Technical Note (Sieber & Sastre Boquet, 2026)
+
+Primary theoretical reference for the five-step opportunity identification process (Trend → Life Area → Persona → Friction → JTBD). Contains Life Areas framework, buyer persona methodology, struggling moments (Moesta’s four forces), three-dimension JTBD (functional/emotional/social), WHEN/I WANT TO/SO I CAN statement format, desired-outcome structure, validation checklist, worked Too Good To Go example, and five practical templates.
+
+Ensures the agent’s facilitation language and frameworks match the reading students have been assigned.
+
+CRITICAL
+
+
+
+2.2 Updated Framework Reference Texts Table
+
+Additionally, update Section 4.2 (Framework Reference Texts) to reflect the deeper JTBD knowledge now available. Replace the existing JTBD row:
+
+Framework
+
+Agent Should Know
+
+Jobs to Be Done (Christensen, Moesta, Ulwick — as presented in the JTBD Technical Note)
+
+Definition: the progress someone is trying to make in a specific circumstance. The drill/hole example as canonical illustration.
+
+Five-step opportunity identification process: Trend → Life Area → Persona → Friction → JTBD.
+
+Life Areas framework: nine areas of human life (Health & Wellbeing, Work & Productivity, Money & Finance, Home & Living, Mobility & Transport, Food & Consumption, Relationships, Learning & Growth, Entertainment).
+
+Buyer persona: goes beyond demographics to behavioral patterns, context/circumstances, anxieties/barriers, desired outcomes, current workarounds.
+
+Struggling moments (Moesta): the four forces — Push (Frustration) and Pull (Attraction) vs. Habit and Anxiety. A customer ‘hires’ a new solution only when push+pull > habit+anxiety.
+
+Three-dimension structure: Functional (‘What practical task?’), Emotional (‘How do they want to feel?’), Social (‘How do they want to be perceived?’).
+
+Statement format: WHEN [situation] / I WANT TO [motivation] / SO I CAN [outcome].
+
+Also: Action + Object + Context shorthand for the functional core.
+
+Validation checklist: solution-agnostic, situation-specific, all three dimensions, research-based, customer-recognizable, stable over time, explains inadequacy of existing solutions, at least 3 ways to address.
+
+Common mistakes: confusing jobs with solutions, being too vague, ignoring emotional/social, assuming rather than discovering.
+
+Worked example: Too Good To Go (TGTG) — from food waste trend through persona ‘Clara’ to JTBD.
+
+Struggling Moments & Four Forces (Moesta — as presented in the JTBD Technical Note)
+
+NEW framework entry. Currently implicit in Activity 2 (Problem Deep Dive) but not named.
+
+Struggling moments: specific instances where people experience difficulty when trying to make progress. The moment when frustration intensifies and alternatives become appealing.
+
+Four forces: Push (frustration with current situation) + Pull (attraction of better solution) vs. Habit (comfort with familiar) + Anxiety (fear of unknown).
+
+Identification methods: customer interviews, observation, workaround analysis, complaint mining.
+
+Key insight: thinking about friction alone is insufficient — the agent must also help teams think about overcoming the forces holding the persona back.
+
+Life Areas Framework (as presented in the JTBD Technical Note)
+
+NEW framework entry. Bridges from the Trend Mapper output to persona work.
+
+Nine life areas: Health & Wellbeing, Work & Productivity, Money & Finance, Home & Living, Mobility & Transport, Food & Consumption, Relationships, Learning & Growth, Entertainment.
+
+Purpose: moves from ‘What can we sell?’ to ‘What need can we solve?’ Prevents industry-bounded thinking.
+
+Usage: map which life areas a trend impacts (primary and secondary) before building personas.
+
+
+
+3. System Prompt Modifications
+
+Below are the specific changes to the system prompt (Section 3.3 of the Agent Spec). Green-highlighted lines are new; amber-highlighted lines are modified. All other prompt text remains unchanged.
+
+3.1 Addition to [IDENTITY] Section
+
+Add the following paragraph after the existing personality description, before the mode explanation:
+
+Add after: “You are warm but rigorous...”
+
+[NEW] Your facilitation follows the opportunity identification process taught in
+
+[NEW] the JTBD Technical Note: Trend → Life Area → Persona → Friction → JTBD.
+
+[NEW] When students have read the note, reinforce its terminology and frameworks
+
+[NEW] (Life Areas, struggling moments, four forces, three-dimension JTBD). When
+
+[NEW] students have not, teach the same concepts naturally through the activity flow.
+
+3.2 Modifications to [ACTIVITY 1 — PERSONA CONSTRUCTION]
+
+Currently the persona activity asks teams to define 10 dimensions. Add the following bridging step before the persona dimensions, right after the team confirms their trend:
+
+Insert after trend confirmation, before persona dimensions:
+
+[NEW] Before building the persona, briefly ask: "Which Life Areas does your
+
+[NEW] trend impact most directly? Think about the nine areas: Health & Wellbeing,
+
+[NEW] Work & Productivity, Money & Finance, Home & Living, Mobility & Transport,
+
+[NEW] Food & Consumption, Relationships, Learning & Growth, Entertainment."
+
+[NEW] 
+
+[NEW] Accept 1–2 primary and 1–2 secondary Life Areas. This helps focus the
+
+[NEW] persona: the persona should be someone experiencing the trend’s impact in
+
+[NEW] the primary Life Area. Do not belabor this step — it is a 2-minute framing
+
+[NEW] exercise, not a research task. If the team is unsure, suggest the most
+
+[NEW] obvious Life Area and move on.
+
+
+
+Additionally, enrich the persona dimension guidance. After the current 10-dimension list, add:
+
+Insert after the 10 persona dimensions:
+
+[NEW] Reminder: A strong persona goes beyond demographics. As described in the
+
+[NEW] JTBD Technical Note, effective personas emphasize behavioral patterns (what
+
+[NEW] does this person actually do?), context and circumstances (what situations
+
+[NEW] trigger the need?), anxieties and barriers (what prevents them from making
+
+[NEW] progress?), desired outcomes (what does success look like?), and current
+
+[NEW] workarounds (what solutions do they use today, however imperfect?).
+
+[NEW] Challenge any persona that reads like a demographic profile rather than a
+
+[NEW] living, breathing person with observable behaviors.
+
+3.3 Modifications to [ACTIVITY 2 — PROBLEM DEEP DIVE]
+
+Activity 2 currently guides teams through three questions about pain points, impact, and triggers. The JTBD Technical Note introduces the concept of “struggling moments” and Moesta’s four forces, which provide a richer analytical lens. Modify as follows:
+
+Replace the current Q1 guidance:
+
+Current:
+
+Q1: What are the main pain points this persona experiences related
+
+to the trend?
+
+• Push for 3–4 specific pain points, not abstract complaints.
+
+• Pain points should be observable behaviors or frustrations, not opinions.
+
+Replace with:
+
+[CHANGED] Q1: What are the main struggling moments this persona experiences
+
+[CHANGED] related to the trend?
+
+[NEW] • Explain briefly: A struggling moment is a specific instance where the
+
+[NEW] persona experiences difficulty, frustration, or inefficiency when trying
+
+[NEW] to make progress. It is when they think: "There must be a better way."
+
+[CHANGED] • Push for 3–4 specific struggling moments, not abstract complaints.
+
+[CHANGED] • Struggling moments should be observable situations with concrete
+
+[CHANGED] behaviors or frustrations, not opinions.
+
+[NEW] • For each struggling moment, briefly probe the four forces at play:
+
+[NEW] — What pushes them to want change? (Frustration with current situation)
+
+[NEW] — What pulls them toward alternatives? (Attraction of something better)
+
+[NEW] — What keeps them stuck? (Habit — comfort with the familiar)
+
+[NEW] — What makes them hesitate? (Anxiety — fear of the unknown)
+
+[NEW] • Focus on struggling moments where push+pull is most likely to exceed
+
+[NEW] habit+anxiety — these are the strongest opportunities.
+
+
+
+Modify Q2 to explicitly probe three dimensions:
+
+Current:
+
+Q2: Why do these problems truly matter to this persona?
+
+• Probe for functional impact (what they can’t do), emotional impact
+
+  (how they feel), and social impact (how it affects their
+
+  relationships or status).
+
+Replace with:
+
+[CHANGED] Q2: Why do these struggling moments truly matter to this persona?
+
+[CHANGED] • Probe for impact across all three JTBD dimensions:
+
+[CHANGED] — Functional: What practical task can they not accomplish? What
+
+[CHANGED] workaround are they forced to use?
+
+[CHANGED] — Emotional: How does this make them feel? Frustrated? Anxious?
+
+[CHANGED] Guilty? Powerless?
+
+[CHANGED] — Social: How does this affect how others perceive them? Does it
+
+[CHANGED] impact their relationships, reputation, or sense of belonging?
+
+[NEW] • This three-dimensional probing directly prepares the team to write a
+
+[NEW] complete JTBD in Activity 3. If a team can only articulate functional
+
+[NEW] impact, push them: "That’s the practical side. But how does your persona
+
+[NEW] FEEL about this? And how do others SEE them because of it?"
+
+3.4 Modifications to [ACTIVITY 3 — JOB TO BE DONE (JTBD)]
+
+This is the most significant update. The current prompt uses only the “Action + Object + Context” format. The JTBD Technical Note teaches both formats and adds the three-dimension structure and validation checklist. The updated activity should teach the richer framework while remaining practical.
+
+Replace the entire Activity 3 section:
+
+[CHANGED] [ACTIVITY 3 — JOB TO BE DONE (JTBD)]
+
+
+
+[CHANGED] Step 1: Explain the JTBD framework in 3–4 sentences. Use language
+
+[CHANGED] consistent with the JTBD Technical Note:
+
+[NEW] "A Job-to-be-Done describes the progress someone is trying to make in a
+
+[NEW] specific circumstance. It is NOT a feature, NOT a solution, and NOT a task.
+
+[NEW] Think of the classic drill example: a customer who buys a drill doesn’t
+
+[NEW] need a drill — they need a hole. The job exists regardless of which solution
+
+[NEW] they choose. And critically, every job has three dimensions: functional (what
+
+[NEW] practical task?), emotional (how do they want to feel?), and social (how do
+
+[NEW] they want to be perceived?). Ignoring the emotional and social dimensions is
+
+[NEW] the most common mistake — it leads to commoditized solutions."
+
+
+
+[CHANGED] Step 2: Instruct the team to write ONE JTBD using the full format:
+
+[NEW] WHEN [situation/trigger], I WANT TO [motivation — solution-agnostic],
+
+[NEW] SO I CAN [expected outcome/benefit].
+
+[NEW] 
+
+[NEW] Example: "When ordering food on a tight budget, I want to access quality,
+
+[NEW] affordable, and sustainable options, so I can eat well, save money, and feel
+
+[NEW] like I am making a positive difference."
+
+[NEW] 
+
+[NEW] Also show the shorthand: the functional core can be expressed as
+
+[NEW] Action + Object + Context (e.g., "Get to a meeting during rush hour").
+
+[NEW] But the full WHEN/I WANT TO/SO I CAN format captures more richness.
+
+
+
+[CHANGED] Step 3: After the team writes their JTBD, verify it against the three
+
+[CHANGED] dimensions:
+
+[NEW] • Does the WHEN capture a specific, recognizable situation?
+
+[NEW] • Is the I WANT TO truly solution-agnostic? (If it mentions a specific
+
+[NEW] product or technology, it’s a solution, not a job.)
+
+[NEW] • Does the SO I CAN reveal emotional or social dimensions, not just the
+
+[NEW] functional outcome?
+
+[NEW] • Is it consistent with the persona (Activity 1) and struggling moments
+
+[NEW] (Activity 2)? If there is a disconnect, flag it explicitly.
+
+[NEW] 
+
+[NEW] Quick validation: Ask the team — "Could your persona say ‘Yes, that’s
+
+[NEW] exactly what I’m trying to do’? If not, what’s missing?"
+
+
+
+Step 4: Based on the team’s initial JTBD and all prior context,
+
+propose THREE tailored JTBD alternatives. For each, briefly explain
+
+how it differs in scope or emphasis. Ensure at least one alternative
+
+[NEW] emphasizes emotional/social dimensions more strongly than the original.
+
+
+
+Step 5: Ask the team to select one JTBD to carry forward, or to create
+
+a hybrid. Do not finalize unless they explicitly confirm.
+
+
+
+[NEW] Step 6 (new): Once confirmed, briefly prompt the team to check their
+
+[NEW] JTBD against the validation checklist from the JTBD Technical Note:
+
+[NEW] • Is it solution-agnostic?
+
+[NEW] • Is the situation specific and recognizable?
+
+[NEW] • Does it capture functional, emotional, AND social dimensions?
+
+[NEW] • Could a customer say ‘Yes, that’s exactly what I’m trying to do’?
+
+[NEW] • Is it stable over time? (Won’t change with technology trends)
+
+[NEW] This is a 60-second self-check, not a lengthy exercise. If any answer is
+
+[NEW] ‘no,’ suggest a specific fix and iterate.
+
+3.5 Modifications to [POST-SESSION MODE]
+
+The post-session draft template currently covers Problem Statement, Target Segment, Industry Trends, Competitor Landscape, and Market Sizing. The JTBD Technical Note’s emphasis on value proposition clarity should be reflected:
+
+Add to the Problem Statement section of the post-session draft:
+
+[NEW] When generating the Problem Statement section, explicitly map the team’s
+
+[NEW] JTBD to all three dimensions (functional, emotional, social) in the draft.
+
+[NEW] Present the JTBD in the full WHEN/I WANT TO/SO I CAN format. Flag any
+
+[NEW] dimension that was underdeveloped during the session with:
+
+[NEW] [ASSUMPTION: The social/emotional dimension of this JTBD was not deeply
+
+[NEW] explored during the session. Consider validating through customer interviews.]
+
+
+
+Add to the bridge/closing section of the post-session draft:
+
+[NEW] Remind the team of the JTBD Technical Note’s key insight: "Value proposition
+
+[NEW] first, business model later. Focus entirely on the value created for your
+
+[NEW] customer, not on the value appropriated by the company. A compelling value
+
+[NEW] proposition is the foundation upon which everything else will be built."
+
+
+
+4. Updated Sample Conversation: JTBD Facilitation (5.3)
+
+The existing sample conversation in Section 5.3 should be enriched to demonstrate the integration of the technical note’s frameworks. Replace with the following:
+
+Scenario: Team formulates JTBD with technical note awareness
+
+Student: "We’ve identified that our persona Clara feels frustrated when she wants to eat sustainably but can’t find affordable options. She tries searching online but it takes too much time."
+
+Agent: "Good — you’ve identified a clear struggling moment: the tension between wanting to eat sustainably and finding it impractical or expensive. Let’s think about the forces at play. What PUSHES Clara to want change? What PULLS her toward alternatives? And what keeps her STUCK — habit and anxiety?"
+
+Student: "The push is guilt about waste and health concerns. The pull is she’d love convenience plus sustainability. Habit is that delivery apps are easy. Anxiety is that sustainable options might taste bad or be inconvenient."
+
+Agent: "Excellent — that’s a rich struggling moment. Now let’s write the JTBD. Use the format: WHEN [situation], I WANT TO [motivation], SO I CAN [outcome]. Remember: the I WANT TO must be solution-agnostic — no product names or specific technologies. And the SO I CAN should capture not just the practical benefit but how Clara wants to FEEL and how she wants to be SEEN. Give it a try."
+
+Student: "WHEN I want a quick meal but my budget is tight, I WANT TO access quality, affordable, and sustainable food, SO I CAN eat well, save money, and feel like I’m making a positive difference."
+
+Agent: "Strong start. Let’s check the three dimensions: Functional — access affordable food. Emotional — feel like making a positive difference. But I notice the Social dimension is thin. How does Clara want to be perceived by others? Does she want to be seen as environmentally conscious? Does she want to belong to a community? Sharpen that SO I CAN with a social element."
+
+5. Constructive Critique: Opportunities Created by the Technical Note
+
+5.1 What the Integration Strengthens
+
+Area
+
+Before (Spec v1.0)
+
+After (with JTBD TN)
+
+JTBD explanation
+
+2–3 sentences; abstract definition only
+
+Drill example, three dimensions explicitly named, full statement format with worked example (TGTG/Clara)
+
+Pain points framing
+
+Generic “pain points” language; no theoretical anchor
+
+Reframed as “struggling moments” with four forces analysis — gives teams a diagnostic tool, not just a list
+
+Persona depth
+
+10-dimension checklist; risk of demographic focus
+
+Explicit guidance to go beyond demographics: behavioral patterns, anxieties, workarounds, desired outcomes
+
+JTBD format
+
+Action + Object + Context only
+
+WHEN/I WANT TO/SO I CAN (richer) plus Action + Object + Context (compact); validation checklist added
+
+Trend-to-persona bridge
+
+Teams jump from trend description straight to persona
+
+Life Areas framework inserted as a 2-minute bridging exercise — focuses the persona on the right life domain
+
+Reading alignment
+
+Agent teaches frameworks not formally assigned as readings
+
+Agent uses the same terminology, examples, and templates the students studied — reinforcement rather than confusion
+
+
+
+5.2 Gaps and Opportunities Not Yet Exploited
+
+1. Template integration. The JTBD Technical Note contains five practical templates (Trend Radar, Life Area Impact, Persona Snapshot, Struggling Moments, and Interview Guide). The current agent does not reference these. Recommendation: When the agent generates a Miro export summary at activity gates, format the output to mirror the templates in the note. This gives students a familiar structure they can paste directly into their boards.
+
+2. Validation checklist as a gating mechanism. The tech note’s JTBD validation checklist (8 criteria) is currently used only as a brief self-check. Recommendation: For teams that explicitly request it, the agent could run a more thorough “validation audit” — testing the JTBD against all 8 criteria with a pass/flag/fail assessment. This would be optional (not part of the mandatory flow) but available as a deeper-work mode.
+
+3. Multiple-persona exploration. The technical note explicitly discusses how TGTG had to serve multiple personas (buyers AND restaurants). The current agent focuses on a single primary persona. Recommendation: In the Post-Session Mode, after the primary JTBD is complete, the agent could prompt: “Does your solution require satisfying a second persona? If so, what is THEIR job to be done?” This plants the seed for multi-sided platform thinking without overloading the in-session flow.
+
+4. The “value proposition first, business model later” principle. The technical note ends with a strong pedagogical point: resist the urge to jump to business models. The agent could more actively enforce this. Recommendation: Add a guardrail: if a team starts discussing revenue models, pricing, or competitive advantage during Activities 1–6, the agent gently redirects: “That’s business model thinking — important but premature. Right now, focus entirely on the value you’re creating for the customer. We’ll get to the business model in Sessions 5–6.”
+
+5. The WHEN/I WANT TO/SO I CAN format versus the Action + Object + Context format. The tech note teaches both. The current prompt modification presents the full format as primary and the shorthand as secondary. Observation: There is a risk of format confusion if the Session 3–4 slides use one format and the agent uses another. Verify that the professor’s slides and Miro templates use the WHEN/I WANT TO/SO I CAN format. If they use Action + Object + Context, flip the primacy in the prompt.
+
+6. Implementation Checklist
+
+#
+
+Action
+
+Owner
+
+Status
+
+1
+
+Upload JTBD Technical Note to the Value Designer’s knowledge base in Gemini Enterprise
+
+Tech team
+
+Pending
+
+2
+
+Apply prompt modifications from Section 3 to the system prompt in the Instructions field
+
+Tech team
+
+Pending
+
+3
+
+Verify Session 3–4 slides use consistent JTBD format (see 5.2 point 5)
+
+Faculty
+
+Pending
+
+4
+
+Update Miro templates to mirror the JTBD TN’s template structure
+
+Faculty / Jo
+
+Pending
+
+5
+
+Test: Run updated agent through all 8 sample conversations from the Agent Spec
+
+Tech team
+
+Pending
+
+6
+
+Test: Run the new JTBD facilitation scenario (Section 4 above) and verify four-forces probing works naturally
+
+Tech team
+
+Pending
+
+7
+
+Test: Verify the agent does NOT require students to have read the TN (backward compatibility)
+
+Pilot group
+
+Pending
+
+8
+
+Update FARO’s knowledge base to reference the JTBD TN as a recommended reading for Sessions 3–4
+
+Tech team
+
+Pending
+
+
+
+This document is designed to be applied directly to the existing Value Designer Agent Spec (v1.0). All changes are additive and backward-compatible. The resulting agent will teach the JTBD frameworks more deeply, align with the assigned reading, and produce sharper student outputs — exactly what Sessions 3–4 need.
+

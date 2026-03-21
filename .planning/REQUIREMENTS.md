@@ -40,7 +40,34 @@
 - [ ] **AGENT-04**: All guardrails are enforced — *pending manual QA (GUARDRAIL_QA.md)*
 - [ ] **AGENT-05**: Terminology discipline enforced — *pending manual QA (GUARDRAIL_QA.md)*
 
-## v2 Requirements
+## v2 Requirements (MVP v2.0 — active milestone)
+
+### Platform
+
+- [ ] **PLAT-01**: User can switch between all 4 agents within a project using a tabbed interface, without losing chat history for any agent
+- [ ] **PLAT-02**: A global session tracker (Session 1–10) is visible and settable from the main UI
+- [ ] **PLAT-03**: The current session number is injected into every agent's system prompt so behavior is session-aware
+
+### New Agents
+
+- [ ] **AGENT-06**: Value Designer agent is available in every project — sequential 6-activity facilitation workflow, no web search, session-aware
+- [ ] **AGENT-07**: SPI (Synthetic Persona Interviewer) agent is available in every project — generates Customer / Investor / Partner personas, sustains in-character interviews, provides structured debrief on END INTERVIEW, no web search
+- [ ] **AGENT-08**: FARO agent is available in every project — course navigation, routing to other agents, FUND II + elective syllabi knowledge base, web search enabled, session-aware course arc awareness
+- [ ] **AGENT-09**: All 4 agents are present in every project from creation — no per-project agent selection required
+
+### Search & Research
+
+- [ ] **SEARCH-01**: Trend Mapper and FARO have web search enabled (Vertex AI Grounding via `googleSearch` tool); Value Designer and SPI do not — they are facilitation engines
+- [ ] **SEARCH-02**: A "Deep Research" toggle is available per message for Trend Mapper and FARO — activates gemini-2.5-pro model + `googleSearch` + `urlContext` tools for exhaustive multi-step research
+- [ ] **SEARCH-03**: Context priority order is enforced across all agents: (1) global system documents, (2) per-project uploaded documents, (3) web search — system prompt explicitly instructs the model to consult pre-loaded and uploaded docs before searching the web
+
+### Documents
+
+- [ ] **DOC-01**: User can upload PDF, PPTX, and DOCX files per project; files are stored and associated with that project
+- [ ] **DOC-02**: Uploaded files are extracted to plain text and injected into the active agent's context before web search runs — uploaded docs take priority over internet results
+- [ ] **DOC-03**: System documents (syllabi, agent specs) are pre-loaded globally at server startup and never visible in the student UI
+
+## v3 Requirements (deferred)
 
 ### Auth & Multi-User
 
@@ -52,11 +79,6 @@
 
 - **EXP-01**: User can export slide content as PDF or text
 - **EXP-02**: User can copy individual slide drafts to clipboard
-
-### Additional Agents
-
-- **AGENT-06**: Value Designer co-pilot integration (Sessions 3-4)
-- **AGENT-07**: Course Butler co-pilot for logistics questions
 
 ### Analytics
 
@@ -102,10 +124,24 @@
 | AGENT-03 | Phase 3 | ✅ Complete |
 | AGENT-04 | Phase 3 | 🔄 Pending manual QA |
 | AGENT-05 | Phase 3 | 🔄 Pending manual QA |
+| PLAT-01 | Phase 5 | ○ Pending |
+| PLAT-02 | Phase 5 | ○ Pending |
+| PLAT-03 | Phase 5 | ○ Pending |
+| AGENT-06 | Phase 6 | ○ Pending |
+| AGENT-07 | Phase 6 | ○ Pending |
+| AGENT-08 | Phase 7 | ○ Pending |
+| AGENT-09 | Phase 5 | ○ Pending |
+| SEARCH-01 | Phase 6 | ○ Pending |
+| SEARCH-02 | Phase 5 | ○ Pending |
+| SEARCH-03 | Phase 8 | ○ Pending |
+| DOC-01 | Phase 8 | ○ Pending |
+| DOC-02 | Phase 8 | ○ Pending |
+| DOC-03 | Phase 8 | ○ Pending |
 
 **Coverage:**
-- v1 requirements: 23 total
-- Mapped to phases: 23
+- v1 requirements: 23 total — all mapped ✓
+- v2 requirements: 14 total — all mapped ✓
+- Unmapped: 0
 - Unmapped: 0 ✓
 
 ---

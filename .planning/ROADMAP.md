@@ -165,6 +165,148 @@ These are known uncertainties from the research phase. Each must be resolved dur
 
 ---
 
+---
+
+## Milestone: MVP v2.0
+
+**Goal:** A single project workspace with all 4 AI agents (Trend Mapper, Value Designer, SPI, FARO) accessible via tabs, a global session tracker that gates each agent's behavior, internet access (standard + deep research) for all agents, and per-project document upload where uploaded docs take priority over web search results.
+
+**Done when:** All 4 phases complete, all 4 agents respond correctly with web access, deep research toggle produces noticeably more thorough responses, uploaded docs are correctly prioritised in context, session tracker injects correctly, and system files are invisible to students.
+
+---
+
+### Phases
+
+- [ ] **Phase 5: Multi-Agent Platform Shell** — DB migration (agentType on Message, AppSettings), agent tab UI within project, global session selector, deep research toggle UI
+- [ ] **Phase 6: Value Designer & SPI Agents** — Wire VD and SPI with full system prompts + web search (googleSearch); deep research mode uses gemini-2.5-pro + urlContext
+- [ ] **Phase 7: FARO Agent** — Extract FUND II + elective syllabi, wire FARO with knowledge base + web search for supplemental lookups
+- [ ] **Phase 8: Document Upload + Context Priority** — Per-project PDF/PPTX/DOCX upload, text extraction, priority injection (uploaded docs → system docs → web search); global system docs hidden from UI
+
+---
+
+### Phase Details
+
+#### Phase 5: Multi-Agent Platform Shell
+**Goal**: Every project has 4 agent tabs with isolated but persistent chat histories; a global session selector (1–10) is visible in the UI and stored in the DB; the current session number is injected into every agent's system prompt; a Deep Research toggle is available per message
+**Depends on**: Phase 4
+**Requirements**: PLAT-01, PLAT-02, PLAT-03, AGENT-09, SEARCH-02
+**Success Criteria**:
+  1. A project page shows 4 tabs: Trend Mapper, Value Designer, SPI, FARO — each with its own message thread
+  2. Switching tabs does not clear chat history; returning to a tab shows the full prior conversation
+  3. A session selector (1–10) is visible in the app; changing it persists across page refresh
+  4. Every agent route handler receives the current session number and includes it in the system prompt
+  5. Trend Mapper's existing messages migrate cleanly — messages get `agentType: 'trend-mapper'` and continue working
+  6. A "Deep Research" toggle button is visible in the chat input area; when active, the POST body includes `deepResearch: true` and the route handler switches to gemini-2.5-pro + urlContext tool
+
+**Plans**: 3 plans
+- [ ] 05-01: Prisma migration — add `agentType String @default("trend-mapper")` to `Message` model; add `AppSettings` model (`id`, `sessionNumber Int @default(1)`); run `prisma migrate dev`; seed one AppSettings row; update all existing Trend Mapper queries to filter by `agentType: 'trend-mapper'`
+- [ ] 05-02: Session tracker API + UI — `GET/PATCH /api/settings/session` Route Handler; add session selector widget (1–10 dropdown or stepper) to the sidebar or project page header; fetch and update via client-side API call with optimistic UI
+- [ ] 05-03: Agent tab navigation + deep research toggle — refactor `app/projects/[projectId]/page.tsx` to render 4 tabs; each tab loads its own message history (`agentType` filter); pass `agentType` and `currentSession` down to `ChatWindow`; update `ChatWindow` to pass `agentType` + `deepResearch` flag in POST body; add Deep Research toggle button to `ChatInput` (icon or checkbox beside send button) that flips a boolean state variable
+
+---
+
+#### Phase 6: Value Designer & SPI Agents
+**Goal**: Value Designer and SPI are wired with their full system prompts, respond correctly in the app, each has its own Route Handler with web search enabled, and deep research mode activates Pro model + urlContext
+**Depends on**: Phase 5
+**Requirements**: AGENT-06, AGENT-07
+**Success Criteria**:
+  1. Sending a message in the Value Designer tab returns a streamed response from the VD agent — not the Trend Mapper
+  2. VD agent opens with the correct mode-detection greeting (In-Session or Post-Session) and refuses to skip activity gates
+  3. Sending a message in the SPI tab returns a streamed response from the SPI agent
+  4. SPI generates a full persona profile when given venture context; stays in character; exits character and gives a debrief when student types END INTERVIEW
+  5. Neither VD nor SPI uses web search — all responses are grounded in injected context and student input only
+  6. Deep Research toggle is visible in VD and SPI tabs but disabled (grayed out with tooltip: "Deep Research is not available for this agent")
+
+**Plans**: 3 plans
+- [ ] 06-01: Extract VD and SPI system prompts to `src/context/agents/value-designer.txt` and `src/context/agents/spi.txt` from the spec `.txt` files; measure token counts; update `lib/context.ts` to export `getValueDesignerContext()` and `getSPIContext()` loaders
+- [ ] 06-02: Implement `app/api/chat/value-designer/[projectId]/route.ts` — streamText with gemini-2.5-flash, no tools; inject VD system prompt + current session; message history filtered to `agentType: 'value-designer'`; same rolling window and persistence pattern as Trend Mapper
+- [ ] 06-03: Implement `app/api/chat/spi/[projectId]/route.ts` — streamText with gemini-2.5-flash, no tools; SPI system prompt + current session injection; message history filtered to `agentType: 'spi'`; rolling window and persistence; update `ChatWindow` to route POST to the correct endpoint based on active agent tab
+
+---
+
+#### Phase 7: FARO Agent
+**Goal**: FARO responds as the course navigator using the FUND II syllabus and elective syllabi as its primary knowledge base, with web search for supplemental ecosystem lookups; deep research mode available for thorough ecosystem questions
+**Depends on**: Phase 5
+**Requirements**: AGENT-08, SEARCH-01
+**Success Criteria**:
+  1. FARO answers questions about course sessions, readings, deadlines accurately (sourced from injected FUND II syllabus)
+  2. FARO correctly routes students to other agents when they ask about tasks that belong to a specific co-pilot
+  3. FARO adapts its response depth based on the current session (e.g. different context at Session 2 vs. Session 9)
+  4. FARO's total injected context (system prompt + syllabi) is measured and confirmed within the token budget; summaries produced for any syllabi that push it over
+  5. FARO uses web search to supplement ecosystem questions (e.g. current IESE events, professor bios) when the syllabi knowledge base doesn't have the answer
+
+**Plans**: 2 plans
+- [ ] 07-01: Extract FUND II syllabus + key elective syllabi to `src/context/faro/` (FUND II + NAVEI, VCIC, SEARCH, BMI, BMC, Corporate Ent, SEI, Entrepreneurial Finance — from the syllabi folder); measure combined token count; produce condensed summaries for any that exceed budget; implement `getFAROContext()` loader in `lib/context.ts` with context priority header
+- [ ] 07-02: Implement `app/api/chat/faro/[projectId]/route.ts` — accept `deepResearch` boolean; standard mode: gemini-2.5-flash + FARO knowledge base + `googleSearch`; deep research mode: gemini-2.5-pro + `googleSearch` + `urlContext`; inject FARO system prompt + syllabi context + current session; message history filtered to `agentType: 'faro'`; rolling window and persistence
+
+---
+
+#### Phase 8: Document Upload + Context Priority
+**Goal**: Students can upload PDF, PPTX, and DOCX files to a project; extracted text is injected as the highest-priority context before web search runs; system files are never visible in the UI
+**Depends on**: Phase 5
+**Requirements**: DOC-01, DOC-02, DOC-03, SEARCH-03
+**Success Criteria**:
+  1. A file upload area is visible within each project; student can upload PDF, PPTX, or DOCX
+  2. After upload, the file name appears in the project's file list
+  3. When the student sends a message to any agent, uploaded document text is injected into the system context BEFORE web search runs — the system prompt explicitly tells the model to consult these documents first
+  4. The model demonstrably references uploaded document content in its response when the document is relevant (e.g. upload a persona document and ask Value Designer to use it)
+  5. System files (syllabi, agent specs) are not listed or accessible anywhere in the student UI
+  6. Uploading a file that exceeds 10 MB shows an inline error
+
+**Plans**: 3 plans
+- [ ] 08-01: Prisma migration — add `UploadedFile` model (`id`, `projectId`, `filename`, `originalName`, `mimeType`, `extractedText`, `createdAt`); FK to Project with cascade delete; run `prisma migrate dev`
+- [ ] 08-02: File upload Route Handler — `POST /api/projects/[id]/files` (multipart, max 10 MB); extract text with mammoth (DOCX), pdf-parse (PDF), or pptx-extract/officegen (PPTX — install if not present); store extracted text in `UploadedFile.extractedText`; `GET /api/projects/[id]/files` returns file list (name, id — no extracted text); `DELETE /api/projects/[id]/files/[fileId]`
+- [ ] 08-03: File upload UI + context priority wiring — upload button/dropzone beside the agent tabs; file list showing uploaded file names with delete affordance; update all 4 agent Route Handlers to assemble context in strict priority order: (1) agent system prompt, (2) current session number, (3) global system docs already injected by each loader (syllabi / megatrend docs / agent specs), (4) per-project uploaded docs with header `[STUDENT UPLOADED DOCUMENTS — highest priority for this project. Consult these before searching the web:\n[doc: filename]\n{text}\n...]`, (5) web search via `googleSearch` tool (Trend Mapper and FARO only); system prompt explicitly states: "Always prioritise pre-loaded course materials and student-uploaded documents over web search results."
+
+---
+
+## v2.0 Progress
+
+**Execution Order:** 5 → 6 → 7 → 8 (Phase 6 and 7 can run in parallel after Phase 5)
+
+| Phase | Stories Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 5. Multi-Agent Platform Shell | 0/3 | ○ Pending | - |
+| 6. Value Designer & SPI Agents | 0/3 | ○ Pending | - |
+| 7. FARO Agent | 0/2 | ○ Pending | - |
+| 8. Document Upload | 0/3 | ○ Pending | - |
+
+---
+
+## v2.0 Requirement Coverage
+
+**v2 requirements: 14 total | Mapped: 14 | Unmapped: 0**
+
+| Requirement | Description | Phase |
+|-------------|-------------|-------|
+| PLAT-01 | Agent tab switching with persistent chat histories | Phase 5 |
+| PLAT-02 | Global session tracker (1–10) settable from UI | Phase 5 |
+| PLAT-03 | Session number injected into all agent system prompts | Phase 5 |
+| AGENT-06 | Value Designer agent — 6-activity facilitation, no web search | Phase 6 |
+| AGENT-07 | SPI agent — persona generation, in-character interview, debrief, no web search | Phase 6 |
+| AGENT-08 | FARO agent — course navigation, syllabi knowledge base + web search | Phase 7 |
+| AGENT-09 | All 4 agents present in every project | Phase 5 |
+| SEARCH-01 | Trend Mapper + FARO have web search; VD + SPI do not | Phase 6 |
+| SEARCH-02 | Deep Research toggle (Trend Mapper + FARO only) — gemini-2.5-pro + urlContext | Phase 5 |
+| SEARCH-03 | Context priority: global system docs → project uploads → web search | Phase 8 |
+| DOC-01 | User can upload PDF/PPTX/DOCX per project | Phase 8 |
+| DOC-02 | Uploaded files extracted and injected as priority context | Phase 8 |
+| DOC-03 | System docs pre-loaded globally, hidden from student UI | Phase 8 |
+
+---
+
+## v2.0 Research Flags
+
+- **Phase 7 (Plan 07-01):** Token count of all elective syllabi is unknown until extracted. FARO's knowledge base may exceed 30K tokens — measure and summarize as needed. Do not guess.
+- **Phase 8 (Plan 08-02):** PPTX text extraction library is not yet installed. Options: `pptx-extract`, `officegen`, or converting via LibreOffice CLI. Verify availability during Phase 8 planning.
+- **Phase 6 — No web search for VD/SPI (per spec):** Value Designer and SPI have no `googleSearch` tool — this matches their original specs (facilitation engines, not research tools). Deep Research toggle is disabled/grayed out for these two agents in the UI.
+- **Phase 5 / Phase 6 — Deep Research implementation:** `thinkingConfig` / `budgetTokens` are not in the current `@ai-sdk/google-vertex` v4.0.93 type definitions. Deep research mode is implemented as: switch model to `gemini-2.5-pro` + add `urlContext` tool alongside `googleSearch`. This gives the Pro model's extended reasoning + ability to read full URLs. Do not attempt to pass `thinkingConfig` through the SDK — it will fail silently or error.
+- **Phase 6 — googleSearch + urlContext on same call:** Verify that `googleSearch` and `urlContext` can be passed simultaneously in the `tools` array. Both are in the `googleVertexTools` export — this should work but confirm during Phase 6 implementation.
+- **Phase 6 / Phase 7:** All agent route handlers will use the same ADC credentials pattern from Trend Mapper — reuse existing vertex instance, no re-verification needed.
+
+---
+
 *Roadmap created: 2026-03-21*
-*Milestone: MVP v1.0*
-*Last updated: 2026-03-21 after initial roadmap creation*
+*Milestone: MVP v1.0 — complete*
+*Milestone: MVP v2.0 — added 2026-03-21*
+*Last updated: 2026-03-21 after v2.0 planning session*
