@@ -65,8 +65,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Copied system-prompt.txt to src/context/. Installed server-only. Created src/lib/context.ts with getSystemContext() — reads system-prompt.txt + megatrend-{1-4}.txt via fs.readFileSync and joins with ---KNOWLEDGE BASE DOCUMENT--- separator. Total context: ~128K chars. ts-node verification skipped (server-only throws outside Next.js), verified by summing file sizes instead."
     },
     {
       "id": "US-005",
