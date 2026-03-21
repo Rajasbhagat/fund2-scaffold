@@ -1,0 +1,59 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-7-wave1-01",
+  "description": "Phase 7 Wave 1 — Plan 01: Extract FARO system prompt and syllabi to src/context/faro/, implement getFAROContext() loader. Base branch: ralph/phase-6-final.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Extract FARO system prompt section from spec file to src/context/faro/faro-system-prompt.txt",
+      "description": "As the system, I need only the FARO system prompt (not the full spec doc) available as a plain-text file for runtime injection.",
+      "acceptanceCriteria": [
+        "Create directory `src/context/faro/` if it doesn't exist",
+        "Read `FARO/FARO_Agent_Spec_v2.txt` fully",
+        "Extract only the SYSTEM PROMPT section — look for markers like '=== BEGIN SYSTEM PROMPT ===' / '=== END SYSTEM PROMPT ===' or equivalent section headers. If no clear delimiters exist, extract the section titled 'System Prompt' or 'Agent Instructions' (the part intended for LLM injection, not the spec documentation)",
+        "If you cannot identify a clear system prompt section, use the entire file content",
+        "Write extracted content to `src/context/faro/faro-system-prompt.txt`",
+        "File must be non-empty (at least 2000 characters)",
+        "File must contain `FARO` (the agent name)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read the FARO spec file carefully. The spec likely contains both documentation about the agent AND the actual system prompt. Only extract the system prompt portion for runtime injection. If the entire document appears to be the system prompt (no separate spec documentation sections), use the whole file."
+    },
+    {
+      "id": "US-002",
+      "title": "Extract FUND II syllabus to src/context/faro/fund2-syllabus.txt and create condensed elective summaries",
+      "description": "As the system, I need the FUND II syllabus in full and condensed summaries of elective syllabi so FARO can answer course navigation questions within the token budget.",
+      "acceptanceCriteria": [
+        "Read `ENTRE syllabi - FUND I II and Electives/FUND_II_Syllabus.txt` and write it to `src/context/faro/fund2-syllabus.txt`",
+        "For each elective syllabus .txt file in `ENTRE syllabi - FUND I II and Electives/` (skip PDF files — only .txt files): read the file, create a condensed summary of 200-400 words covering: course name, key topics/themes, session count, main assignments/deliverables",
+        "Write all elective summaries to a single file `src/context/faro/elective-summaries.txt` with a header `=== ELECTIVE COURSE SUMMARIES ===` and each course separated by `--- [Course Name] ---`",
+        "src/context/faro/fund2-syllabus.txt is non-empty",
+        "src/context/faro/elective-summaries.txt is non-empty",
+        "src/context/faro/elective-summaries.txt contains `=== ELECTIVE COURSE SUMMARIES ===`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "List the ENTRE syllabi folder first with Bash to find all .txt files. Skip PDF files — only process .txt files. The FUND II syllabus goes in full. Each elective gets a 200-400 word summary. If there are no .txt elective files (only PDFs), create a minimal elective-summaries.txt with a note that elective syllabi are in PDF format and not yet extracted."
+    },
+    {
+      "id": "US-003",
+      "title": "Add getFAROContext() loader to src/lib/context.ts",
+      "description": "As the system, I need a getFAROContext() function that assembles FARO's complete knowledge base (system prompt + FUND II syllabus + elective summaries) for injection into the route handler.",
+      "acceptanceCriteria": [
+        "Read `src/lib/context.ts` to understand the existing loader pattern",
+        "Add `export function getFAROContext(): string` that: reads faro-system-prompt.txt + fund2-syllabus.txt + elective-summaries.txt, assembles them with headers",
+        "The assembled context must be in this order: (1) FARO system prompt, (2) `\\n\\n[FARO KNOWLEDGE BASE — FUND II Course Navigator]\\nPriority: Consult pre-loaded course materials before searching the web.\\n`, (3) FUND II syllabus with header `=== FUND II SYLLABUS ===`, (4) elective summaries",
+        "src/lib/context.ts contains `export function getFAROContext`",
+        "src/lib/context.ts contains `faro-system-prompt.txt`",
+        "src/lib/context.ts contains `fund2-syllabus.txt`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Follow the same fs.readFileSync pattern as existing context loaders. The function should concatenate all three files with appropriate section headers. Use path.join(process.cwd(), 'src/context/faro/...') for file paths."
+    }
+  ]
+}

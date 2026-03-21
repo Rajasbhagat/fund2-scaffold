@@ -1,0 +1,32 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-6-wave2-02",
+  "description": "Phase 6 Wave 2 — Plan 02: Value Designer route handler. No web search, no deep research. Base branch: ralph/phase-6-merged.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement Value Designer route handler at /api/chat/value-designer/[projectId]",
+      "description": "As a student, I need to send messages in the Value Designer tab and receive streamed responses from the VD agent using its full facilitation workflow system prompt.",
+      "acceptanceCriteria": [
+        "Create directory `src/app/api/chat/value-designer/[projectId]/` and file `route.ts`",
+        "Route has `export const runtime = 'nodejs'` at top",
+        "Route has `export const dynamic = 'force-dynamic'`",
+        "Route imports and calls `getValueDesignerContext()` from `@/lib/context`",
+        "Route reads `currentSession` from POST body with default 1",
+        "Route injects session: `const systemWithSession = \\`${vdContext}\\n\\n[Current FUND II Session: ${currentSession} of 10]\\``",
+        "Route uses `const AGENT_TYPE = 'value-designer'` as a constant (not read from request body)",
+        "Route filters message history: `prisma.message.findMany({ where: { projectId, agentType: AGENT_TYPE }, orderBy: { createdAt: 'asc' } })`",
+        "Route uses `streamText` with `model: vertex('gemini-2.5-flash')` — NO `tools` key at all",
+        "Route persists user message with `agentType: AGENT_TYPE`",
+        "Route persists assistant message with `agentType: AGENT_TYPE` in onFinish",
+        "Route uses the same rolling window logic as the Trend Mapper route (first 4 + last 40 messages)",
+        "Route uses the same streaming response headers as Trend Mapper (X-Accel-Buffering, Cache-Control)",
+        "File does NOT contain the string `tools:` (confirms no web search)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts fully first — copy its structure exactly but: (1) use getValueDesignerContext() instead of getSystemContext(), (2) hardcode AGENT_TYPE = 'value-designer', (3) remove ALL tools. The rolling window, streaming headers, error handling, and onFinish pattern must be identical to Trend Mapper."
+    }
+  ]
+}

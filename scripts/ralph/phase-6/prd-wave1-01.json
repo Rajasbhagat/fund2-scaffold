@@ -1,0 +1,59 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-6-wave1-01",
+  "description": "Phase 6 Wave 1 — Plan 01: Extract Value Designer and SPI system prompts to src/context/agents/, add getValueDesignerContext() and getSPIContext() loaders to src/lib/context.ts. Base branch: ralph/phase-5-multi-agent-shell.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Extract Value Designer system prompt (merge base spec + JTBD update) to src/context/agents/",
+      "description": "As the system, I need the merged Value Designer system prompt available as a plain-text file so the route handler can inject it on every request.",
+      "acceptanceCriteria": [
+        "Create directory `src/context/agents/` if it doesn't exist",
+        "Read `Value Designer/FUND_II_Value_Designer_Agent_Spec.txt` and `Value Designer/FUND_II_Value_Designer_JTBD_Integration_Update.txt`",
+        "Merge the JTBD Integration Update modifications into the base spec — the update adds JTBD language ('Life Areas', 'struggling moments', 'four forces of progress', 'WHEN [situation]') to the relevant activities in the base spec. Read both files carefully to understand which sections are modified",
+        "Write the merged result to `src/context/agents/value-designer.txt`",
+        "Verify the file contains: `Life Areas` (from JTBD update)",
+        "Verify the file contains: `struggling moments` (from JTBD update)",
+        "Verify the file contains: `four forces` (from JTBD update)",
+        "Verify the file is non-empty (at least 10000 characters)",
+        "Run `npx tsc --noEmit` — passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read both VD spec files fully before merging. The JTBD Integration Update modifies specific activities in the 6-activity workflow — apply those modifications to the corresponding sections in the base spec. The merged file should read as a single coherent system prompt, not two concatenated documents. Do NOT create a TypeScript file — just write the merged plain text to src/context/agents/value-designer.txt."
+    },
+    {
+      "id": "US-002",
+      "title": "Copy SPI system prompt to src/context/agents/spi.txt",
+      "description": "As the system, I need the SPI system prompt available as a plain-text file so the SPI route handler can inject it.",
+      "acceptanceCriteria": [
+        "Read `SPI - Sythetic Persona Interviewer/SPI_Agent_Spec_v1_1.txt`",
+        "Write the content to `src/context/agents/spi.txt`",
+        "Verify the file contains `END INTERVIEW` (SPI debrief trigger phrase)",
+        "Verify the file contains `Synthetic Persona` or `synthetic persona` (core concept)",
+        "Verify the file is non-empty (at least 5000 characters)",
+        "Run `npx tsc --noEmit` — passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "This is a direct copy — read the .txt file and write it to the new location. Do not modify the content."
+    },
+    {
+      "id": "US-003",
+      "title": "Add getValueDesignerContext() and getSPIContext() loaders to src/lib/context.ts",
+      "description": "As the system, I need exported loader functions for the VD and SPI context files so route handlers can import and call them just like getSystemContext().",
+      "acceptanceCriteria": [
+        "Read `src/lib/context.ts` to understand the existing getSystemContext() pattern",
+        "Add `export function getValueDesignerContext(): string` that reads `src/context/agents/value-designer.txt` using the same fs.readFileSync pattern as existing loaders",
+        "Add `export function getSPIContext(): string` that reads `src/context/agents/spi.txt` using the same fs.readFileSync pattern",
+        "Both functions use `path.join(process.cwd(), 'src/context/agents/...')` for the file path",
+        "src/lib/context.ts contains `export function getValueDesignerContext`",
+        "src/lib/context.ts contains `export function getSPIContext`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Read src/lib/context.ts first to match the exact pattern used by getSystemContext(). Use the same approach — readFileSync at startup or lazily. Follow whatever caching pattern already exists in the file."
+    }
+  ]
+}

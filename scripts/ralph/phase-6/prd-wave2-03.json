@@ -1,0 +1,50 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-6-wave2-03",
+  "description": "Phase 6 Wave 2 — Plan 03: SPI route handler + ChatWindow endpoint routing. No web search. Base branch: ralph/phase-6-merged.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement SPI route handler at /api/chat/spi/[projectId]",
+      "description": "As a student, I need to send messages in the SPI tab and receive streamed responses from the SPI persona interviewer using its full in-character interview system prompt.",
+      "acceptanceCriteria": [
+        "Create directory `src/app/api/chat/spi/[projectId]/` and file `route.ts`",
+        "Route has `export const runtime = 'nodejs'` at top",
+        "Route has `export const dynamic = 'force-dynamic'`",
+        "Route imports and calls `getSPIContext()` from `@/lib/context`",
+        "Route reads `currentSession` from POST body with default 1",
+        "Route injects session: `const systemWithSession = \\`${spiContext}\\n\\n[Current FUND II Session: ${currentSession} of 10]\\``",
+        "Route uses `const AGENT_TYPE = 'spi'` as a constant",
+        "Route filters message history: `prisma.message.findMany({ where: { projectId, agentType: AGENT_TYPE }, orderBy: { createdAt: 'asc' } })`",
+        "Route uses `streamText` with `model: vertex('gemini-2.5-flash')` — NO `tools` key at all",
+        "Route persists user message with `agentType: AGENT_TYPE`",
+        "Route persists assistant message with `agentType: AGENT_TYPE` in onFinish",
+        "Route uses the same rolling window logic as Trend Mapper (first 4 + last 40 messages)",
+        "Route uses the same streaming response headers as Trend Mapper",
+        "File does NOT contain the string `tools:` (confirms no web search)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts fully first — copy its structure exactly but: (1) use getSPIContext() instead of getSystemContext(), (2) hardcode AGENT_TYPE = 'spi', (3) remove ALL tools. Identical structure to the VD route handler."
+    },
+    {
+      "id": "US-002",
+      "title": "Add getEndpoint() routing helper to ChatWindow.tsx to route POST to correct agent endpoint",
+      "description": "As a student, when I send a message in any agent tab, the correct agent's route handler must receive the request — not always the Trend Mapper handler.",
+      "acceptanceCriteria": [
+        "Read src/components/ChatWindow.tsx to understand the current fetch call",
+        "Add a `getEndpoint(agentType: string, projectId: string): string` helper function at module level in ChatWindow.tsx (above the component)",
+        "getEndpoint returns: 'trend-mapper' → `/api/chat/${projectId}`, 'value-designer' → `/api/chat/value-designer/${projectId}`, 'spi' → `/api/chat/spi/${projectId}`, 'faro' → `/api/chat/faro/${projectId}`, default → `/api/chat/${projectId}`",
+        "Update the fetch call in ChatWindow's sendMessage/handleSubmit to use `getEndpoint(agentType, projectId)` instead of the hardcoded `/api/chat/${projectId}`",
+        "src/components/ChatWindow.tsx contains `function getEndpoint`",
+        "src/components/ChatWindow.tsx contains `value-designer`",
+        "src/components/ChatWindow.tsx contains `faro` (placeholder for Phase 7)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Read src/components/ChatWindow.tsx first to find the exact fetch call location. This is a minimal change — only add the helper function and update the one fetch URL. All other ChatWindow logic (streaming, state, error handling) stays unchanged. The FARO case must be included even though Phase 7 isn't done yet — it just needs the URL string."
+    }
+  ]
+}
