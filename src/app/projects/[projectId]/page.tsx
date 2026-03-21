@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import ChatWindow from '@/components/ChatWindow'
 
@@ -21,10 +20,9 @@ export default async function ProjectPage({
   })
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col h-full">
       <div className="p-4 border-b border-gray-200">
-        <Link href="/" className="text-sm text-blue-600 hover:underline">← Back to Dashboard</Link>
-        <h1 className="text-xl font-bold mt-1">{project.name}</h1>
+        <h1 className="text-xl font-bold">{project.name}</h1>
       </div>
       <div className="flex-1 overflow-hidden">
         <ChatWindow projectId={projectId} initialMessages={messages} />
