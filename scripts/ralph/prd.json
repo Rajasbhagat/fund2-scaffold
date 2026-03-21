@@ -1,42 +1,48 @@
 {
   "project": "FUND II Trend Mapper",
-  "branchName": "ralph/phase-3-integration",
-  "description": "Phase 3 Integration — Vertex AI Grounding and full end-to-end wiring. Runs AFTER Group A and Group B branches are merged. US-003 adds grounding to the route (depends on Group A). US-006 wires the project page end-to-end (depends on both groups). Base branch: ralph/phase-3-merged.",
+  "branchName": "ralph/phase-4-group-a",
+  "description": "Phase 4 Group A (New Files Track) — MessageBubble component and GUARDRAIL_QA checklist. Creates ONLY new files with zero risk of conflicting with Group B or Group C. Runs in parallel with Groups B and C. Base branch: ralph/phase-3-streaming-chat.",
   "userStories": [
     {
-      "id": "US-003",
-      "title": "Configure Vertex AI Grounding with web search on the model",
-      "description": "As a student, I need the Trend Mapper agent to cite real web sources when making claims about trends, so I can trust the information and explore further.",
+      "id": "US-001",
+      "title": "Install react-markdown + remark-gfm and implement MessageBubble.tsx with prose styling",
+      "description": "As a student, I need chat messages to render with proper markdown formatting — headers, bold text, bullet lists, tables, and code blocks — so I can read the agent's structured pedagogical responses clearly.",
       "acceptanceCriteria": [
-        "Before implementing: run `npm show @google-cloud/vertexai version` or check the installed SDK types to confirm the exact parameter name and structure for enabling web search grounding — do not assume it matches old docs",
-        "Configure web search grounding on the model call in the chat route (Path A: check `@ai-sdk/google-vertex` docs for grounding tool config; Path B: add `tools` or `googleSearchRetrieval` config to the `generateContentStream` call)",
-        "Test: POST to the chat route with a message 'What are the latest AI trends in 2025?' — the response must include grounding metadata or citation markers in the streamed tokens",
-        "Verify grounding is active by checking for `groundingMetadata` in the raw response or visible citations in the streamed output",
+        "Install `react-markdown` and `remark-gfm` via npm: `npm install react-markdown remark-gfm`",
+        "Create `src/components/MessageBubble.tsx` as a Client Component (`'use client'`)",
+        "MessageBubble accepts props: `role: 'user' | 'model'` and `content: string`",
+        "Model/assistant messages render `content` through `<ReactMarkdown remarkPlugins={[remarkGfm]}>` wrapped in a `<div>` with Tailwind `prose prose-sm max-w-none` classes for readable typography",
+        "User messages render `content` as plain text (no markdown processing needed)",
+        "Model bubble uses a light background (e.g. `bg-gray-100`) aligned left; user bubble uses a colored background (e.g. `bg-blue-600 text-white`) aligned right",
+        "Rendered output: `## Header` produces a visually larger header element, `**bold**` produces bold text, `- item` produces an indented bullet, code fenced blocks use monospace font",
+        "Note: ChatWindow will be updated to use MessageBubble in the integration commit after all Phase 4 groups merge — do NOT modify ChatWindow.tsx in this story",
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK TypeScript types or official docs before coding. Do not copy-paste from old examples without checking that types compile. PRISMA 7 NOTE: generated client is at `@/generated/prisma/client`."
+      "notes": "This story creates only a NEW file. Do not modify ChatWindow.tsx — that is done in the integration step after all Phase 4 groups merge. The MessageBubble component must accept role 'user' | 'model' (Vertex AI convention) not 'user' | 'assistant'."
     },
     {
       "id": "US-006",
-      "title": "Wire the project chat page end-to-end with Server Component history hydration",
-      "description": "As a student, I need the project page to load my prior conversation instantly on page load and then let me continue chatting in real time, so the experience feels seamless.",
+      "title": "Create GUARDRAIL_QA.md checklist for manual pedagogical verification against FUND II spec",
+      "description": "As a FUND II faculty member or QA reviewer, I need a structured checklist of specific test prompts and expected behaviors so I can manually verify the agent never violates its pedagogical guardrails.",
       "acceptanceCriteria": [
-        "Update `src/app/projects/[projectId]/page.tsx` (Server Component) to load initial chat history: `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`",
-        "Pass the fetched messages as `initialMessages` prop to `<ChatWindow projectId={projectId} initialMessages={messages} />`",
-        "Remove the Phase 2 placeholder `<p>Chat coming in Phase 3</p>`",
-        "ChatWindow is rendered below the project name heading; ChatInput is rendered inside or below ChatWindow",
-        "End-to-end test: create a new project, open it, send a message, see it stream word-by-word, close the tab, reopen the project — prior message and response are visible immediately on load",
-        "Verify the agent's first response to a new project demonstrates challenge-first behavior consistent with the FUND II system prompt (not a generic opener like 'How can I help you today?')",
-        "Verify chat input is disabled and shows 'Thinking...' while the stream is active",
-        "Verify the agent cites web sources when asked about recent trends (Grounding active)",
-        "`npx tsc --noEmit` passes",
-        "`npm run build` completes without errors"
+        "Create `GUARDRAIL_QA.md` in the project root",
+        "The file documents the exact agent spec source: `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`",
+        "The file contains a section for Guardrail 1 — 'Never output a complete 6-slide deck': includes a specific test prompt and expected behavior (agent refuses and scaffolds one slide at a time)",
+        "The file contains a section for Guardrail 2 — 'Never use pain point language': includes a test prompt and expected behavior (agent uses 'problems' not 'pain points')",
+        "The file contains a section for Guardrail 3 — 'Never invent statistics without citation': includes a test prompt asking for stats and expected behavior (agent cites a source or declines to state an unverified stat)",
+        "The file contains a section for Guardrail 4 — 'Session 3 bridge signal': test prompt simulating end of trend analysis workflow, expected behavior (agent signals transition to Value Designer)",
+        "The file contains Pre-Class Mode verification section: 6-slide scaffolding workflow prompts and expected step-by-step behavior",
+        "The file contains In-Class Mode verification section: S-curve, 2x2 grid, and trend-to-problem mapping interactions with test prompts",
+        "Each section has a `[ ] PASS` / `[ ] FAIL` checkbox and a Notes field for the human reviewer",
+        "The file includes setup instructions: start dev server with `npm run dev`, navigate to a project, confirm system prompt loads",
+        "`npm run dev` starts without errors (verify then stop the server)",
+        "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
+      "passes": false,
+      "notes": "HUMAN VERIFICATION REQUIRED. Ralph creates the GUARDRAIL_QA.md checklist and confirms `npm run dev` starts cleanly. The actual pedagogical QA sign-off must be done by a human reviewer (FUND II faculty or project lead). Do NOT set passes: true on this story autonomously — only a human reviewer should mark this complete after conducting the manual QA session. Read `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt` to extract the exact guardrail rules and terminology."
     }
   ]
 }
