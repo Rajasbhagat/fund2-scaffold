@@ -21,10 +21,17 @@ model Project {
 model Message {
   id        String   @id @default(cuid())
   projectId String
+  agentType String   @default("trend-mapper")
   role      String
   content   String
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt])
+  @@index([projectId, agentType, createdAt])
+}
+
+model AppSettings {
+  id            Int @id @default(1)
+  sessionNumber Int @default(1)
 }
