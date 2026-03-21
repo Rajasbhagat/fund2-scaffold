@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ChatInput from '@/components/ChatInput'
+import MessageBubble from '@/components/MessageBubble'
 
 interface Message {
   id: string
@@ -158,7 +159,7 @@ export default function ChatWindow({ projectId, initialMessages }: ChatWindowPro
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">{msg.content}</p>
+              <MessageBubble role={msg.role === 'assistant' ? 'model' : 'user'} content={msg.content} />
             )}
           </div>
         ))}
