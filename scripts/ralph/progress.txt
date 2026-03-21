@@ -1,120 +1,25 @@
 # Ralph Progress Log
-Started: 2026-03-21
-Project: FUND II Trend Mapper
-Phase: 1 — Foundation & Environment
+Started: Sat Mar 21 16:53:00 CET 2026
 ---
 
 ## Codebase Patterns
-- Next.js scaffold: use temp dir (create-next-app rejects capital letters in cwd name), then cp -r /tmp/scaffold/. . then rm -rf node_modules && npm install (to fix symlinks)
-- Branch setup: create-next-app overwrites .git — always run git checkout -b <branch> AFTER copying scaffold files
-- Typecheck: `npx tsc --noEmit` (requires node_modules symlinks to be correct)
-- Prisma 7: uses driver adapters — SQLite requires `@prisma/adapter-better-sqlite3` + `better-sqlite3`; PrismaClient constructor requires `{ adapter }` option (no-arg constructor is a type error)
-- Prisma 7: PrismaClient generated to `src/generated/prisma/client.ts` — import from `@/generated/prisma/client` (not `@prisma/client`)
-- Prisma 7: config in `prisma.config.ts` (not schema.prisma) — datasource URL set via `process.env["DATABASE_URL"]` loaded by `dotenv/config`
-- SQLite db file lands at `./dev.db` (project root) — add `*.db` to .gitignore
-- pdf-parse v2: use `PDFParse` class with `{ url: absolutePath }` constructor → `.load()` → `.getText()` (returns `{ pages: [{text, num}] }`)
-- ts-node scripts with tsconfig `"module":"esnext"`: run with `--compiler-options '{"module":"commonjs"}'` to avoid ESM require() errors
-- scripts/extract-docs.ts: run with `npx ts-node --skip-project --compiler-options '{"module":"commonjs"}' scripts/extract-docs.ts`
-- server-only package throws when imported outside Next.js context (even in ts-node) — cannot use ts-node to verify modules that import server-only; verify via file size checks instead
-- Context loader: import from `@/lib/context`, function `getSystemContext()` returns all docs joined with `\n\n---KNOWLEDGE BASE DOCUMENT---\n\n`
-- Vertex AI model on socratoys project: use `gemini-2.5-flash` — gemini-2.0-flash and gemini-1.5-flash return 404; gemini-2.5-flash is available
-- Vertex AI ADC: use GOOGLE_CLOUD_PROJECT=socratoys, GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS pointing to ADC json
-- All Vertex AI Route Handlers MUST have `export const runtime = 'nodejs'` — edge runtime breaks gcloud ADC auth
-
-## 2026-03-21 - US-001
-- What was implemented: Scaffolded Next.js 14 App Router project with TypeScript, Tailwind, ESLint. Replaced default boilerplate in src/app/page.tsx with `<h1>FUND II Trend Mapper</h1>`. Restored Trend Mapper source docs and scripts/ralph directory.
-- Files changed: src/app/page.tsx, scripts/ralph/prd.json, scripts/ralph/progress.txt, scripts/ralph/CLAUDE.md, Trend Mapper/* (all source docs added)
-- **Learnings for future iterations:**
-  - create-next-app rejects dirs with capital letters — scaffold in /tmp then copy
-  - Copying scaffold with `cp -r . dest/` also copies .git, overwriting project git — always run scaffold then branch, not the other way around
-  - After cp -r node_modules, symlinks in .bin/ break — always `rm -rf node_modules && npm install` after copying
-  - git clean -fd removes ALL untracked files including important source files — never use on ralph branch without checking what's untracked
----
-
-## 2026-03-21 - US-002
-- What was implemented: Prisma 7 + SQLite setup with driver adapter, global singleton, and WAL mode instrumentation
-- Files changed: prisma/schema.prisma (stub Project model), prisma.config.ts, prisma/migrations/20260321150637_init/migration.sql, src/lib/prisma.ts (singleton with PrismaBetterSqlite3 adapter), src/instrumentation.ts (WAL mode on nodejs runtime), package.json, .gitignore
-- **Learnings for future iterations:**
-  - Prisma 7 is a BREAKING change from Prisma 5/6: requires driver adapters for all databases; `new PrismaClient()` with no args is a TypeScript error
-  - For SQLite: `npm install @prisma/adapter-better-sqlite3 better-sqlite3 @types/better-sqlite3`
-  - PrismaBetterSqlite3 adapter takes `{ url: '/absolute/path/to/dev.db' }` — strip `file:` prefix and resolve with `path.join(process.cwd(), ...)`
-  - PrismaClient must be imported from `@/generated/prisma/client` (the generated output path), not from `@prisma/client`
-  - `npx prisma generate` must be run after `prisma init` — migrate dev does NOT auto-generate the client in Prisma 7
-  - instrumentation.ts lives in `src/` (not root) because this project uses src-dir; gates WAL PRAGMA behind `NEXT_RUNTIME === 'nodejs'` check
----
+- All Vertex AI routes use `export const runtime = 'nodejs'`
+- Prisma client imported from `@/lib/prisma` (singleton), generated to `@/generated/prisma/client`
+- Context loaded via `getSystemContext()` from `@/lib/context`
+- Vertex AI grounding: `tools: { google_search: vertex.tools.googleSearch({}) }` in streamText call
+- `vertex` instance created with `createVertex()` has `.tools.googleSearch()` available
+- Run `npx prisma generate` before typecheck if `@/generated/prisma/client` errors appear
+- This is a git worktree — work in `/private/tmp/fund2-p3-integration`, NOT the main working dir
 
 ## 2026-03-21 - US-003
-- What was implemented: Extraction script for all 4 megatrend source docs. Installed mammoth + pdf-parse v2. Created scripts/extract-docs.ts. Generated src/context/megatrend-{1-4}.txt (all non-empty).
-- Files changed: scripts/extract-docs.ts (new), src/context/megatrend-1.txt through megatrend-4.txt (new), package.json, package-lock.json
+- Implemented Vertex AI web search grounding on the chat route
+- Added `tools: { google_search: vertex.tools.googleSearch({}) }` to the `streamText` call
+- Verified using `@ai-sdk/google-vertex` SDK docs at `node_modules/@ai-sdk/google-vertex/docs/16-google-vertex.mdx`
+- The `createVertex()` return value has `.tools.googleSearch()` — confirmed in type definitions
+- Files changed: `src/app/api/chat/[projectId]/route.ts`
 - **Learnings for future iterations:**
-  - pdf-parse v2 is a complete API change from v1: use `new PDFParse({ url: absPath })` → `.load()` → `.getText()` which returns `{ pages: [{text, num}] }`
-  - tsconfig has `"module":"esnext"` so ts-node scripts can't use `require()` — must pass `--compiler-options '{"module":"commonjs"}'`
-  - @types/pdf-parse was written for v1 so types are wrong for v2; use `require()` with manual type casting in script
-  - mammoth.extractRawText works as expected with `{ path: string }`
----
-
-## 2026-03-21 - US-004
-- What was implemented: Copied system-prompt.txt to src/context/. Installed server-only package. Created src/lib/context.ts with getSystemContext() that reads system-prompt.txt + megatrend-{1-4}.txt and joins them with ---KNOWLEDGE BASE DOCUMENT--- separator.
-- Files changed: src/context/system-prompt.txt (new), src/lib/context.ts (new), package.json, package-lock.json
-- **Learnings for future iterations:**
-  - server-only package throws at import time outside Next.js — ts-node verification of modules that use server-only will fail; verify by checking file sizes instead
-  - Total assembled context: ~128K chars (well above 10K threshold)
-  - getSystemContext() uses fs.readFileSync with process.cwd() for path resolution — works in Next.js server context
----
-
-
-## 2026-03-21 - Phase 2 US-001
-- What was implemented: Updated Prisma schema with full Project and Message models. Project uses cuid() id, has updatedAt and messages relation. Message has cascade delete and @@index([projectId, createdAt]). Ran migrate dev (migration: add_project_and_message_models) and prisma generate.
-- Files changed: prisma/schema.prisma, prisma/migrations/20260321153653_add_project_and_message_models/migration.sql
-- **Learnings for future iterations:**
-  - Switched from phase-1 branch (ralph/phase-1-foundation) to new phase-2 branch (ralph/phase-2-project-management)
-  - src/generated/prisma is gitignored — commit only schema + migrations, not generated client
-  - Prisma 7 cuid() works as @id @default(cuid()) — no plugin needed
----
-
-## 2026-03-21 - Phase 2 US-002
-- What was implemented: Project CRUD API routes. `src/app/api/projects/route.ts` exports GET (list, sorted by updatedAt desc) and POST (create, Zod validated, 201). `src/app/api/projects/[id]/route.ts` exports GET (single), PATCH (rename, Zod validated), DELETE (delete with 404 guard). Both use `export const dynamic = 'force-dynamic'` and import prisma from `@/lib/prisma`. Installed zod.
-- Files changed: src/app/api/projects/route.ts (new), src/app/api/projects/[id]/route.ts (new), package.json, package-lock.json
-- **Learnings for future iterations:**
-  - Next.js 16.x (v15+ patterns): dynamic route params are a Promise — must `await params` in route handlers
-  - Zod safeParse returns `.success` boolean; use `.error.issues[0]?.message` for user-facing errors
-  - `export const dynamic = 'force-dynamic'` prevents GET route caching; place at top of file before imports
-  - git add with glob brackets like `[id]` fails in zsh — use directory path `src/app/api/projects/` instead
----
-
-## 2026-03-21 - US-005
-- What was implemented: Installed @google-cloud/vertexai, created src/app/api/smoke-test/route.ts with nodejs runtime. Created .env.local with GOOGLE_CLOUD_PROJECT=socratoys, GOOGLE_CLOUD_LOCATION=us-central1, GOOGLE_APPLICATION_CREDENTIALS path. Route hits Vertex AI with gemini-2.5-flash and returns {ok:true, response:'READY'}.
-- Files changed: src/app/api/smoke-test/route.ts (new), .env.local (new, gitignored), package.json, package-lock.json
-- **Learnings for future iterations:**
-  - gemini-2.0-flash returns 404 on socratoys project — use gemini-2.5-flash for all Vertex AI calls
-  - gemini-1.5-flash is also unavailable on socratoys; gemini-2.5-flash is the working model
-  - @google-cloud/vertexai is deprecated (warns at import) but still functional; @google/genai is the future replacement
-  - @google/genai free-tier API keys hit limit:0 for gemini-2.0-flash (gen-lang-client projects have no billing) — use Vertex AI ADC instead
-  - GOOGLE_APPLICATION_CREDENTIALS must be explicitly set in .env.local for ADC to resolve correctly in Next.js server context
----
-
-## 2026-03-21 - Phase 2 US-003
-- What was implemented: Replaced stub page.tsx with an async Server Component that queries `prisma.project.findMany({ orderBy: { updatedAt: 'desc' } })` and renders project names in a list. Shows 'No projects yet' empty state when list is empty. Page title is 'FUND II Trend Mapper' in an h1.
-- Files changed: src/app/page.tsx
-- **Learnings for future iterations:**
-  - Server Components can be async functions — no 'use client' directive needed, Prisma can be called directly
-  - `npm run build` shows the `/` route as ○ (Static) unless force-dynamic is set; for a page that reads from DB this is fine — Next.js will revalidate on request
----
-
-## 2026-03-21 - Phase 2 US-004
-- What was implemented: Created ProjectCard.tsx (Client Component with rename inline-edit + delete confirmation), CreateProjectForm.tsx (Client Component with POST to /api/projects), and ProjectList.tsx (Client Component managing optimistic state). Updated page.tsx to serialize Prisma Date fields to ISO strings and pass to ProjectList.
-- Files changed: src/components/ProjectCard.tsx (new), src/components/CreateProjectForm.tsx (new), src/components/ProjectList.tsx (new), src/app/page.tsx
-- **Learnings for future iterations:**
-  - Server → Client Component prop boundary: Prisma Date objects must be serialized to strings (`.toISOString()`) before passing as props
-  - Optimistic UI pattern: Server Component fetches initial data; Client wrapper manages local state array; child callbacks mutate state without page reload
-  - ProjectList acts as the state manager; ProjectCard and CreateProjectForm are purely controlled via callbacks
----
-
-## 2026-03-21 - Phase 2 US-005
-- What was implemented: Created `src/app/projects/[projectId]/page.tsx` as an async Server Component. Fetches project by id via Prisma; calls `notFound()` if missing. Renders project name in h1, placeholder "Chat coming in Phase 3", and a back link to /. Created `src/app/projects/[projectId]/not-found.tsx` with a user-friendly message and dashboard link.
-- Files changed: src/app/projects/[projectId]/page.tsx (new), src/app/projects/[projectId]/not-found.tsx (new)
-- **Learnings for future iterations:**
-  - Next.js 16.x Server Component pages also receive params as a Promise — use `{ params }: { params: Promise<{ projectId: string }> }` and `await params`
-  - `notFound()` from `next/navigation` triggers the nearest `not-found.tsx` in the same route segment
-  - Both `npx tsc --noEmit` and `npm run build` passed cleanly; route shows as ƒ (Dynamic) in build output
+  - The grounding API in `@ai-sdk/google-vertex` v4 uses `vertex.tools.googleSearch({})` as a tool, NOT `googleSearchRetrieval` config
+  - The worktree at `/private/tmp/fund2-p3-integration` is the `ralph/phase-3-integration` branch — always cd here, not to the main `/Users/rajas/Desktop/AntiGravity/Fund2Updated` working dir
+  - Run `npx prisma generate` before typecheck in a fresh worktree — generated client is not committed
+  - The integration branch has `ralph/phase-3-merged` as its base; both share the same starting commit
 ---

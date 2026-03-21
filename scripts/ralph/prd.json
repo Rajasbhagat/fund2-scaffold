@@ -1,94 +1,42 @@
 {
   "project": "FUND II Trend Mapper",
-  "branchName": "ralph/phase-2-project-management",
-  "description": "Phase 2: Project Management — Students can manage all their trend projects from a dashboard. Create, rename, delete, and navigate into each project's dedicated workspace. Depends on Phase 1 (ralph/phase-1-foundation) being complete.",
+  "branchName": "ralph/phase-3-integration",
+  "description": "Phase 3 Integration — Vertex AI Grounding and full end-to-end wiring. Runs AFTER Group A and Group B branches are merged. US-003 adds grounding to the route (depends on Group A). US-006 wires the project page end-to-end (depends on both groups). Base branch: ralph/phase-3-merged.",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Define Prisma schema with Project and Message models, cascade delete, and composite index",
-      "description": "As a developer, I need the full Prisma schema in place so the database can store projects and their messages with correct cascade-delete and query-performance characteristics.",
+      "id": "US-003",
+      "title": "Configure Vertex AI Grounding with web search on the model",
+      "description": "As a student, I need the Trend Mapper agent to cite real web sources when making claims about trends, so I can trust the information and explore further.",
       "acceptanceCriteria": [
-        "Replace the stub model in `prisma/schema.prisma` with two models: `Project` (id String @id @default(cuid()), name String, createdAt DateTime @default(now()), updatedAt DateTime @updatedAt, messages Message[]) and `Message` (id String @id @default(cuid()), projectId String, role String, content String, createdAt DateTime @default(now()), project Project @relation(fields: [projectId], references: [id], onDelete: Cascade))",
-        "Add `@@index([projectId, createdAt])` to the Message model",
-        "Run `npx prisma migrate dev --name add-project-and-message-models` — migration completes without errors",
-        "Run `npx prisma generate` — client regenerates without errors",
-        "Verify `prisma/migrations/` contains a new folder named with timestamp and `add_project_and_message_models`",
+        "Before implementing: run `npm show @google-cloud/vertexai version` or check the installed SDK types to confirm the exact parameter name and structure for enabling web search grounding — do not assume it matches old docs",
+        "Configure web search grounding on the model call in the chat route (Path A: check `@ai-sdk/google-vertex` docs for grounding tool config; Path B: add `tools` or `googleSearchRetrieval` config to the `generateContentStream` call)",
+        "Test: POST to the chat route with a message 'What are the latest AI trends in 2025?' — the response must include grounding metadata or citation markers in the streamed tokens",
+        "Verify grounding is active by checking for `groundingMetadata` in the raw response or visible citations in the streamed output",
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": ""
+      "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK TypeScript types or official docs before coding. Do not copy-paste from old examples without checking that types compile. PRISMA 7 NOTE: generated client is at `@/generated/prisma/client`."
     },
     {
-      "id": "US-002",
-      "title": "Implement project CRUD Route Handlers with Zod validation and force-dynamic",
-      "description": "As a developer, I need REST API endpoints for project CRUD so the dashboard UI can create, list, rename, and delete projects through well-typed, validated handlers.",
+      "id": "US-006",
+      "title": "Wire the project chat page end-to-end with Server Component history hydration",
+      "description": "As a student, I need the project page to load my prior conversation instantly on page load and then let me continue chatting in real time, so the experience feels seamless.",
       "acceptanceCriteria": [
-        "Create `src/app/api/projects/route.ts` — exports `GET` (list all projects sorted by `updatedAt` desc) and `POST` (create project); both import `prisma` from `@/lib/prisma`",
-        "`route.ts` has `export const dynamic = 'force-dynamic'` at the top to prevent GET route caching",
-        "POST handler validates request body with Zod: `z.object({ name: z.string().min(1).max(100) })` — returns 400 with `{ error }` message on invalid input",
-        "Create `src/app/api/projects/[id]/route.ts` — exports `GET` (single project by id), `PATCH` (rename, Zod-validated), `DELETE` (delete project by id)",
-        "All handlers return `NextResponse.json(...)` with appropriate HTTP status codes (200, 201, 400, 404)",
-        "GET `/api/projects` returns a JSON array; POST `/api/projects` with body `{\"name\":\"Test Project\"}` returns `{ id, name, createdAt, updatedAt }` with status 201",
-        "DELETE `/api/projects/[id]` on a non-existent id returns 404",
-        "`npx tsc --noEmit` passes"
-      ],
-      "priority": 2,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-003",
-      "title": "Build the project dashboard Server Component that renders the initial project list",
-      "description": "As a student, I need a dashboard page that shows all my trend projects when I open the app so I can see what I've been working on at a glance.",
-      "acceptanceCriteria": [
-        "Replace `src/app/page.tsx` with a Server Component (no `'use client'` directive) that queries Prisma directly: `prisma.project.findMany({ orderBy: { updatedAt: 'desc' } })`",
-        "Import `prisma` from `@/lib/prisma`",
-        "Renders a list of project names; if no projects exist, displays an empty state message such as 'No projects yet'",
-        "Page title reads 'FUND II Trend Mapper' (e.g. in an `<h1>`)",
-        "`npm run build` completes without errors (static analysis must pass)",
-        "`npx tsc --noEmit` passes"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-004",
-      "title": "Build project card component with create, rename, and delete interactions using optimistic UI",
-      "description": "As a student, I need to create new projects, rename existing ones, and delete projects I no longer need — all without a full page reload — so the dashboard feels fast and responsive.",
-      "acceptanceCriteria": [
-        "Create `src/components/ProjectCard.tsx` as a Client Component (`'use client'`) that accepts a `project: { id: string; name: string; updatedAt: string }` prop",
-        "Card displays the project name and an 'Open' link pointing to `/projects/[id]`",
-        "Card has a 'Rename' affordance (button or inline edit) that PATCHes `/api/projects/[id]` with `{ name }` and updates the UI without a full reload",
-        "Card has a 'Delete' button that shows a confirmation step (e.g. 'Are you sure?') before sending DELETE to `/api/projects/[id]` and removing the card from the list optimistically",
-        "Create `src/components/CreateProjectForm.tsx` as a Client Component with a text input and 'Create' button that POSTs `{ name }` to `/api/projects` and appends the new project to the list on success",
-        "Dashboard `page.tsx` renders `<CreateProjectForm />` above the project list and passes each project to `<ProjectCard />`",
-        "No full page reload occurs for any of the three interactions (create, rename, delete)",
-        "`npx tsc --noEmit` passes"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-005",
-      "title": "Build project routing with /projects/[projectId] page, not-found handling, and back navigation",
-      "description": "As a student, I need to navigate into a project's dedicated page when I click 'Open' so I have a workspace for that project's chat (placeholder at this stage).",
-      "acceptanceCriteria": [
-        "Create `src/app/projects/[projectId]/page.tsx` as a Server Component that accepts `params: { projectId: string }`",
-        "Page fetches the project from Prisma: `prisma.project.findUnique({ where: { id: projectId } })`",
-        "If project is not found, calls Next.js `notFound()` (imported from `next/navigation`) to render the 404 page",
-        "If found, renders the project name in an `<h1>` and a placeholder section such as `<p>Chat coming in Phase 3</p>`",
-        "Includes a back-navigation link: `<Link href='/'>← Back to Dashboard</Link>` (using `next/link`)",
-        "Create `src/app/projects/[projectId]/not-found.tsx` with a user-friendly 'Project not found' message and a link back to the dashboard",
-        "Clicking 'Open' on a ProjectCard navigates to `/projects/[id]` and displays the correct project name",
+        "Update `src/app/projects/[projectId]/page.tsx` (Server Component) to load initial chat history: `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`",
+        "Pass the fetched messages as `initialMessages` prop to `<ChatWindow projectId={projectId} initialMessages={messages} />`",
+        "Remove the Phase 2 placeholder `<p>Chat coming in Phase 3</p>`",
+        "ChatWindow is rendered below the project name heading; ChatInput is rendered inside or below ChatWindow",
+        "End-to-end test: create a new project, open it, send a message, see it stream word-by-word, close the tab, reopen the project — prior message and response are visible immediately on load",
+        "Verify the agent's first response to a new project demonstrates challenge-first behavior consistent with the FUND II system prompt (not a generic opener like 'How can I help you today?')",
+        "Verify chat input is disabled and shows 'Thinking...' while the stream is active",
+        "Verify the agent cites web sources when asked about recent trends (Grounding active)",
         "`npx tsc --noEmit` passes",
         "`npm run build` completes without errors"
       ],
-      "priority": 5,
-      "passes": true,
-      "notes": ""
+      "priority": 2,
+      "passes": false,
+      "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
     }
   ]
 }
