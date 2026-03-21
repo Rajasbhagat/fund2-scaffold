@@ -3,10 +3,33 @@
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { SessionProvider, useSession } from '@/contexts/SessionContext'
 
 interface Project {
   id: string
   name: string
+}
+
+function SessionSelector() {
+  const { sessionNumber, setSessionNumber } = useSession()
+  return (
+    <div className="p-4 border-t border-gray-200">
+      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+        FUND II Session
+      </label>
+      <select
+        value={sessionNumber}
+        onChange={(e) => setSessionNumber(Number(e.target.value))}
+        className="w-full text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+          <option key={n} value={n}>
+            Session {n}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
 }
 
 export default function ProjectLayout({
@@ -20,6 +43,7 @@ export default function ProjectLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
+    <SessionProvider>
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside
@@ -69,6 +93,7 @@ export default function ProjectLayout({
             })}
           </ul>
         </nav>
+        <SessionSelector />
       </aside>
 
       {/* Main content */}
@@ -87,5 +112,6 @@ export default function ProjectLayout({
         <div className="flex-1 overflow-hidden">{children}</div>
       </div>
     </div>
+    </SessionProvider>
   )
 }
