@@ -19,15 +19,31 @@ function roleLabel(role: string): string {
   return role === 'user' ? 'You' : 'Trend Mapper'
 }
 
+function ThinkingIndicator() {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        Trend Mapper
+      </span>
+      <div className="flex items-center gap-1 py-1">
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:150ms]" />
+        <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:300ms]" />
+      </div>
+    </div>
+  )
+}
+
 export default function ChatWindow({ projectId, initialMessages }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [lastUserText, setLastUserText] = useState<string>('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isLoading])
 
   async function sendMessage(userText: string) {
     const userMessage: Message = {
@@ -36,14 +52,9 @@ export default function ChatWindow({ projectId, initialMessages }: ChatWindowPro
       content: userText,
     }
 
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      role: 'assistant',
-      content: '',
-    }
-
-    setMessages((prev) => [...prev, userMessage, assistantMessage])
+    setMessages((prev) => [...prev, userMessage])
     setLastUserText(userText)
+    setIsLoading(true)
     setIsStreaming(true)
 
     try {
@@ -61,45 +72,57 @@ export default function ChatWindow({ projectId, initialMessages }: ChatWindowPro
         } catch {
           // ignore JSON parse failure
         }
-        setMessages((prev) => {
-          const updated = [...prev]
-          updated[updated.length - 1] = {
-            ...assistantMessage,
-            content: errorMsg,
-            isError: true,
-          }
-          return updated
-        })
+        setIsLoading(false)
+        const errorMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: errorMsg,
+          isError: true,
+        }
+        setMessages((prev) => [...prev, errorMessage])
         return
       }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
+      let firstToken = true
+      const assistantId = crypto.randomUUID()
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        setMessages((prev) => {
-          const updated = [...prev]
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: updated[updated.length - 1].content + chunk,
-          }
-          return updated
-        })
+
+        if (firstToken) {
+          firstToken = false
+          setIsLoading(false)
+          // Add the assistant message with the first chunk
+          setMessages((prev) => [
+            ...prev,
+            { id: assistantId, role: 'assistant', content: chunk },
+          ])
+        } else {
+          setMessages((prev) => {
+            const updated = [...prev]
+            updated[updated.length - 1] = {
+              ...updated[updated.length - 1],
+              content: updated[updated.length - 1].content + chunk,
+            }
+            return updated
+          })
+        }
       }
     } catch {
-      setMessages((prev) => {
-        const updated = [...prev]
-        updated[updated.length - 1] = {
-          ...updated[updated.length - 1],
-          content: 'Something went wrong. Please try again.',
-          isError: true,
-        }
-        return updated
-      })
+      setIsLoading(false)
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: 'Something went wrong. Please try again.',
+        isError: true,
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
+      setIsLoading(false)
       setIsStreaming(false)
     }
   }
@@ -139,9 +162,10 @@ export default function ChatWindow({ projectId, initialMessages }: ChatWindowPro
             )}
           </div>
         ))}
+        {isLoading && <ThinkingIndicator />}
         <div ref={bottomRef} />
       </div>
-      <ChatInput onSubmit={handleSubmit} disabled={isStreaming} />
+      <ChatInput onSubmit={handleSubmit} disabled={isLoading || isStreaming} />
     </div>
   )
 }

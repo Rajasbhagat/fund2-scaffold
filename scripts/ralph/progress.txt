@@ -8,6 +8,21 @@
 Started: Sat Mar 21 17:02:22 CET 2026
 ---
 
+## 2026-03-21 - US-002
+- Added `isLoading` state (true from submit → false on first token) separate from `isStreaming` (true until stream completes)
+- Refactored message append: user message added immediately on submit; assistant message created only when first token arrives (eliminates the empty assistant placeholder during loading)
+- ThinkingIndicator component: three pulsing dots using Tailwind `animate-bounce` with staggered animation delays, rendered as an assistant-style entry
+- `isLoading` is set false on first token, clearing the ThinkingIndicator from DOM as content begins populating
+- Send button disabled while `isLoading || isStreaming` to prevent duplicate submissions
+- `isLoading` reset in catch/finally blocks to ensure UI is never stuck after errors
+- Error messages also switched to appending a new message rather than replacing a placeholder
+- `npx tsc --noEmit` passes
+- Files changed: src/components/ChatWindow.tsx, scripts/ralph/prd.json, scripts/ralph/progress.txt
+- **Learnings for future iterations:**
+  - Separating `isLoading` (waiting for first token) from `isStreaming` (stream active) enables the thinking indicator to disappear precisely on first token
+  - Creating the assistant message on first token (rather than pre-creating an empty one) simplifies error handling — no stale placeholder to clean up
+---
+
 ## 2026-03-21 - US-003
 - Wrapped Vertex AI `streamText` call in try/catch in route.ts; on error returns `NextResponse.json({ error, code: 'AI_ERROR' }, { status: 500 })`
 - Added `NextResponse` import from `next/server` to route.ts
