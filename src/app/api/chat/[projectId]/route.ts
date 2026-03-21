@@ -1,23 +1,74 @@
 export const runtime = 'nodejs';
 
-import { streamText } from 'ai';
+import { streamText, type ModelMessage } from 'ai';
 import { createVertex } from '@ai-sdk/google-vertex';
 import { getSystemContext } from '@/lib/context';
+import { prisma } from '@/lib/prisma';
 
 const vertex = createVertex({
   project: process.env.GOOGLE_CLOUD_PROJECT,
   location: process.env.GOOGLE_CLOUD_LOCATION ?? 'us-central1',
 });
 
-export async function POST(request: Request) {
-  const { messages } = await request.json();
+const FIRST_KEEP = 4;  // first 2 turns (4 messages)
+const LAST_KEEP = 40;  // last 20 turns (40 messages)
+const MAX_MESSAGES = FIRST_KEEP + LAST_KEEP;
+
+function applyRollingWindow<T>(messages: T[]): T[] {
+  if (messages.length <= MAX_MESSAGES) return messages;
+  return [...messages.slice(0, FIRST_KEEP), ...messages.slice(messages.length - LAST_KEEP)];
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params;
+  const { messages: incomingMessages } = await request.json();
+
+  // Extract text from the last incoming message (new user message)
+  const lastIncoming = Array.isArray(incomingMessages)
+    ? incomingMessages[incomingMessages.length - 1]
+    : null;
+  const userMessageContent: string =
+    typeof lastIncoming?.content === 'string'
+      ? lastIncoming.content
+      : (lastIncoming?.content?.[0]?.text ?? '');
+
+  // Load history from DB ordered oldest first
+  const dbMessages = await prisma.message.findMany({
+    where: { projectId },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  // Apply rolling window: keep first 2 turns + last 20 turns
+  const windowed = applyRollingWindow(dbMessages);
+
+  // Persist user message to DB BEFORE streaming to avoid losing it on errors
+  await prisma.message.create({
+    data: { projectId, role: 'user', content: userMessageContent },
+  });
+
+  // Format DB history for ai SDK ('model' -> 'assistant')
+  const historyMessages: ModelMessage[] = windowed.map((msg) => ({
+    role: msg.role === 'model' ? ('assistant' as const) : ('user' as const),
+    content: msg.content,
+  }));
 
   const systemContext = getSystemContext();
 
   const result = streamText({
     model: vertex('gemini-2.5-flash'),
     system: systemContext,
-    messages,
+    messages: [
+      ...historyMessages,
+      { role: 'user' as const, content: userMessageContent },
+    ],
+    onFinish: async (event) => {
+      await prisma.message.create({
+        data: { projectId, role: 'model', content: event.text },
+      });
+    },
   });
 
   const response = result.toTextStreamResponse();
