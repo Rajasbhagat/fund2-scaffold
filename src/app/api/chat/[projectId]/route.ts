@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 
 import { streamText } from 'ai';
 import { createVertex } from '@ai-sdk/google-vertex';
+import { getSystemContext } from '@/lib/context';
 
 const vertex = createVertex({
   project: process.env.GOOGLE_CLOUD_PROJECT,
@@ -9,11 +10,14 @@ const vertex = createVertex({
 });
 
 export async function POST(request: Request) {
-  await request.json(); // reads { messages } — will be used in US-004
+  const { messages } = await request.json();
+
+  const systemContext = getSystemContext();
 
   const result = streamText({
     model: vertex('gemini-2.5-flash'),
-    prompt: 'Respond with just the phrase: STREAM OK',
+    system: systemContext,
+    messages,
   });
 
   const response = result.toTextStreamResponse();
