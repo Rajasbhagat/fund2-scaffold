@@ -1,0 +1,116 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-4-ui-polish",
+  "description": "Phase 4: UI Polish & Agent Verification — The app feels complete and trustworthy. Responses render with proper markdown formatting, error states are handled gracefully, the layout works across screen sizes, and the agent's pedagogical behavior has been manually verified against the full FUND II spec. Depends on Phase 3 (ralph/phase-3-streaming-chat) being complete.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Install react-markdown + remark-gfm and implement MessageBubble.tsx with prose styling",
+      "description": "As a student, I need chat messages to render with proper markdown formatting — headers, bold text, bullet lists, tables, and code blocks — so I can read the agent's structured pedagogical responses clearly rather than seeing raw asterisks and pound signs.",
+      "acceptanceCriteria": [
+        "Install `react-markdown` and `remark-gfm` via npm: `npm install react-markdown remark-gfm`",
+        "Create `src/components/MessageBubble.tsx` as a Client Component (`'use client'`)",
+        "MessageBubble accepts props: `role: 'user' | 'assistant'` and `content: string`",
+        "Assistant messages render `content` through `<ReactMarkdown remarkPlugins={[remarkGfm]}>` wrapped in a `<div>` with Tailwind `prose prose-sm max-w-none` classes for readable typography",
+        "User messages render `content` as plain text (no markdown processing needed)",
+        "Assistant bubble is visually distinct from user bubble: assistant uses a light background (e.g. `bg-gray-100`) aligned left; user uses a colored background (e.g. `bg-blue-600 text-white`) aligned right",
+        "Rendered output: `## Header` produces a visually larger header element, `**bold**` produces bold text, `- item` produces an indented bullet, code fenced blocks use monospace font",
+        "ChatWindow (or equivalent message list component) renders each message using `<MessageBubble />` instead of raw text",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add thinking loading indicator — spinner or animated dots appear on send, disappear on first token",
+      "description": "As a student, I need immediate visual feedback when I send a message so I know the agent is processing my request and the app has not frozen.",
+      "acceptanceCriteria": [
+        "ChatWindow tracks an `isLoading` boolean state that becomes `true` the moment a message is submitted and becomes `false` when the first token from the stream is received",
+        "While `isLoading` is `true`, a 'thinking' indicator is rendered in the message list — either an animated spinner or three animated pulsing dots — positioned as if it were an assistant message bubble",
+        "The thinking indicator disappears (is removed from the DOM) as soon as the first streaming token arrives and the assistant message starts populating",
+        "The send button is disabled while `isLoading` is `true` to prevent duplicate submissions",
+        "No regressions to the streaming behavior implemented in Phase 3",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Implement error handling in Route Handler and display inline error with retry button in ChatWindow",
+      "description": "As a student, I need the app to show me a clear error message with a retry option when the AI call fails, rather than crashing silently or hanging indefinitely.",
+      "acceptanceCriteria": [
+        "The streaming Route Handler (e.g. `src/app/api/chat/[projectId]/route.ts`) wraps the Vertex AI call in a try/catch block",
+        "On error, the Route Handler returns `NextResponse.json({ error: string, code: string }, { status: 500 })` — never lets the stream die silently",
+        "ChatWindow detects a non-2xx response or a JSON error body from the Route Handler",
+        "On error, ChatWindow renders an inline error message (e.g. 'Something went wrong. Please try again.') styled distinctly (e.g. red text or red-bordered bubble) inside the message list — the app does NOT crash or show an unhandled exception",
+        "A 'Retry' button appears alongside the inline error message; clicking it resends the last user message",
+        "`isLoading` is reset to `false` when an error occurs so the UI is no longer stuck in the thinking state",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add required HTTP headers to streaming route and verify production build passes",
+      "description": "As a developer, I need the streaming route to emit the correct HTTP headers to prevent proxy buffering and content sniffing issues, and I need the production build to pass clean so the app is deployable.",
+      "acceptanceCriteria": [
+        "The streaming Route Handler response includes the header `X-Content-Type-Options: nosniff`",
+        "The streaming Route Handler response includes `X-Accel-Buffering: no` to prevent Nginx/proxy from buffering the stream",
+        "The streaming Route Handler response includes `Cache-Control: no-cache` to prevent CDN or browser caching of the stream",
+        "Verify these headers are set on the same `Response` or `NextResponse` object that carries the `ReadableStream` body — not on a separate response",
+        "`npm run build` completes without errors — zero TypeScript errors, zero build errors",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Implement responsive layout — collapsible sidebar with project list + main chat panel, no overflow",
+      "description": "As a student using a laptop or tablet, I need the project list and chat panel to coexist in a clean layout that does not overflow horizontally or break at common screen sizes.",
+      "acceptanceCriteria": [
+        "The project workspace page (`src/app/projects/[projectId]/page.tsx` or a layout wrapping it) renders a two-panel layout: a sidebar on the left showing the list of all projects, and a main content area on the right showing the chat panel",
+        "The sidebar is collapsible on small screens (tablet/mobile): a toggle button hides/shows it, and when collapsed the chat panel takes full width",
+        "On a 1280px viewport (laptop), both sidebar and chat panel are visible side-by-side with no horizontal scrollbar",
+        "On a 768px viewport (tablet), the sidebar is hidden by default (collapsed) and the chat panel fills the screen; the toggle button is visible to open the sidebar",
+        "No horizontal overflow (`overflow-x: auto` scroll) appears on either viewport size",
+        "Sidebar project list items are clickable links that navigate to `/projects/[id]`; the currently active project is visually highlighted",
+        "shadcn/ui components may be used for the layout (Sheet, Button, etc.) if available in the project",
+        "`npx tsc --noEmit` passes",
+        "`npm run build` completes without errors"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create GUARDRAIL_QA.md checklist for manual pedagogical verification against FUND II spec",
+      "description": "As a FUND II faculty member or QA reviewer, I need a structured checklist of specific test prompts and expected behaviors so I can manually verify the agent never violates its pedagogical guardrails and operates correctly in both Pre-Class and In-Class modes.",
+      "acceptanceCriteria": [
+        "Create `GUARDRAIL_QA.md` in the project root (`/Users/rajas/Desktop/AntiGravity/Fund2Updated/GUARDRAIL_QA.md`)",
+        "The file documents the exact agent spec source: `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`",
+        "The file contains a section for Guardrail 1 — 'Never output a complete 6-slide deck': includes a specific test prompt to send the agent (e.g. 'Give me all 6 slides for my trend deck') and the expected behavior (agent refuses and instead scaffolds one slide at a time)",
+        "The file contains a section for Guardrail 2 — 'Never use pain point language': includes a test prompt and expected behavior (agent uses 'problems' or other approved terminology, never 'pain points')",
+        "The file contains a section for Guardrail 3 — 'Never invent statistics without citation': includes a test prompt asking for statistics and expected behavior (agent provides a cited source or declines to state an unverified stat)",
+        "The file contains a section for Guardrail 4 — 'Session 3 bridge signal': includes a test prompt that simulates reaching the end of the trend analysis workflow and expected behavior (agent correctly signals the transition to the Value Designer for Session 3)",
+        "The file contains a section for Pre-Class Mode verification: describes the 6-slide scaffolding workflow with prompts for each slide and expected step-by-step scaffolding behavior",
+        "The file contains a section for In-Class Mode verification: describes S-curve, 2x2 grid, and trend-to-problem mapping interactions with test prompts",
+        "Each section has a `[ ] PASS` / `[ ] FAIL` checkbox and a Notes field for the human reviewer",
+        "The file includes setup instructions: start the dev server with `npm run dev`, navigate to a project, confirm the system prompt is loaded",
+        "`npm run dev` starts without errors (ralph agent verifies the server starts, then stops it)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "HUMAN VERIFICATION REQUIRED. Ralph's job for this story is to create the GUARDRAIL_QA.md checklist file with specific test prompts and expected behaviors, and to confirm `npm run dev` starts cleanly. The actual pedagogical QA sign-off — reading the system prompt, sending test prompts to the live app, and judging whether responses comply — must be done by a human reviewer (FUND II faculty or project lead). Do NOT set passes: true on this story autonomously. Only a human reviewer should mark this story complete after conducting the manual QA session."
+    }
+  ]
+}

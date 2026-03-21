@@ -1,0 +1,42 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-3-integration",
+  "description": "Phase 3 Integration — Vertex AI Grounding and full end-to-end wiring. Runs AFTER Group A and Group B branches are merged. US-003 adds grounding to the route (depends on Group A). US-006 wires the project page end-to-end (depends on both groups). Base branch: ralph/phase-3-merged.",
+  "userStories": [
+    {
+      "id": "US-003",
+      "title": "Configure Vertex AI Grounding with web search on the model",
+      "description": "As a student, I need the Trend Mapper agent to cite real web sources when making claims about trends, so I can trust the information and explore further.",
+      "acceptanceCriteria": [
+        "Before implementing: run `npm show @google-cloud/vertexai version` or check the installed SDK types to confirm the exact parameter name and structure for enabling web search grounding — do not assume it matches old docs",
+        "Configure web search grounding on the model call in the chat route (Path A: check `@ai-sdk/google-vertex` docs for grounding tool config; Path B: add `tools` or `googleSearchRetrieval` config to the `generateContentStream` call)",
+        "Test: POST to the chat route with a message 'What are the latest AI trends in 2025?' — the response must include grounding metadata or citation markers in the streamed tokens",
+        "Verify grounding is active by checking for `groundingMetadata` in the raw response or visible citations in the streamed output",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK TypeScript types or official docs before coding. Do not copy-paste from old examples without checking that types compile. PRISMA 7 NOTE: generated client is at `@/generated/prisma/client`."
+    },
+    {
+      "id": "US-006",
+      "title": "Wire the project chat page end-to-end with Server Component history hydration",
+      "description": "As a student, I need the project page to load my prior conversation instantly on page load and then let me continue chatting in real time, so the experience feels seamless.",
+      "acceptanceCriteria": [
+        "Update `src/app/projects/[projectId]/page.tsx` (Server Component) to load initial chat history: `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`",
+        "Pass the fetched messages as `initialMessages` prop to `<ChatWindow projectId={projectId} initialMessages={messages} />`",
+        "Remove the Phase 2 placeholder `<p>Chat coming in Phase 3</p>`",
+        "ChatWindow is rendered below the project name heading; ChatInput is rendered inside or below ChatWindow",
+        "End-to-end test: create a new project, open it, send a message, see it stream word-by-word, close the tab, reopen the project — prior message and response are visible immediately on load",
+        "Verify the agent's first response to a new project demonstrates challenge-first behavior consistent with the FUND II system prompt (not a generic opener like 'How can I help you today?')",
+        "Verify chat input is disabled and shows 'Thinking...' while the stream is active",
+        "Verify the agent cites web sources when asked about recent trends (Grounding active)",
+        "`npx tsc --noEmit` passes",
+        "`npm run build` completes without errors"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-3-streaming-chat",
+  "description": "Phase 3: Streaming Chat Pipeline — Students can send messages in a project's chat and receive real-time streaming responses from Gemini, grounded with the FUND II system prompt, all three megatrend documents, and Vertex AI web search. Conversation history persists across browser sessions. Depends on Phase 2 (ralph/phase-2-project-management) being complete.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Install AI SDK dependencies and create minimal streaming route handler",
+      "description": "As a developer, I need a minimal streaming route handler with verified end-to-end streaming before adding DB or context complexity, so I can confirm the SDK auth and streaming transport work correctly in isolation.",
+      "acceptanceCriteria": [
+        "Run `npm show @ai-sdk/google-vertex version` to confirm the current version before installing — note in progress.txt if major version differs from 1.x",
+        "Install `ai` and `@ai-sdk/google-vertex` packages",
+        "Create `src/app/api/chat/[projectId]/route.ts` with `export const runtime = 'nodejs'` as the FIRST line after imports — this is non-negotiable for gcloud ADC auth",
+        "Route exports a `POST` handler that reads `{ messages }` from the request body",
+        "Path A: use `streamText` from `ai` and the vertex provider from `@ai-sdk/google-vertex` with a hardcoded prompt 'Respond with just the phrase: STREAM OK'",
+        "Return a streaming response using `result.toDataStreamResponse()`",
+        "Add response headers: `X-Accel-Buffering: no`, `Cache-Control: no-cache`, `X-Content-Type-Options: nosniff`",
+        "Test: POST to http://localhost:3000/api/chat/test-id with `{ messages: [] }` returns a streaming response containing 'STREAM OK' tokens",
+        "`npx tsc --noEmit` passes",
+        "If Path A fails with ADC auth errors in the SDK bridge layer, switch immediately to Path B: use `@google-cloud/vertexai` direct SDK with a `pull`-based `ReadableStream` constructor wrapping the AsyncIterator — do NOT debug the wrapper"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "CRITICAL: `export const runtime = 'nodejs'` must be present — edge runtime breaks gcloud ADC auth (uses Node.js fs APIs). Path A first: `@ai-sdk/google-vertex` + `streamText` + `useChat` client. If ADC auth fails inside the SDK bridge layer (not a project/credentials config issue), switch to Path B immediately: `@google-cloud/vertexai` direct SDK + manual ReadableStream bridge. Path B ReadableStream: use pull-based constructor wrapping AsyncIterator, NOT `for await...of` in `start` callback (causes backpressure issues). GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION must be set in .env.local. PHASE 1 VERIFIED: The working model for the `socratoys` GCP project is `gemini-2.5-flash` — `gemini-2.0-flash` returns 404 on this project. Check `src/app/api/smoke-test/route.ts` for the confirmed model string."
+    },
+    {
+      "id": "US-002",
+      "title": "Wire full context injection — system prompt and megatrend docs into systemInstruction",
+      "description": "As a developer, I need the FUND II system prompt and all megatrend knowledge base documents injected into every Vertex AI request so the agent behaves according to the pedagogical spec.",
+      "acceptanceCriteria": [
+        "Import `getSystemContext` from `@/lib/context` in the chat route handler",
+        "Call `getSystemContext()` on each request and pass the result as `system` (Path A `streamText`) or `systemInstruction` (Path B direct SDK) — NOT as an entry in the `messages`/`contents` array",
+        "Verify the system prompt is NOT appearing as a user or model message in the Vertex AI contents array",
+        "Add a debug log statement (temporary, remove before commit) that prints `Context length: ${context.length}` — confirm it is > 10000 chars in dev server logs",
+        "Remove the debug log and commit clean code",
+        "Test: POST to the chat route with a message asking 'What are the FUND II megatrends?' — response should reference the megatrend content from the injected docs, not give a generic answer",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Vertex AI convention: system prompt goes in `systemInstruction` (Path B) or `system` param of `streamText` (Path A) — NOT in the `contents` array. This is different from OpenAI where the system role is just another message. `@/lib/context` is server-only (has `import 'server-only'`). The function reads system-prompt.txt + all megatrend .txt files and joins them with a separator."
+    },
+    {
+      "id": "US-003",
+      "title": "Configure Vertex AI Grounding with web search on the model",
+      "description": "As a student, I need the Trend Mapper agent to cite real web sources when making claims about trends, so I can trust the information and explore further.",
+      "acceptanceCriteria": [
+        "Before implementing: run `npm show @google-cloud/vertexai version` or check the installed SDK docs to confirm the exact parameter name and structure for enabling web search grounding — do not assume it matches old docs",
+        "Configure web search grounding on the model call in the chat route (Path A: check `@ai-sdk/google-vertex` docs for grounding tool config; Path B: add `tools` or `googleSearchRetrieval` config to the `generateContentStream` call)",
+        "Test: POST to the chat route with a message 'What are the latest AI trends in 2025?' — the response must include grounding metadata or citation markers in the streamed tokens",
+        "Verify grounding is active by checking for `groundingMetadata` in the raw response or visible citations in the streamed output",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK's TypeScript types or official docs before coding. Do not copy-paste from old examples without checking types compile."
+    },
+    {
+      "id": "US-004",
+      "title": "Implement chat history persistence with rolling window",
+      "description": "As a student, I need my conversation history to survive browser refreshes and tab closes so I can return to a project and pick up where I left off.",
+      "acceptanceCriteria": [
+        "At the start of the POST handler, load all messages for the given `projectId` from Prisma: `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`",
+        "Apply rolling window: preserve the first 2 turns (4 messages: 2 user + 2 model) and the last 20 turns (40 messages) — total cap 44 messages — never drop messages from the end, always drop from the middle",
+        "Format history as Vertex AI `contents` array: `[{ role: 'user' | 'model', parts: [{ text }] }]` — role values must be 'user' and 'model' (not 'assistant')",
+        "Persist the incoming user message to the DB BEFORE calling the streaming model — use `await prisma.message.create({ data: { projectId, role: 'user', content: userMessage } })`",
+        "Path A: use the `onFinish` callback of `streamText` to persist the complete assistant message after streaming ends",
+        "Path B: collect streamed chunks into a buffer and persist via `prisma.message.create` after the stream closes",
+        "Test: send 3 messages to a project, refresh the page, send a 4th message — the model should have context from all prior messages",
+        "Test: DELETE the project via API and verify all its messages are also deleted (cascade delete from Phase 2 schema)",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Role values are 'user' and 'model' for Vertex AI — not 'assistant'. Persist user message BEFORE streaming starts to avoid losing it on stream errors. Persist assistant message AFTER stream closes (onFinish for Path A, manual buffer for Path B). Rolling window: keep first 2 turns + last 20 turns. Never drop from the end — always drop from the middle. Import prisma from `@/lib/prisma` (singleton)."
+    },
+    {
+      "id": "US-005",
+      "title": "Build ChatWindow and ChatInput client components with streaming state",
+      "description": "As a student, I need to see the agent's response stream into the chat window word-by-word and have the input disabled while it streams, so the chat feels live and prevents double-sends.",
+      "acceptanceCriteria": [
+        "Create `src/components/ChatWindow.tsx` as a Client Component (`'use client'`)",
+        "ChatWindow accepts `initialMessages: { id: string; role: string; content: string }[]` prop and hydrates local state with it",
+        "Path A: use `useChat` hook from `ai/react` pointed at `/api/chat/[projectId]` — handle streaming state via hook's `isLoading` flag",
+        "Path B fallback: manage streaming manually with `useState` for messages and `isStreaming`, use `fetch` + `reader.read()` loop to append tokens to the last message in real time",
+        "Messages render in a scrollable container; each message shows role label ('You' for user, 'Trend Mapper' for model) and content",
+        "Auto-scroll to the bottom when new tokens arrive (use `useEffect` + `ref.scrollIntoView()` on the message list)",
+        "Create `src/components/ChatInput.tsx` as a Client Component with a `<textarea>` and 'Send' button",
+        "ChatInput accepts `onSubmit: (message: string) => void` and `disabled: boolean` props",
+        "Input and button are disabled when `disabled` is true; button label changes to 'Thinking...' during active stream",
+        "Submit on Enter key (without Shift) as well as button click",
+        "ChatInput clears after submit",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Path A uses `useChat` from `ai/react` — simplest integration. Path B requires manual fetch + ReadableStream reader loop accumulating tokens. Auto-scroll must fire on every new token append, not just on message add. Disabled state must be visually distinct (Tailwind opacity/cursor classes). Do not allow submit of empty or whitespace-only messages."
+    },
+    {
+      "id": "US-006",
+      "title": "Wire the project chat page end-to-end with Server Component history hydration",
+      "description": "As a student, I need the project page to load my prior conversation instantly on page load and then let me continue chatting in real time, so the experience feels seamless.",
+      "acceptanceCriteria": [
+        "Update `src/app/projects/[projectId]/page.tsx` (Server Component) to load initial chat history: `prisma.message.findMany({ where: { id: projectId }, orderBy: { createdAt: 'asc' } })`",
+        "Pass the fetched messages as `initialMessages` prop to `<ChatWindow projectId={projectId} initialMessages={messages} />`",
+        "Remove the Phase 2 placeholder `<p>Chat coming in Phase 3</p>`",
+        "ChatWindow is rendered below the project name heading",
+        "ChatInput is rendered inside or below ChatWindow and wired to the chat submission logic",
+        "End-to-end test: create a new project, open it, send a message, see it stream word-by-word, close the tab, reopen the project — prior message and response are visible immediately on load",
+        "Verify the agent's first response to a new project demonstrates challenge-first behavior consistent with the FUND II system prompt (not a generic opener like 'How can I help you today?')",
+        "Verify chat input is disabled and shows 'Thinking...' while the stream is active",
+        "Verify the agent cites web sources when asked about recent trends (Grounding active)",
+        "`npx tsc --noEmit` passes",
+        "`npm run build` completes without errors"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component — no 'use client' on the page itself. Verify build passes since this is the integration point for all Phase 3 work."
+    }
+  ]
+}

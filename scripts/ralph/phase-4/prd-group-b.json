@@ -1,0 +1,56 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-4-group-b",
+  "description": "Phase 4 Group B (Shared Files Track) — HTTP headers, error handling, and loading indicator. All stories touch route.ts or ChatWindow.tsx. Stories must run sequentially within this group to avoid intra-group conflicts. Runs in parallel with Groups A and C. Base branch: ralph/phase-3-streaming-chat.",
+  "userStories": [
+    {
+      "id": "US-004",
+      "title": "Add required HTTP headers to streaming route and verify production build passes",
+      "description": "As a developer, I need the streaming route to emit the correct HTTP headers to prevent proxy buffering and content sniffing issues, and I need the production build to pass clean so the app is deployable.",
+      "acceptanceCriteria": [
+        "The streaming Route Handler response includes the header `X-Content-Type-Options: nosniff`",
+        "The streaming Route Handler response includes `X-Accel-Buffering: no` to prevent Nginx/proxy from buffering the stream",
+        "The streaming Route Handler response includes `Cache-Control: no-cache` to prevent CDN or browser caching of the stream",
+        "Verify these headers are set on the same `Response` or `NextResponse` object that carries the `ReadableStream` body — not on a separate response",
+        "`npm run build` completes without errors — zero TypeScript errors, zero build errors",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Small targeted change to route.ts only. Must come first within this group so US-003 can build on top of it cleanly."
+    },
+    {
+      "id": "US-003",
+      "title": "Implement error handling in Route Handler and display inline error with retry button in ChatWindow",
+      "description": "As a student, I need the app to show me a clear error message with a retry option when the AI call fails, rather than crashing silently or hanging indefinitely.",
+      "acceptanceCriteria": [
+        "The streaming Route Handler wraps the Vertex AI call in a try/catch block",
+        "On error, the Route Handler returns `NextResponse.json({ error: string, code: string }, { status: 500 })` — never lets the stream die silently",
+        "ChatWindow detects a non-2xx response or a JSON error body from the Route Handler",
+        "On error, ChatWindow renders an inline error message (e.g. 'Something went wrong. Please try again.') styled distinctly (e.g. red text or red-bordered bubble) inside the message list — the app does NOT crash",
+        "A 'Retry' button appears alongside the inline error message; clicking it resends the last user message",
+        "`isLoading` (or `isStreaming`) is reset to `false` when an error occurs so the UI is no longer stuck",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Touches both route.ts (server error response) and ChatWindow.tsx (client error display). Must run after US-004 within this group."
+    },
+    {
+      "id": "US-002",
+      "title": "Add thinking loading indicator — spinner or animated dots appear on send, disappear on first token",
+      "description": "As a student, I need immediate visual feedback when I send a message so I know the agent is processing my request and the app has not frozen.",
+      "acceptanceCriteria": [
+        "ChatWindow tracks an `isLoading` boolean state that becomes `true` the moment a message is submitted and becomes `false` when the first token from the stream is received",
+        "While `isLoading` is `true`, a 'thinking' indicator is rendered in the message list — either an animated spinner or three animated pulsing dots — positioned as if it were an assistant message bubble",
+        "The thinking indicator disappears (is removed from the DOM) as soon as the first streaming token arrives and the assistant message starts populating",
+        "The send button is disabled while `isLoading` is `true` to prevent duplicate submissions",
+        "No regressions to the streaming behavior implemented in Phase 3",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Touches ChatWindow.tsx only. Must run after US-003 within this group to avoid conflicts on ChatWindow."
+    }
+  ]
+}

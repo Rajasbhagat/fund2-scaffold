@@ -1,0 +1,30 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-3-group-b",
+  "description": "Phase 3 Group B (UI Components Track) — ChatWindow and ChatInput client components. Touches ONLY src/components/ChatWindow.tsx and src/components/ChatInput.tsx. Runs in parallel with Group A (route handler track). Base branch: ralph/phase-2-project-management.",
+  "userStories": [
+    {
+      "id": "US-005",
+      "title": "Build ChatWindow and ChatInput client components with streaming state",
+      "description": "As a student, I need to see the agent's response stream into the chat window word-by-word and have the input disabled while it streams, so the chat feels live and prevents double-sends.",
+      "acceptanceCriteria": [
+        "Create `src/components/ChatWindow.tsx` as a Client Component (`'use client'`)",
+        "ChatWindow accepts props: `projectId: string` and `initialMessages: { id: string; role: string; content: string }[]`",
+        "ChatWindow hydrates local state with `initialMessages` on mount",
+        "Path A: use `useChat` hook from `ai/react` with `api: /api/chat/${projectId}` — handle streaming state via hook's `isLoading` flag",
+        "Path B fallback: manage streaming manually with `useState` for messages and `isStreaming`, use `fetch` + `reader.read()` loop to append tokens to the last message in real time",
+        "Messages render in a scrollable container; each message shows role label ('You' for user, 'Trend Mapper' for model/assistant) and content as plain text (markdown rendering comes in Phase 4)",
+        "Auto-scroll to the bottom when new tokens arrive (use `useEffect` + `ref.scrollIntoView()` on the message list)",
+        "Create `src/components/ChatInput.tsx` as a Client Component (`'use client'`) with a `<textarea>` and 'Send' button",
+        "ChatInput accepts `onSubmit: (message: string) => void` and `disabled: boolean` props",
+        "Input and button are disabled when `disabled` is true; button label changes to 'Thinking...' during active stream",
+        "Submit on Enter key (without Shift) as well as button click",
+        "ChatInput clears after submit; empty or whitespace-only messages are not submitted",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "These components work independently of the route implementation — they POST to /api/chat/[projectId] which will exist after Phase 3 Group A merges. Path A uses `useChat` from `ai/react`. Path B requires manual fetch + ReadableStream reader loop. Disabled state must be visually distinct (Tailwind opacity/cursor classes). These components are intentionally minimal — markdown rendering and loading indicators are Phase 4 work."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# Ralph Progress Log
+Started: 2026-03-21
+Project: FUND II Trend Mapper
+Phase: 4 — UI Polish & Agent Verification
+---
+
+## Codebase Patterns
+(populated as stories complete)

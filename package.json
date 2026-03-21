@@ -9,11 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google-vertex": "^4.0.93",
     "@google-cloud/vertexai": "^1.10.2",
     "@prisma/adapter-better-sqlite3": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/pdf-parse": "^1.1.5",
+    "ai": "^6.0.134",
     "better-sqlite3": "^12.8.0",
     "dotenv": "^17.3.1",
     "mammoth": "^1.12.0",

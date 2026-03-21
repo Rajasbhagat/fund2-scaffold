@@ -1,0 +1,27 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-4-group-c",
+  "description": "Phase 4 Group C (Layout Track) — Responsive two-panel layout with collapsible sidebar. Creates/modifies layout files only — zero conflict with Groups A (new component files) or B (route+ChatWindow modifications). Runs in parallel with Groups A and B. Base branch: ralph/phase-3-streaming-chat.",
+  "userStories": [
+    {
+      "id": "US-005",
+      "title": "Implement responsive layout — collapsible sidebar with project list + main chat panel, no overflow",
+      "description": "As a student using a laptop or tablet, I need the project list and chat panel to coexist in a clean layout that does not overflow horizontally or break at common screen sizes.",
+      "acceptanceCriteria": [
+        "The project workspace renders a two-panel layout: a sidebar on the left showing the list of all projects, and a main content area on the right showing the chat panel",
+        "Implement via `src/app/projects/[projectId]/layout.tsx` or by modifying `src/app/projects/[projectId]/page.tsx` — prefer a layout file to keep the page component clean",
+        "Sidebar fetches the full project list from Prisma directly (Server Component) and renders each as a `<Link href='/projects/[id]'>` — the currently active project is visually highlighted",
+        "The sidebar is collapsible on small screens: a toggle button hides/shows it, and when collapsed the chat panel takes full width",
+        "On a 1280px viewport (laptop), both sidebar and chat panel are visible side-by-side with no horizontal scrollbar",
+        "On a 768px viewport (tablet), the sidebar is hidden by default and the chat panel fills the screen; the toggle button is visible to open the sidebar",
+        "No horizontal overflow appears on either viewport size",
+        "shadcn/ui components may be used (Sheet, Button, etc.) if already installed; do not install new UI libraries without checking package.json first",
+        "`npx tsc --noEmit` passes",
+        "`npm run build` completes without errors"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Prefer creating a new `layout.tsx` file rather than heavily modifying `page.tsx`. This keeps the layout concerns separate and avoids conflicts with ChatWindow changes being made in Group B. Sidebar project list is a Server Component — fetch directly from Prisma. Use `usePathname()` from `next/navigation` in a Client Component wrapper to highlight the active project. PRISMA 7: import from `@/generated/prisma/client`."
+    }
+  ]
+}
