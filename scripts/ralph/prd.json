@@ -50,7 +50,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -68,7 +68,7 @@
         "`npx tsc --noEmit` passes"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

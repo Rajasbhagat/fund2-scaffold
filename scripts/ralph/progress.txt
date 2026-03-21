@@ -92,3 +92,20 @@ Phase: 1 — Foundation & Environment
   - @google/genai free-tier API keys hit limit:0 for gemini-2.0-flash (gen-lang-client projects have no billing) — use Vertex AI ADC instead
   - GOOGLE_APPLICATION_CREDENTIALS must be explicitly set in .env.local for ADC to resolve correctly in Next.js server context
 ---
+
+## 2026-03-21 - Phase 2 US-003
+- What was implemented: Replaced stub page.tsx with an async Server Component that queries `prisma.project.findMany({ orderBy: { updatedAt: 'desc' } })` and renders project names in a list. Shows 'No projects yet' empty state when list is empty. Page title is 'FUND II Trend Mapper' in an h1.
+- Files changed: src/app/page.tsx
+- **Learnings for future iterations:**
+  - Server Components can be async functions — no 'use client' directive needed, Prisma can be called directly
+  - `npm run build` shows the `/` route as ○ (Static) unless force-dynamic is set; for a page that reads from DB this is fine — Next.js will revalidate on request
+---
+
+## 2026-03-21 - Phase 2 US-004
+- What was implemented: Created ProjectCard.tsx (Client Component with rename inline-edit + delete confirmation), CreateProjectForm.tsx (Client Component with POST to /api/projects), and ProjectList.tsx (Client Component managing optimistic state). Updated page.tsx to serialize Prisma Date fields to ISO strings and pass to ProjectList.
+- Files changed: src/components/ProjectCard.tsx (new), src/components/CreateProjectForm.tsx (new), src/components/ProjectList.tsx (new), src/app/page.tsx
+- **Learnings for future iterations:**
+  - Server → Client Component prop boundary: Prisma Date objects must be serialized to strings (`.toISOString()`) before passing as props
+  - Optimistic UI pattern: Server Component fetches initial data; Client wrapper manages local state array; child callbacks mutate state without page reload
+  - ProjectList acts as the state manager; ProjectCard and CreateProjectForm are purely controlled via callbacks
+---
