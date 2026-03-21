@@ -60,6 +60,7 @@ export async function POST(
   const result = streamText({
     model: vertex('gemini-2.5-flash'),
     system: systemContext,
+    tools: { google_search: vertex.tools.googleSearch({}) },
     messages: [
       ...historyMessages,
       { role: 'user' as const, content: userMessageContent },
