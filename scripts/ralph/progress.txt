@@ -1,45 +1,20 @@
 ## Codebase Patterns
-- node_modules not present in worktree — symlink from main project: `ln -s /Users/rajas/Desktop/AntiGravity/Fund2Updated/node_modules /private/tmp/fund2-p5-wave2-03/node_modules`
-- Prisma generated client not in worktree — symlink: `ln -s /Users/rajas/Desktop/AntiGravity/Fund2Updated/src/generated /private/tmp/fund2-p5-wave2-03/src/generated`
-- AgentWorkspace uses CSS `absolute inset-0 hidden/block h-full` inside a `relative` container to preserve in-memory ChatWindow state across tab switches
+- FARO system prompt lives in `src/context/faro/faro-system-prompt.txt` (extracted from `FARO/FARO_Agent_Spec_v2.txt` between `=== BEGIN SYSTEM PROMPT ===` / `=== END SYSTEM PROMPT ===` markers)
+- Worktree at `/private/tmp/fund2-p7-wave1-01` — node_modules must be symlinked from `/Users/rajas/Desktop/AntiGravity/Fund2Updated/node_modules`
+- Run tsc as: `/Users/rajas/Desktop/AntiGravity/Fund2Updated/node_modules/.bin/tsc --noEmit --project /private/tmp/fund2-p7-wave1-01/tsconfig.json`
+- Pre-existing TS errors (non-blocking): `src/app/api/chat/[projectId]/route.ts` (TS18046 x2), `src/app/page.tsx` (TS7006 x1)
 
 # Ralph Progress Log
-Started: Sat Mar 21 20:42:10 CET 2026
+Started: Sat Mar 21 20:58:40 CET 2026
 ---
 
 ## 2026-03-21 - US-001
-- Created `src/components/AgentTabs.tsx` — 4-tab nav (Trend Mapper, Value Designer, SPI, FARO) with blue/gray active styling
-- Created `src/components/AgentWorkspace.tsx` — renders all 4 ChatWindow instances simultaneously using CSS hidden/block (not conditional rendering)
-- Added `showDeepResearch?: boolean` to ChatWindowProps (consumed in US-002); prop prefixed with `_` to avoid lint unused warning
-- Rewrote `src/app/projects/[projectId]/page.tsx` as async Server Component — loads messages per agentType in parallel with Promise.all
-- Files changed: AgentTabs.tsx (new), AgentWorkspace.tsx (new), ChatWindow.tsx, page.tsx
+- Extracted FARO system prompt from `FARO/FARO_Agent_Spec_v2.txt` (between `=== BEGIN SYSTEM PROMPT ===` and `=== END SYSTEM PROMPT ===` markers)
+- Created directory `src/context/faro/`
+- Wrote system prompt to `src/context/faro/faro-system-prompt.txt` (12268 chars, contains FARO)
+- Files changed: `src/context/faro/faro-system-prompt.txt` (new)
 - **Learnings for future iterations:**
-  - Worktree has no node_modules — must symlink from main project before running tsc
-  - Worktree has no src/generated — must symlink Prisma generated client too
-  - Pre-existing TS errors exist in route.ts (msg: unknown) and page.tsx (param: any) — not introduced by this story
----
-
-## 2026-03-21 - US-002
-- Updated `ChatWindowProps`: added `agentType: string`, `currentSession: number`, `showDeepResearch: boolean` (all required)
-- Added `deepResearch` state; included `agentType`, `currentSession`, `deepResearch` in POST body
-- Defined `AGENT_DISPLAY_NAMES` map; moved `roleLabel` inside component; `ThinkingIndicator` accepts `agentDisplayName` prop
-- Updated `ChatInputProps`: added `deepResearch`, `onDeepResearchToggle`, `showDeepResearch`; renders Deep Research button only when `showDeepResearch=true`
-- Updated `AgentWorkspace` to pass `agentType` and `currentSession` to ChatWindow
-- Files changed: ChatWindow.tsx, ChatInput.tsx, AgentWorkspace.tsx
-- **Learnings for future iterations:**
-  - ThinkingIndicator is a standalone function component — pass display name as prop for dynamic agent name
-  - All 3 new ChatWindowProps are required (not optional), so AgentWorkspace must pass all of them
----
-
-## 2026-03-21 - US-003
-- Expanded request body destructure: added `currentSession = 1, deepResearch = false`
-- Added `systemWithSession` that appends current session to system context
-- Added conditional model: `gemini-2.5-pro` for deepResearch, `gemini-2.5-flash` otherwise
-- Added conditional tools: googleSearch always; urlContext added when deepResearch=true
-- Fixed TypeScript union type error for `tools` by using `ToolSet` type + spread pattern
-- Files changed: src/app/api/chat/[projectId]/route.ts
-- **Learnings for future iterations:**
-  - `vertex.tools.urlContext` is confirmed available in this SDK version (found at line 118 of index.d.ts)
-  - Cannot use ternary for tool objects — union type (`{ url_context?: undefined }`) breaks ToolSet index sig; use `ToolSet` type + spread instead
-  - `ToolSet` is exported from `ai` package
+  - FARO spec has clear `=== BEGIN/END SYSTEM PROMPT ===` delimiters — easy extraction
+  - Worktree lacks node_modules; must symlink from main project for tsc to work
+  - 3 pre-existing TS errors exist on baseline (not introduced by this story)
 ---
