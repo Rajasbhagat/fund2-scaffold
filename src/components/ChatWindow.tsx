@@ -47,7 +47,7 @@ export default function ChatWindow({ projectId, initialMessages }: ChatWindowPro
       const res = await fetch(`/api/chat/${projectId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText }),
+        body: JSON.stringify({ messages: [{ role: 'user', content: userText }] }),
       })
 
       if (!res.ok || !res.body) {
