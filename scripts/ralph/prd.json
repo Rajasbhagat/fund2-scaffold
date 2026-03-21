@@ -1,0 +1,89 @@
+{
+  "project": "FUND II Trend Mapper",
+  "branchName": "ralph/phase-1-foundation",
+  "description": "Phase 1: Foundation & Environment — Scaffold Next.js app, extract megatrend docs, wire Vertex AI ADC credentials, initialize Prisma + SQLite with WAL mode. Nothing else can be built until this phase is done.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Scaffold Next.js 14 project with TypeScript and Tailwind",
+      "description": "As a developer, I need a clean Next.js 14 App Router project so all subsequent stories have a working base.",
+      "acceptanceCriteria": [
+        "Run `npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias '@/*'` in the project root",
+        "`npm run dev` starts without errors and http://localhost:3000 loads",
+        "Replace default Next.js boilerplate in `src/app/page.tsx` with a simple `<h1>FUND II Trend Mapper</h1>`",
+        "`tsconfig.json`, `tailwind.config.ts`, and `next.config.ts` are present",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Set up Prisma with SQLite, WAL mode, and global singleton",
+      "description": "As a developer, I need Prisma configured with SQLite so the app can persist projects and chat history.",
+      "acceptanceCriteria": [
+        "Install `prisma` and `@prisma/client`",
+        "Run `npx prisma init --datasource-provider sqlite`",
+        "Create `src/lib/prisma.ts` with the global singleton pattern: `const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }; export const prisma = globalForPrisma.prisma ?? new PrismaClient(); if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;`",
+        "Create `src/instrumentation.ts` that runs `PRAGMA journal_mode=WAL` via `prisma.$executeRawUnsafe('PRAGMA journal_mode=WAL')` on server startup",
+        "Add a stub model to `prisma/schema.prisma` and run `npx prisma migrate dev --name init` successfully",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Extract megatrend documents to plain text files",
+      "description": "As a developer, I need the megatrend .docx and .pdf files converted to plain text so they can be injected as Vertex AI context.",
+      "acceptanceCriteria": [
+        "Install `mammoth`, `pdf-parse`, and `@types/pdf-parse`",
+        "Create `scripts/extract-docs.ts` that reads all files from `Trend Mapper/MEGATRENDS Docs for TrendMapper/`",
+        "Extracts each .docx using `mammoth.extractRawText()` and the .pdf using `pdf-parse`",
+        "Writes output to `src/context/megatrend-1.txt`, `megatrend-2.txt`, `megatrend-3.txt`, `megatrend-4.txt`",
+        "Run the script: `npx ts-node --skip-project scripts/extract-docs.ts`",
+        "All 4 `.txt` files are non-empty and contain readable text (not binary garbage)",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Source files: 'Deep Research Report ChaqtGPT.docx', 'Global_Megatrends_Impact_Impulse_Matrix_2025-2050 (Claude).docx', 'Spotting_Big_Trends_Megatrends_Handout.pdf', 'The Great Fragmentation GEMINI Deep Research.docx' — all in 'Trend Mapper/MEGATRENDS Docs for TrendMapper/'"
+    },
+    {
+      "id": "US-004",
+      "title": "Create server-side context loader for system prompt and megatrend docs",
+      "description": "As a developer, I need a context loader that assembles the full system prompt + knowledge base as a string ready for Vertex AI injection.",
+      "acceptanceCriteria": [
+        "Copy `Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt` to `src/context/system-prompt.txt`",
+        "Create `src/lib/context.ts` that exports `getSystemContext(): string`",
+        "Function reads `system-prompt.txt` then all 4 megatrend `.txt` files using `fs.readFileSync`",
+        "Combines them with `\\n\\n---KNOWLEDGE BASE DOCUMENT---\\n\\n` as separator between docs",
+        "Add `import 'server-only'` at top to prevent client-side imports (install `server-only` package)",
+        "Verify: `npx ts-node --skip-project -e \"const {getSystemContext} = require('./src/lib/context'); console.log('Context length:', getSystemContext().length)\"` outputs a number > 10000",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Verify Vertex AI ADC authentication with a smoke test API route",
+      "description": "As a developer, I need to confirm Vertex AI credentials work before building the chat pipeline on top of them.",
+      "acceptanceCriteria": [
+        "Install `@google-cloud/vertexai`",
+        "Add `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` (e.g. `us-central1`) to `.env.local`",
+        "Create `src/app/api/smoke-test/route.ts` with `export const runtime = 'nodejs'`",
+        "Route sends a single non-streaming message to Vertex AI: 'Hello, respond with just the word READY'",
+        "Returns `{ ok: true, response: '...' }` as JSON",
+        "Test: GET http://localhost:3000/api/smoke-test returns `{ ok: true }` with a valid response string",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "MUST have `export const runtime = 'nodejs'` — edge runtime breaks gcloud ADC auth. If ADC fails, set GOOGLE_APPLICATION_CREDENTIALS in .env.local pointing to ~/.config/gcloud/application_default_credentials.json"
+    }
+  ]
+}

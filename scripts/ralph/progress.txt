@@ -1,0 +1,9 @@
+# Ralph Progress Log
+Started: 2026-03-21
+Project: FUND II Trend Mapper
+Phase: 1 — Foundation & Environment
+---
+
+## Codebase Patterns
+(populated as stories complete)
+
