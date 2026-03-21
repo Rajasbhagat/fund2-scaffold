@@ -1,37 +1,20 @@
-# Ralph Progress Log
-Started: Sat Mar 21 16:53:00 CET 2026
----
-
 ## Codebase Patterns
+- Worktree has no node_modules or prisma client on first use — run `npm install && npx prisma generate` and `DATABASE_URL="file:./dev.db" npx prisma migrate deploy` before running tsc/build checks
 - All Vertex AI routes use `export const runtime = 'nodejs'`
-- Prisma client imported from `@/lib/prisma` (singleton), generated to `@/generated/prisma/client`
-- Context loaded via `getSystemContext()` from `@/lib/context`
-- Vertex AI grounding: `tools: { google_search: vertex.tools.googleSearch({}) }` in streamText call
-- `vertex` instance created with `createVertex()` has `.tools.googleSearch()` available
-- Run `npx prisma generate` before typecheck if `@/generated/prisma/client` errors appear
-- This is a git worktree — work in `/private/tmp/fund2-p3-integration`, NOT the main working dir
+- Prisma client imported from `@/lib/prisma` (singleton pattern)
+- HTTP streaming headers (X-Content-Type-Options, X-Accel-Buffering, Cache-Control) set on Response wrapping result.toTextStreamResponse()
 
-## 2026-03-21 - US-003
-- Implemented Vertex AI web search grounding on the chat route
-- Added `tools: { google_search: vertex.tools.googleSearch({}) }` to the `streamText` call
-- Verified using `@ai-sdk/google-vertex` SDK docs at `node_modules/@ai-sdk/google-vertex/docs/16-google-vertex.mdx`
-- The `createVertex()` return value has `.tools.googleSearch()` — confirmed in type definitions
-- Files changed: `src/app/api/chat/[projectId]/route.ts`
-- **Learnings for future iterations:**
-  - The grounding API in `@ai-sdk/google-vertex` v4 uses `vertex.tools.googleSearch({})` as a tool, NOT `googleSearchRetrieval` config
-  - The worktree at `/private/tmp/fund2-p3-integration` is the `ralph/phase-3-integration` branch — always cd here, not to the main `/Users/rajas/Desktop/AntiGravity/Fund2Updated` working dir
-  - Run `npx prisma generate` before typecheck in a fresh worktree — generated client is not committed
-  - The integration branch has `ralph/phase-3-merged` as its base; both share the same starting commit
+# Ralph Progress Log
+Started: Sat Mar 21 17:02:22 CET 2026
 ---
 
-## 2026-03-21 - US-006
-- Wired project chat page end-to-end with Server Component history hydration
-- `src/app/projects/[projectId]/page.tsx`: fetches messages from DB, passes as `initialMessages` to `<ChatWindow>`, removed placeholder
-- `src/components/ChatWindow.tsx`: fixed fetch body from `{ message: userText }` to `{ messages: [{ role: 'user', content: userText }] }` to match route handler expectation
-- `npm run build` passes; `npx tsc --noEmit` passes
-- Files changed: `src/app/projects/[projectId]/page.tsx`, `src/components/ChatWindow.tsx`
+## 2026-03-21 - US-004
+- Verified HTTP headers already present in route.ts (lines 77-85): X-Content-Type-Options: nosniff, X-Accel-Buffering: no, Cache-Control: no-cache
+- Set up worktree: ran npm install, npx prisma generate, and prisma migrate deploy
+- `npx tsc --noEmit` passes (0 errors)
+- `npm run build` passes (all 5 pages generated)
+- Files changed: scripts/ralph/prd.json, scripts/ralph/progress.txt
 - **Learnings for future iterations:**
-  - The worktree has no dev.db tables by default — run `DATABASE_URL="file:./dev.db" npx prisma db push` to create them before build
-  - ChatWindow already had `disabled={isStreaming}` wired to ChatInput, which shows 'Thinking...' — no changes needed there
-  - Route handler expects `{ messages: [{ role, content }] }` array format, not a plain `message` string
+  - Worktree requires manual `npm install` + `npx prisma generate` + `DATABASE_URL="file:./dev.db" npx prisma migrate deploy` before any TypeScript or build checks
+  - The headers were already committed to the branch — US-004 was pre-implemented; this iteration verified and marked it passing
 ---

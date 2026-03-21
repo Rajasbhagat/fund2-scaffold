@@ -1,42 +1,56 @@
 {
   "project": "FUND II Trend Mapper",
-  "branchName": "ralph/phase-3-integration",
-  "description": "Phase 3 Integration — Vertex AI Grounding and full end-to-end wiring. Runs AFTER Group A and Group B branches are merged. US-003 adds grounding to the route (depends on Group A). US-006 wires the project page end-to-end (depends on both groups). Base branch: ralph/phase-3-merged.",
+  "branchName": "ralph/phase-4-group-b",
+  "description": "Phase 4 Group B (Shared Files Track) — HTTP headers, error handling, and loading indicator. All stories touch route.ts or ChatWindow.tsx. Stories must run sequentially within this group to avoid intra-group conflicts. Runs in parallel with Groups A and C. Base branch: ralph/phase-3-streaming-chat.",
   "userStories": [
     {
-      "id": "US-003",
-      "title": "Configure Vertex AI Grounding with web search on the model",
-      "description": "As a student, I need the Trend Mapper agent to cite real web sources when making claims about trends, so I can trust the information and explore further.",
+      "id": "US-004",
+      "title": "Add required HTTP headers to streaming route and verify production build passes",
+      "description": "As a developer, I need the streaming route to emit the correct HTTP headers to prevent proxy buffering and content sniffing issues, and I need the production build to pass clean so the app is deployable.",
       "acceptanceCriteria": [
-        "Before implementing: run `npm show @google-cloud/vertexai version` or check the installed SDK types to confirm the exact parameter name and structure for enabling web search grounding — do not assume it matches old docs",
-        "Configure web search grounding on the model call in the chat route (Path A: check `@ai-sdk/google-vertex` docs for grounding tool config; Path B: add `tools` or `googleSearchRetrieval` config to the `generateContentStream` call)",
-        "Test: POST to the chat route with a message 'What are the latest AI trends in 2025?' — the response must include grounding metadata or citation markers in the streamed tokens",
-        "Verify grounding is active by checking for `groundingMetadata` in the raw response or visible citations in the streamed output",
+        "The streaming Route Handler response includes the header `X-Content-Type-Options: nosniff`",
+        "The streaming Route Handler response includes `X-Accel-Buffering: no` to prevent Nginx/proxy from buffering the stream",
+        "The streaming Route Handler response includes `Cache-Control: no-cache` to prevent CDN or browser caching of the stream",
+        "Verify these headers are set on the same `Response` or `NextResponse` object that carries the `ReadableStream` body — not on a separate response",
+        "`npm run build` completes without errors — zero TypeScript errors, zero build errors",
         "`npx tsc --noEmit` passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Vertex AI Grounding config parameter is MEDIUM confidence — the exact field name (googleSearchRetrieval, tools with googleSearch, etc.) may have changed across SDK versions. Always verify against the installed SDK TypeScript types or official docs before coding. Do not copy-paste from old examples without checking that types compile. PRISMA 7 NOTE: generated client is at `@/generated/prisma/client`."
+      "notes": "Small targeted change to route.ts only. Must come first within this group so US-003 can build on top of it cleanly."
     },
     {
-      "id": "US-006",
-      "title": "Wire the project chat page end-to-end with Server Component history hydration",
-      "description": "As a student, I need the project page to load my prior conversation instantly on page load and then let me continue chatting in real time, so the experience feels seamless.",
+      "id": "US-003",
+      "title": "Implement error handling in Route Handler and display inline error with retry button in ChatWindow",
+      "description": "As a student, I need the app to show me a clear error message with a retry option when the AI call fails, rather than crashing silently or hanging indefinitely.",
       "acceptanceCriteria": [
-        "Update `src/app/projects/[projectId]/page.tsx` (Server Component) to load initial chat history: `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`",
-        "Pass the fetched messages as `initialMessages` prop to `<ChatWindow projectId={projectId} initialMessages={messages} />`",
-        "Remove the Phase 2 placeholder `<p>Chat coming in Phase 3</p>`",
-        "ChatWindow is rendered below the project name heading; ChatInput is rendered inside or below ChatWindow",
-        "End-to-end test: create a new project, open it, send a message, see it stream word-by-word, close the tab, reopen the project — prior message and response are visible immediately on load",
-        "Verify the agent's first response to a new project demonstrates challenge-first behavior consistent with the FUND II system prompt (not a generic opener like 'How can I help you today?')",
-        "Verify chat input is disabled and shows 'Thinking...' while the stream is active",
-        "Verify the agent cites web sources when asked about recent trends (Grounding active)",
-        "`npx tsc --noEmit` passes",
-        "`npm run build` completes without errors"
+        "The streaming Route Handler wraps the Vertex AI call in a try/catch block",
+        "On error, the Route Handler returns `NextResponse.json({ error: string, code: string }, { status: 500 })` — never lets the stream die silently",
+        "ChatWindow detects a non-2xx response or a JSON error body from the Route Handler",
+        "On error, ChatWindow renders an inline error message (e.g. 'Something went wrong. Please try again.') styled distinctly (e.g. red text or red-bordered bubble) inside the message list — the app does NOT crash",
+        "A 'Retry' button appears alongside the inline error message; clicking it resends the last user message",
+        "`isLoading` (or `isStreaming`) is reset to `false` when an error occurs so the UI is no longer stuck",
+        "`npx tsc --noEmit` passes"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Server Component fetches initial history and passes to Client Component for hydration — standard Next.js 14 App Router pattern. The project page already handles notFound() from Phase 2. ChatWindow and ChatInput are Client Components rendered inside the Server Component. Verify build passes since this is the integration point for all Phase 3 work. PRISMA 7: import from `@/generated/prisma/client`."
+      "passes": false,
+      "notes": "Touches both route.ts (server error response) and ChatWindow.tsx (client error display). Must run after US-004 within this group."
+    },
+    {
+      "id": "US-002",
+      "title": "Add thinking loading indicator — spinner or animated dots appear on send, disappear on first token",
+      "description": "As a student, I need immediate visual feedback when I send a message so I know the agent is processing my request and the app has not frozen.",
+      "acceptanceCriteria": [
+        "ChatWindow tracks an `isLoading` boolean state that becomes `true` the moment a message is submitted and becomes `false` when the first token from the stream is received",
+        "While `isLoading` is `true`, a 'thinking' indicator is rendered in the message list — either an animated spinner or three animated pulsing dots — positioned as if it were an assistant message bubble",
+        "The thinking indicator disappears (is removed from the DOM) as soon as the first streaming token arrives and the assistant message starts populating",
+        "The send button is disabled while `isLoading` is `true` to prevent duplicate submissions",
+        "No regressions to the streaming behavior implemented in Phase 3",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Touches ChatWindow.tsx only. Must run after US-003 within this group to avoid conflicts on ChatWindow."
     }
   ]
 }
