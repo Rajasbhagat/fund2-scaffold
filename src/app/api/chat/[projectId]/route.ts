@@ -1,6 +1,6 @@
 export const runtime = 'nodejs';
 
-import { streamText, type ModelMessage } from 'ai';
+import { streamText, type ModelMessage, type ToolSet } from 'ai';
 import { createVertex } from '@ai-sdk/google-vertex';
 import { NextResponse } from 'next/server';
 import { getSystemContext } from '@/lib/context';
@@ -25,7 +25,7 @@ export async function POST(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   const { projectId } = await params;
-  const { messages: incomingMessages, agentType = 'trend-mapper' } = await request.json();
+  const { messages: incomingMessages, agentType = 'trend-mapper', currentSession = 1, deepResearch = false } = await request.json();
 
   // Extract text from the last incoming message (new user message)
   const lastIncoming = Array.isArray(incomingMessages)
@@ -57,12 +57,19 @@ export async function POST(
   }));
 
   const systemContext = getSystemContext();
+  const systemWithSession = `${systemContext}\n\n[Current FUND II Session: ${currentSession} of 10]`;
+
+  const model = deepResearch ? vertex('gemini-2.5-pro') : vertex('gemini-2.5-flash');
+  const tools: ToolSet = {
+    google_search: vertex.tools.googleSearch({}),
+    ...(deepResearch ? { url_context: vertex.tools.urlContext({}) } : {}),
+  };
 
   try {
     const result = streamText({
-      model: vertex('gemini-2.5-flash'),
-      system: systemContext,
-      tools: { google_search: vertex.tools.googleSearch({}) },
+      model,
+      system: systemWithSession,
+      tools,
       messages: [
         ...historyMessages,
         { role: 'user' as const, content: userMessageContent },
