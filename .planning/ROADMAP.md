@@ -181,6 +181,8 @@ These are known uncertainties from the research phase. Each must be resolved dur
 - [ ] **Phase 6: Value Designer & SPI Agents** — Wire VD and SPI with full system prompts + web search (googleSearch); deep research mode uses gemini-2.5-pro + urlContext
 - [ ] **Phase 7: FARO Agent** — Extract FUND II + elective syllabi, wire FARO with knowledge base + web search for supplemental lookups
 - [ ] **Phase 8: Document Upload + Context Priority** — Per-project PDF/PPTX/DOCX upload, text extraction, priority injection (uploaded docs → system docs → web search); global system docs hidden from UI
+- [ ] **Phase 9: Unified Conversation Thread** — Replace isolated per-agent panels with a single shared conversation thread; inline agent picker selects responder without switching view; full history sent to every agent as context
+- [x] **Phase 10: Aerospace HUD UI Redesign** *(parallel — can run alongside Phases 5–9)* — Full app retheme with Sci-Fi HUD design system; Rajdhani/JetBrains Mono fonts, neon yellow accent blocks, flat brutalist grid layout, HUD primitive component library (completed 2026-03-22)
 
 ---
 
@@ -260,6 +262,43 @@ These are known uncertainties from the research phase. Each must be resolved dur
 
 ---
 
+#### Phase 9: Unified Conversation Thread
+**Goal**: Replace the isolated per-agent chat panels with a single shared conversation thread per project. The student selects which agent responds via an inline picker above the input — switching agents does not clear or replace the conversation. Every agent receives the full shared history as context, eliminating the need to re-explain prior analysis when switching.
+**Depends on**: Phase 8
+**Requirements**: UNIF-01, UNIF-02, UNIF-03, UNIF-04, UNIF-05
+**Success Criteria**:
+  1. A project shows ONE conversation thread regardless of which agent is active — no panel switching, no history reset
+  2. An inline 4-pill agent picker (TREND MAPPER / VALUE DESIGNER / SPI / FARO) above the input shows the active agent highlighted; clicking a different pill changes the target agent without altering the displayed messages
+  3. Messages from different agents are labeled (e.g. "TREND MAPPER", "FARO") above each assistant bubble so the student can trace who said what
+  4. Sending a message with FARO selected after a Trend Mapper exchange: FARO's response demonstrates awareness of the prior Trend Mapper content — it received the full history
+  5. Student messages show as "YOU" with no agent attribution; agent label only appears on assistant messages
+
+**Plans**: 3 plans
+- [ ] 09-01: DB + API — make `agentType` nullable on `Message` (user messages don't require it); update all 4 route handlers to accept a `messages: {role, content, agentType?}[]` array (full client-side history) instead of building history from DB; format unified history into strict alternating user/model Vertex AI turns (merge consecutive same-role turns if needed); keep rolling window applied to the full unified history; route handlers still persist user message + assistant response to DB
+- [ ] 09-02: Refactor AgentWorkspace — remove the per-agent `absolute inset-0` panel map; add `activeAgent` state (default `'trend-mapper'`); replace `AgentTabs` with a new `AgentPicker` component (4 labeled pills, selecting changes `activeAgent` state only — no panel switch); pass `activeAgent` down to a single `UnifiedChatWindow`; load ALL messages for the project at page load (no `agentType` filter in the Server Component query)
+- [ ] 09-03: Update ChatWindow (unified mode) — rename to `UnifiedChatWindow` or add `unified` prop; `messages` state holds all agents' messages in one list; on submit, route POST to the correct endpoint for `activeAgent`; send full `messages` array in POST body; render each message with its `agentType` label for assistant messages using the existing `MessageBubble` + role label pattern; show active agent name in the thinking indicator
+
+---
+
+#### Phase 10: Aerospace HUD UI Redesign
+**Goal**: The entire app is reskinned with the Aerospace Telemetry / Sci-Fi HUD design system — flat, brutalist technical grid aesthetic with pale icy-blue backgrounds, neon yellow accent blocks, deep slate typography, and geometric micro-copy decorations across every surface
+**Depends on**: Phase 4 (functional baseline) — can run in parallel with Phases 5–9
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07, UI-08, UI-09, UI-10
+**Success Criteria** (what must be TRUE):
+  1. App loads with Rajdhani (or Chakra Petch) as the primary typeface and JetBrains Mono for all codes/coordinates/timestamps — no system fonts visible in the main UI
+  2. Dashboard shows project list as instrument-panel cards with 1px slate borders, crosshairs at grid intersections, and a neon yellow (#ebff00) accent strip or block in the header — no rounded corners or shadows anywhere
+  3. Project workspace renders the agent selector as a horizontal HUD tab strip with active-state bracket decorations `[ ]`, the chat panel and sidebar separated by a single 1px rule
+  4. Chat messages display with a micro-copy agent label tag above each assistant bubble; ChatInput looks like a command console
+  5. Session tracker reads as a monospace telemetry value; Deep Research toggle is a flat command switch with neon yellow active state
+  6. At least one panel section uses a dotted/perforated background pattern
+
+**Plans**: 3 plans
+- [x] 10-01: Design foundation — install Rajdhani + Chakra Petch + JetBrains Mono via `next/font`; extend `tailwind.config` with `hud-bg` (#d2edea), `hud-fg` (#1a2024), `hud-accent` (#ebff00), `hud-panel` (#b1dbd8) colors, `borderRadius: { DEFAULT: '0' }` override, and `fontFamily` additions; add global CSS for flat baseline (no shadows, no gradients); create HUD primitive components: `HUDPanel`, `HUDLabel`, `HUDValue`, `HUDAccentBlock`, `Barcode`, `DotGrid`
+- [x] 10-02: Dashboard redesign — restyle `ProjectList`, `ProjectCard`, and `CreateProjectForm` using the HUD system; 2-column layout (20% sidebar / 80% main) with a single 1px vertical rule; sidebar holds the app identity block + session tracker as monospace telemetry readout; main area renders project cards as bordered instrument panels with crosshair corner decorations and neon yellow accent block in the header strip; creation form styled as a flat command input zone
+- [x] 10-03: Workspace + chat redesign — restyle `ProjectLayout`, `AgentWorkspace`, `AgentTabs` (→ HUD tab strip with bracket active states), `ChatWindow`, `MessageBubble` (micro-copy agent label above each bubble), `ChatInput` (command console), `FileUploadPanel` (data intake module), session picker (numbered 1–10 grid cells), and deep research toggle (flat switch with accent active state); apply DotGrid background pattern to at least one panel section
+
+---
+
 ## v2.0 Progress
 
 **Execution Order:** 5 → 6 → 7 → 8 (Phase 6 and 7 can run in parallel after Phase 5)
@@ -270,6 +309,8 @@ These are known uncertainties from the research phase. Each must be resolved dur
 | 6. Value Designer & SPI Agents | 0/3 | ○ Pending | - |
 | 7. FARO Agent | 0/2 | ○ Pending | - |
 | 8. Document Upload | 0/3 | ○ Pending | - |
+| 9. Unified Conversation Thread | 0/3 | ○ Pending | - |
+| 10. Aerospace HUD UI Redesign *(parallel)* | 3/3 | Complete   | 2026-03-22 |
 
 ---
 
@@ -292,6 +333,16 @@ These are known uncertainties from the research phase. Each must be resolved dur
 | DOC-01 | User can upload PDF/PPTX/DOCX per project | Phase 8 |
 | DOC-02 | Uploaded files extracted and injected as priority context | Phase 8 |
 | DOC-03 | System docs pre-loaded globally, hidden from student UI | Phase 8 |
+| UI-01 | HUD typography — Rajdhani/Chakra Petch + JetBrains Mono | Phase 10 |
+| UI-02 | HUD color tokens in Tailwind config | Phase 10 |
+| UI-03 | HUD primitive components (HUDPanel, HUDLabel, etc.) | Phase 10 |
+| UI-04 | Dashboard as instrument-panel grid with crosshairs | Phase 10 |
+| UI-05 | Workspace as HUD with agent tab strip | Phase 10 |
+| UI-06 | Chat as telemetry stream with agent micro-labels | Phase 10 |
+| UI-07 | Session tracker + deep research as telemetry/HUD controls | Phase 10 |
+| UI-08 | File upload as data intake module | Phase 10 |
+| UI-09 | Zero box-shadows, gradients, or rounded corners | Phase 10 |
+| UI-10 | Dotted background pattern in at least one panel | Phase 10 |
 
 ---
 
@@ -309,4 +360,4 @@ These are known uncertainties from the research phase. Each must be resolved dur
 *Roadmap created: 2026-03-21*
 *Milestone: MVP v1.0 — complete*
 *Milestone: MVP v2.0 — added 2026-03-21*
-*Last updated: 2026-03-21 after v2.0 planning session*
+*Last updated: 2026-03-22 after Phase 10 (HUD UI Redesign) added as parallel phase*

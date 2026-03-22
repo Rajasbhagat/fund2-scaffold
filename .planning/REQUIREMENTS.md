@@ -67,6 +67,27 @@
 - [ ] **DOC-02**: Uploaded files are extracted to plain text and injected into the active agent's context before web search runs — uploaded docs take priority over internet results
 - [ ] **DOC-03**: System documents (syllabi, agent specs) are pre-loaded globally at server startup and never visible in the student UI
 
+### Unified Conversation (v2.1 — Phase 9)
+
+- [ ] **UNIF-01**: All 4 agents share a single unified conversation thread per project — no isolated per-agent panels or tab switching that clears context
+- [ ] **UNIF-02**: An inline agent picker (4 labeled pills above the input) selects which agent responds to the next message — selecting a different agent does NOT change the displayed conversation
+- [ ] **UNIF-03**: Each assistant message in the unified thread is labeled with the agent that produced it (e.g. "TREND MAPPER", "FARO") so students can trace who said what
+- [ ] **UNIF-04**: When a student switches to a different agent and sends a message, that agent receives the entire prior conversation (all agents' messages) as its context — no re-explaining needed
+- [ ] **UNIF-05**: User messages display as "YOU" with no agent label; the active agent at send time is recorded on the message for persistence
+
+### UI Design System (HUD Redesign — parallel to v2.0)
+
+- [ ] **UI-01**: Global typography configured — Rajdhani or Chakra Petch as primary sans-serif, JetBrains Mono as monospace accent; loaded via `next/font` or `@import`
+- [ ] **UI-02**: Tailwind config extended with HUD design tokens — `#d2edea` (bg-main), `#1a2024` (fg), `#ebff00` (accent), `#b1dbd8` (bg-secondary); border-radius defaulting to 0 globally
+- [ ] **UI-03**: Reusable HUD primitive components — `HUDPanel` (bordered box with crosshair corners), `HUDLabel` (uppercase micro-copy), `HUDValue` (mega data text), `HUDAccentBlock` (neon yellow block), `Barcode` (decorative dense lines), `DotGrid` (perforated background)
+- [ ] **UI-04**: Dashboard redesigned as a mission control panel — strict 2-column grid with 1px slate borders, project list as instrument-panel cards with crosshairs at grid intersections, neon yellow accent strip in the header
+- [x] **UI-05**: Project workspace redesigned as a full HUD — agent selector rendered as a horizontal tab strip with active-state bracket decoration, chat panel / sidebar divided by harsh 1px lines
+- [x] **UI-06**: Chat interface redesigned as a telemetry stream — assistant messages labeled with micro-copy agent tag, `ChatInput` rendered as a command console with flat border, loading indicator as a HUD pulse
+- [x] **UI-07**: Session tracker displayed as a monospace telemetry readout; Deep Research toggle as a flat command switch with neon yellow active state
+- [x] **UI-08**: File upload panel redesigned as a data intake module within the HUD system
+- [x] **UI-09**: All UI elements are completely flat — zero box-shadows, zero gradients, zero rounded corners (except perfect circles in logo marks)
+- [ ] **UI-10**: Dotted background pattern used in at least one major panel section (e.g., dashboard hero or workspace sidebar)
+
 ## v3 Requirements (deferred)
 
 ### Auth & Multi-User
@@ -137,11 +158,15 @@
 | DOC-01 | Phase 8 | ○ Pending |
 | DOC-02 | Phase 8 | ○ Pending |
 | DOC-03 | Phase 8 | ○ Pending |
+| UNIF-01 | Phase 9 | ○ Pending |
+| UNIF-02 | Phase 9 | ○ Pending |
+| UNIF-03 | Phase 9 | ○ Pending |
+| UNIF-04 | Phase 9 | ○ Pending |
+| UNIF-05 | Phase 9 | ○ Pending |
 
 **Coverage:**
 - v1 requirements: 23 total — all mapped ✓
-- v2 requirements: 14 total — all mapped ✓
-- Unmapped: 0
+- v2 requirements: 19 total — all mapped ✓
 - Unmapped: 0 ✓
 
 ---
