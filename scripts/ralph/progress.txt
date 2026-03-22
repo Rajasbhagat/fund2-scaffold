@@ -56,3 +56,8 @@ Started: Sun Mar 22 01:56:09 CET 2026
   - UnifiedChatWindow captures `updatedMessages` snapshot at send time for the POST body (avoids stale closure)
   - AgentPicker placed between message area and ChatInput for natural flow
 ---
+
+## 2026-03-22 - Phase 9 Complete
+- All 5 US stories implemented
+- Files changed: prisma/schema.prisma, all 4 route handlers, project page Server Component, AgentWorkspace.tsx, new AgentPicker.tsx, new UnifiedChatWindow.tsx
+---
