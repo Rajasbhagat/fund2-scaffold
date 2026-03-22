@@ -1,19 +1,19 @@
 # Project Research Summary
 
-**Project:** FUND II Trend Mapper
-**Domain:** Multi-project pedagogical AI chat web application (single-workspace, no auth)
-**Researched:** 2026-03-21
-**Confidence:** MEDIUM-HIGH
+**Project:** FUND II — AI-Powered Slide Generation (v2.1 milestone)
+**Domain:** AI-powered .pptx generation from multi-agent chat conversations (pedagogical MBA tool)
+**Researched:** 2026-03-22
+**Confidence:** HIGH
 
 ---
 
 ## Executive Summary
 
-The FUND II Trend Mapper is a focused internal tool: a single Next.js 14 App Router application where MBA students create named "projects" (one per trend being explored), and each project has a persistent AI chat backed by Vertex AI Gemini. There is no authentication — the entire cohort shares one URL. The defining technical challenge is not the chat UI itself (well-trodden territory) but three interconnected requirements: (1) keeping Vertex AI credentials server-side and out of the browser, (2) injecting pre-extracted megatrend documents as static system context on every request without a RAG pipeline, and (3) getting streaming responses to work correctly end-to-end through Next.js Route Handlers. These three pieces must be wired correctly before a single feature is usable.
+This milestone adds AI-powered slide generation on top of a working multi-agent chat platform (Next.js 16.2.1, Prisma 7 + SQLite, ai@6.0.134, Vertex AI Gemini 2.5 Flash). The feature surface is minimal but the integration is precise: one new package (`pptxgenjs@4.0.1`), one new API route family (`app/api/slides/[type]/[projectId]/route.ts`), and two new client components (`SlidePanel`, `SlideGenerateButton`). No DB schema changes, no new auth, no new infrastructure — stateless generation on demand.
 
-The recommended approach is straightforward: one repo, one Node.js process, no external services beyond Vertex AI. The AI layer uses either the Vercel AI SDK with `@ai-sdk/google-vertex` (less boilerplate, Path A) or `@google-cloud/vertexai` directly (more control, Path B). The database is SQLite via Prisma 5 — zero infrastructure, sufficient for a single cohort of ~40 students. The megatrend docs (three `.docx`/`.pdf` files) must be extracted to plain text once at setup time and committed to the repo; they are loaded from disk at server startup and injected into every Vertex AI request as the `systemInstruction`. No vector database, no RAG, no file upload pipeline. The agent behavior (challenge-first, scaffold-don't-solve, pre-class vs. in-class modes) is entirely governed by the existing system prompt — no UI configuration is needed.
+The recommended approach is a strict server-side pipeline: client sends the full message history in the POST body, the route handler filters to agent-relevant turns, calls `generateText` with `Output.object()` (the current AI SDK v6 pattern — `generateObject` is deprecated and scheduled for removal), extracts structured slide data via a flat Zod schema, builds the PPTX in memory with pptxgenjs, and returns a binary response. The pedagogical core of the feature — progressive disclosure — is implemented as a two-stage unlock: a cheap message-count heuristic runs client-side on every render; a Gemini completeness check runs inline in the generation route only when the student actually clicks Generate and the count threshold is met.
 
-The dominant risk category is infrastructure misconfiguration, not feature complexity. Five pitfalls have near-certain probability of occurring if not addressed explicitly: using Edge runtime on AI routes (breaks gcloud auth), failing to add the Prisma singleton (causes SQLite lock errors during development), not extracting megatrend docs before first run (context injection silently produces garbage), not enabling SQLite WAL mode (concurrent reads block during streaming writes), and ADC credential path not resolving correctly in non-gcloud-CLI environments. All five are preventable with day-one setup steps and do not require architectural decisions later.
+The primary risks are correctness risks, not architectural ones. The top three: (1) Zod schema fields must be `.nullable()` to prevent Gemini from hallucinating content for absent fields; (2) the `agentType` filter must be applied to all message queries or cross-agent content contaminates slide extraction; (3) the completeness check must be implemented with a one-way latch and debounce from day one — calling Gemini on every chat render is a real-money mistake. All three are preventable with upfront discipline and do not require rework once in place.
 
 ---
 
@@ -21,231 +21,121 @@ The dominant risk category is infrastructure misconfiguration, not feature compl
 
 ### Recommended Stack
 
-A lean, single-repo full-stack setup with no external infrastructure. Next.js 14 (App Router) handles both the UI and the backend API. Vertex AI Gemini 1.5 Pro is the LLM. SQLite via Prisma 5 is the database. Tailwind CSS and shadcn/ui handle the frontend. All LLM calls happen in Node.js Route Handlers — never Edge functions, never Server Actions.
+The existing stack requires exactly one new package. `pptxgenjs@4.0.1` is the only addition needed — it is the de-facto JavaScript PPTX library, has zero runtime dependencies, ships TypeScript definitions, and its `write('nodebuffer')` method returns a `Promise<Buffer>` suitable for a Next.js API route response. All other capabilities (structured AI extraction, Zod schema validation, file download trigger) are already present in the installed stack.
+
+The critical API note: `generateObject` is deprecated in `ai@6.0.134`. The current pattern is `generateText` with `output: Output.object({ schema })`. Using the deprecated API risks a breaking change in a future patch. The route must declare `export const runtime = 'nodejs'` — pptxgenjs uses Node.js built-ins and is incompatible with the edge runtime.
 
 **Core technologies:**
+- `pptxgenjs@4.0.1`: PPTX file generation — only new dependency; zero transitive deps; Node.js only; `write('nodebuffer')` returns Buffer for direct HTTP response
+- `generateText` + `Output.object()` from `ai@6.0.134`: structured slide content extraction — replaces deprecated `generateObject`; already installed; same `createVertex` instance as streaming routes
+- `zod` (bundled with `ai`): slide content schemas — already present; keep schemas flat (max 1 level of nesting) to avoid Vertex AI structured output rejections
 
-| Technology | Purpose | Why |
-|------------|---------|-----|
-| Next.js 14.2.x | Full-stack framework | App Router streaming, Route Handlers, single repo for UI + API |
-| TypeScript 5.4.x | Type safety | Prisma generates typed client; catches schema/API mismatches at compile time |
-| Node.js 20 LTS | Runtime | Required for `@google-cloud/vertexai` — Google Auth Library is Node-only, no edge support |
-| `@ai-sdk/google-vertex` + `ai` (Path A) | LLM layer + streaming | `useChat` + `streamText` reduce streaming boilerplate by ~80%; try this first |
-| `@google-cloud/vertexai` (Path B fallback) | LLM layer | Use if ADC auth fails in the AI SDK wrapper; requires manual ReadableStream bridging |
-| Prisma 5.16.x + SQLite | Database + ORM | Type-safe queries, schema migrations, zero infrastructure; sufficient for one cohort |
-| Tailwind CSS 3.4.x + shadcn/ui | Styling + components | Utility-first, zero runtime cost; copy-paste Radix primitives for chat UI components |
-| Zod 3.23.x | Input validation | Validate all API inputs before touching DB or LLM — no auth means no trust of inputs |
-
-**What NOT to use:**
-- `@google/generative-ai` — wrong product (API key auth, not ADC/Vertex)
-- Edge runtime (`export const runtime = 'edge'`) on AI routes — breaks gcloud auth
-- Server Actions for chat streaming — cannot return `ReadableStream` in Next.js 14
-- Vector database (Pinecone, pgvector) — corpus is too small to justify; Gemini 1.5 Pro's 1M token window makes RAG unnecessary
-
-See `/STACK.md` for full installation commands and code patterns.
-
----
+See `.planning/research/STACK.md` for full API reference patterns and code samples.
 
 ### Expected Features
 
-The full MVP feature set is smaller than it might appear. Most items are low-complexity UI. The medium-complexity work is the streaming pipeline and the chat persistence layer. The highest-effort item is not engineering — it is testing that the system prompt guardrails hold (no full slide decks, no pain-point language, no invented statistics).
+Five slide types map directly to the pedagogical arc: Trend Mapper (6-part structure), and four Value Designer slides (Opportunity Statement, Value Proposition, Customer Segment, Business Model). Each has its own Zod extraction schema derived from the agent system prompt's activity structure.
 
-**Must have (MVP — Phase 1):**
-- Project dashboard — create, list, rename, delete; sorted by recency
-- Persistent chat per project — load history on open, survive page refresh
-- Streaming AI response — Vertex AI Gemini with system prompt + megatrend context + web search grounding
-- Markdown rendering — headers, bold, bullets in assistant responses
-- Loading indicator + error states — thinking spinner; error toast with retry affordance
-- Correct agent persona — the Trend Mapper system prompt must be injected faithfully on every request
+**Must have (table stakes) — v2.1:**
+- Generate Slide button per slide type with disabled state and explanatory tooltip — locked features must explain themselves
+- Two-stage unlock: message-count heuristic (cheap, client-side) gates Gemini completeness check (inline in generation route on first click)
+- `.pptx` download via `Content-Disposition: attachment` — MBA students must open in PowerPoint or Google Slides
+- Loading state during generation (2–15 second wait) — no spinner means double-clicks and confusion
+- Slide content derived from the actual conversation — null fields render as `[Not yet defined — continue the conversation]`, not hallucinated content
 
-**FUND II differentiators (what makes this different from generic ChatGPT):**
-- Megatrend knowledge base pre-injected as system context (Impact Impulse Matrix, Great Fragmentation, Deep Research Report)
-- Vertex AI Grounding for web search — agent spec mandates real citations; this is a config option, not custom code
-- Strict system prompt fidelity — challenge-first, scaffold-don't-solve, pre-class vs. in-class awareness, Session 3 bridge language
+**Should have (differentiators) — v2.1:**
+- Per-type progressive unlocking tied to pedagogical readiness — the unlock sequence IS the course feedback loop
+- `missingElements` array surfaced in tooltip when not ready — tells students exactly what content is absent
+- HUD-consistent slide styling (neon yellow `#ebff00` header, icy blue `#d2edea` body, dark `#1a2024` text) — visual coherence with the app
 
-**Defer to Phase 2:**
-- PDF/slide export (copy-paste is sufficient for MVP)
-- Dark mode
-- Conversation search
-- Auth + per-user isolation (only needed when cohort size or privacy requires it)
+**Defer (v2+):**
+- Slide storage / re-download — re-generation on demand is sufficient while conversations are already persisted
+- Google Slides direct export — requires OAuth per user, explicitly out of scope for v2.1
+- HTML slide preview — requires a separate renderer (Reveal.js); not worth the complexity
+- Editable fields before generation — re-chatting is the correct feedback loop; a form UI adds frontend complexity with no pedagogical benefit
 
-**Never build without explicit decision:**
-- User login or accounts
-- File upload from students
-- Any agent other than Trend Mapper
-
-**Anti-features to explicitly exclude:** real-time collaboration, chat branching, message editing, agent config UI, RAG pipeline, project archiving/tagging.
-
-See `/FEATURES.md` for the full feature dependency chain and complexity breakdown.
-
----
+See `.planning/research/FEATURES.md` for full Zod schemas, threshold tables, and the complete feature prioritization matrix.
 
 ### Architecture Approach
 
-A single Next.js 14 application. No separate backend process. Route Handlers (`app/api/`) act as the API boundary — they run in the Node.js runtime and own all Vertex AI and Prisma calls. React Client Components handle chat UI state and streaming consumption. Server Components handle initial data loading (project list, chat history). SQLite stores only conversation turns — never the system prompt or megatrend docs (which are injected from disk at request time).
+The integration adds one dedicated route family and two components without modifying any existing files except `AgentWorkspace.tsx` (to mount `SlidePanel`). The separation is clean: chat routes own streaming SSE; slide routes own blocking structured extraction + binary response. These two response shapes cannot share a handler — `streamText` commits to an SSE response immediately; `generateText` with `Output.object()` is blocking and returns JSON. Client state for slide buttons is entirely derived — `thresholdMet` recomputes from the messages array on every render; `isGenerating` and `lastError` are transient `useState` with no DB backing.
 
 **Major components:**
+1. `app/api/slides/[type]/[projectId]/route.ts` — POST handler: message filtering, `generateText`+`Output.object()` extraction, pptxgenjs build, Buffer response with PPTX headers
+2. `src/components/SlidePanel.tsx` — owns `SlideButtonState` map; receives `messages[]` and `activeAgent` as props; mounts 5 `SlideGenerateButton` instances; implements one-way latch
+3. `src/lib/slides/` — server-only modules: `schemas.ts` (5 flat Zod schemas), `builders.ts` (5 pptxgenjs template functions), `thresholds.ts` (message count constants), `prompts.ts` (extraction system prompts)
 
-| Component | Type | Responsibility |
-|-----------|------|---------------|
-| `app/page.tsx` | Server Component | Dashboard — renders project list via Prisma directly |
-| `app/projects/[projectId]/page.tsx` | Server Component | Chat view — loads project + history from DB for initial render |
-| `ChatWindow.tsx` | Client Component | Manages streaming state, message list, scroll-to-bottom |
-| `ChatInput.tsx` | Client Component | Textarea + submit; disabled during active stream |
-| `MessageBubble.tsx` | Client Component | Renders markdown in chat bubbles |
-| `app/api/projects/route.ts` | Route Handler | CRUD: list + create projects |
-| `app/api/projects/[id]/route.ts` | Route Handler | CRUD: get, rename, delete single project |
-| `app/api/chat/[projectId]/route.ts` | Route Handler (Node.js) | Core: load history, persist user message, stream Vertex AI response, persist assistant message |
-| `lib/prisma.ts` | Singleton module | One PrismaClient per process — prevents hot-reload connection exhaustion |
-| `lib/vertexai.ts` | Module | VertexAI client, `streamChatResponse()`, rolling history window |
-| `lib/context.ts` | Module | Load system prompt + megatrend text from disk once; cache in module scope |
-
-**Data flow for a new chat message:**
-```
-User types → ChatInput → POST /api/chat/:projectId
-→ Load history from SQLite
-→ Persist user message to SQLite
-→ Build Vertex AI request (history + systemInstruction with full context)
-→ generateContentStream → ReadableStream
-→ Stream tokens to browser while buffering full response
-→ Stream closes → persist assistant message to SQLite
-```
-
-**Key schema decisions:**
-- `role` field uses `"user"` and `"model"` (matching Vertex AI's `Content.role` values — no translation needed)
-- `onDelete: Cascade` on Message — deleting a project removes all messages automatically
-- No `userId` column — no auth in MVP
-- Composite index `[projectId, createdAt]` — covers the only query pattern: all messages for project X, ordered by time
-
-See `/ARCHITECTURE.md` for directory structure, full API route table, and code patterns.
-
----
+See `.planning/research/ARCHITECTURE.md` for full data flow diagrams and the 5-step build order with test methods.
 
 ### Critical Pitfalls
 
-All six critical pitfalls below will occur without explicit prevention. None require architectural rethinking — they are all day-one setup decisions.
+1. **pptxgenjs imported in client bundle** — Import only inside `app/api/` routes; add `import 'server-only'` to any `src/lib/slides/` utility module on day one. Failure mode: `Module not found: Can't resolve 'fs'` at `next build`.
 
-1. **Edge runtime silently breaks Vertex AI SDK** — Add `export const runtime = 'nodejs'` to every Route Handler that calls Vertex AI. The gcloud credential chain requires Node.js `fs` access; the Edge runtime blocks it. Build succeeds but requests return 403.
+2. **All Zod schema fields required — Gemini hallucinates absent content** — Mark fields that may be absent as `.nullable()`. Required fields force Gemini to invent plausible content when the conversation hasn't covered that topic. Use `[Not yet defined]` placeholders in the PPTX instead.
 
-2. **Prisma client multiplied by hot-reload** — Use the global singleton pattern in `lib/prisma.ts` from day one. Without it, every file save in `next dev` creates a new PrismaClient, exhausting SQLite connections and producing `SQLITE_BUSY` errors that disappear on cold restart.
+3. **Wrong `agentType` filter on message queries** — Always filter messages by both `projectId` AND `agentType`. For legacy Trend Mapper messages (v1.0, null agentType), use `OR: [{ agentType: 'trend-mapper' }, { agentType: null }]`. Missing filter produces cross-agent slide contamination intermittently.
 
-3. **Raw DOCX/PDF bytes sent as context** — DOCX files are ZIP-compressed XML; they cannot be read with `fs.readFileSync` and passed as text. Extract all megatrend docs to `.txt` files using `mammoth` (DOCX) and `pdf-parse` (PDF) in a one-time setup script. Commit the `.txt` files. Never run extraction at request time.
+4. **Completeness check called on every render** — Implement a one-way latch (`Set<string>` of ready slide types, never removes entries) and debounce (check only on assistant message completion, not streaming chunks). Calling Gemini per render burns tokens and adds perceptible latency to every chat turn.
 
-4. **Megatrend docs exceed practical token budget** — Extracted docs may reach 50,000–100,000 tokens. Measure with Vertex AI `countTokens` before committing the strategy. Budget a hard ceiling of 30,000 tokens for megatrend context. If exceeded, produce one-time condensed summaries (3,000–5,000 tokens each) rather than injecting full text. Always use the `systemInstruction` field, not the `contents` array.
+5. **Corrupt PPTX download** — Use the exact MIME type `application/vnd.openxmlformats-officedocument.presentationml.presentation` and `Content-Disposition: attachment`. Do not use `NextResponse.json()` for binary responses — it corrupts the buffer. Smoke-test each slide type against PowerPoint/LibreOffice before adding UI.
 
-5. **ADC credential not found outside gcloud CLI context** — `gcloud auth application-default login` writes to `~/.config/gcloud/`. When Next.js runs as a process manager process, Docker container, or CI job, `~` may resolve differently. Set `GOOGLE_APPLICATION_CREDENTIALS` explicitly in `.env.local` pointing to the absolute path. For production, use a service account JSON key — never ship gcloud user credentials.
-
-6. **SQLite WAL mode not enabled — concurrent reads block writes** — Default SQLite journal mode causes reads to block during write transactions. With streaming (long-lived writes), the project list page will fail while a chat is active. Run `PRAGMA journal_mode=WAL` and `PRAGMA busy_timeout=5000` via `prisma.$executeRaw` immediately after client creation.
-
-**Moderate pitfalls to address during implementation:**
-- System prompt placed in `contents` array instead of `systemInstruction` — puts instructions in the conversation turn array, causes model to treat them as user messages
-- Streaming response buffered by reverse proxy in production — add `X-Accel-Buffering: no` and `Cache-Control: no-cache` headers to the streaming route
-- Unbounded chat history growth — implement a rolling window (`slice(-40)`) when building the Vertex AI history array; preserve first 2 turns + last 20
-- `prisma generate` not in `postinstall` — add it immediately; schema changes without regeneration cause stale TypeScript types and runtime failures
-
-See `/PITFALLS.md` for detection signatures and exact prevention code for all 16 pitfalls.
+See `.planning/research/PITFALLS.md` for all 10 critical pitfalls, recovery strategies, and the "Looks Done But Isn't" verification checklist.
 
 ---
 
 ## Implications for Roadmap
 
-All research converges on the same dependency chain: infrastructure before features. The megatrend context injection is a prerequisite for the AI behavior being correct. The AI behavior correctness is a prerequisite for pedagogical testing. Project CRUD is a prerequisite for the chat UI having anything to attach to. Nothing is parallelizable until the streaming pipeline is proven end-to-end.
+The architecture's own 5-step build order — server-side pipeline first, UI last — is the right phase structure. Each step is independently verifiable before the next begins, which is essential because binary file delivery and structured output failures are both invisible to the browser until the full pipeline is complete.
 
-### Phase 0: Environment and Document Extraction (Prerequisite — no UI)
+### Phase 1: Slide Schemas, Prompts, and Thresholds
+**Rationale:** All downstream work depends on the Zod schemas being correct and accepted by Vertex AI structured output. Flat schemas must be validated with real Gemini calls before any rendering code is written. Fixing schema complexity is cheap at this stage and expensive after pptxgenjs templates are built on top of them.
+**Delivers:** `src/lib/slides/schemas.ts` (5 flat Zod schemas), `prompts.ts` (5 extraction system prompts), `thresholds.ts` (message count constants per slide type)
+**Addresses:** Foundation for slide content derived from actual conversation; null-safe field design
+**Avoids:** Pitfall 10 (complex Zod schema rejected by Vertex AI), Pitfall 3 (hallucinated required fields)
+**Research flag:** Standard patterns — straightforward TypeScript/Zod authoring; no phase research needed. Validate each schema with a real Gemini call as part of phase execution before moving on.
 
-**Rationale:** Three of the six critical pitfalls occur before a single line of application code is written. Getting these right first means every subsequent phase can be tested immediately without debugging environment issues. This is also the only phase with a hard dependency on external state (existing `.docx`/`.pdf` files and gcloud credentials). It has zero UI and zero database work.
+### Phase 2: Slide Generation API Route (JSON extraction prototype)
+**Rationale:** Build the route returning structured JSON (not yet PPTX) so the extraction pipeline can be verified with `curl` before pptxgenjs is introduced. This decouples schema correctness from file delivery correctness — two independent failure modes that are much harder to debug when combined.
+**Delivers:** `app/api/slides/[type]/[projectId]/route.ts` returning structured JSON 200 (or 422 with human-readable reason); `export const runtime = 'nodejs'`; `export const maxDuration = 60`; `agentType` filter with null-safe legacy handling; `NoObjectGeneratedError` caught and returned as 422
+**Uses:** `generateText` + `Output.object()` from `ai@6.0.134`, `createVertex` (same instance as chat routes), message filtering from POST body
+**Avoids:** Pitfall 4 (`NoObjectGeneratedError` unhandled), Pitfall 5 (wrong agentType filter), Pitfall 8 (context budget blown — strip megatrend docs from extraction prompt), Pitfall 9 (timeout without maxDuration)
+**Research flag:** Standard patterns — existing chat routes establish the template; adapt and verify. No phase research needed.
 
-**Delivers:**
-- Next.js 14 project scaffolded with TypeScript, Tailwind, Prisma, and shadcn/ui installed
-- Prisma singleton (`lib/prisma.ts`) in place with WAL mode initialization
-- Megatrend docs extracted to `.txt` files and committed (`content/megatrends/`)
-- `lib/context.ts` loading and caching the system prompt + extracted docs
-- `.env.local` with `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `GOOGLE_APPLICATION_CREDENTIALS`
-- Token count measured — megatrend context confirmed within 30,000-token budget
-- Vertex AI connectivity smoke-tested (one raw API call, no UI)
+### Phase 3: pptxgenjs Slide Builders and Binary Response
+**Rationale:** With the extraction pipeline verified, add pptxgenjs rendering and wire the binary buffer response. Smoke-test each of the 5 slide types with PowerPoint and LibreOffice before any UI is built — corrupt PPTX files destroy trust immediately and are hard to diagnose after the UI masks the raw response.
+**Delivers:** `src/lib/slides/builders.ts` (5 HUD-styled PPTX template functions, 16:9 widescreen, HUD color tokens); slide route updated to return PPTX buffer with correct MIME type and `Content-Disposition: attachment`
+**Uses:** `pptxgenjs@4.0.1`, `write('nodebuffer')`, HUD tokens (#ebff00 header, #d2edea body, #1a2024 text)
+**Avoids:** Pitfall 1 (pptxgenjs in client bundle — add `import 'server-only'` to all slide lib modules here), Pitfall 2 (wrong binary response headers)
+**Research flag:** Standard patterns — pptxgenjs documentation is authoritative and complete. No phase research needed. Note: verify `new Uint8Array(buffer)` compatibility vs direct `Buffer` in `new Response()` on the installed Node.js version.
 
-**Addresses from FEATURES.md:** Megatrend knowledge base injection (differentiator), agent persona fidelity
-**Avoids from PITFALLS.md:** Pitfalls 3 (raw DOCX bytes), 4 (token budget), 5 (ADC credential path), 6 (WAL mode), 14 (DOCX garbage)
-**Research flag:** Standard patterns — no deeper research needed. All steps are deterministic and well-documented.
+### Phase 4: SlideGenerateButton and SlidePanel UI
+**Rationale:** Client components built after the API contract is fixed and verified. The one-way latch and debounce for the completeness check must be implemented from the start — these are not optimizations to add later. Retrofitting them after students report confusing button behavior is avoidable.
+**Delivers:** `SlideGenerateButton.tsx` (threshold + loading + error states, generates and downloads via blob URL); `SlidePanel.tsx` (owns `SlideButtonState` map, one-way ready latch, receives messages and activeAgent as props)
+**Addresses:** All table stakes — loading state, disabled state with tooltip, `missingElements` feedback, HUD-consistent styling
+**Avoids:** Pitfall 6 (completeness check over-firing — one-way latch + debounce), Pitfall 7 (button re-locking — one-way latch)
+**Research flag:** Standard patterns — React state management for a button component; no phase research needed.
 
----
-
-### Phase 1: Data Layer and Project CRUD
-
-**Rationale:** Before any chat UI exists, the database schema and CRUD API must be stable. These are the load-bearing beams the rest of the application rests on. Getting the schema right (especially `role` field values matching Vertex AI's `"user"`/`"model"` convention) avoids a painful migration mid-feature-build. Project CRUD is entirely low-complexity UI and can be done quickly once the schema is locked.
-
-**Delivers:**
-- `prisma/schema.prisma` with `Project` and `Message` models, composite index, cascade delete
-- `prisma migrate dev` run, `prisma generate` in `postinstall`
-- Route Handlers: `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/[id]`
-- Zod validation on all API inputs
-- Dashboard page (`app/page.tsx`) — project list, create button
-- Project create/rename modal, delete confirmation dialog
-- Navigation from dashboard to project page
-
-**Addresses from FEATURES.md:** Project dashboard, create/rename/delete, project list sorted by recency
-**Avoids from PITFALLS.md:** Pitfalls 9 (migration path), 11 (stale Prisma types), 13 (GET route caching — add `force-dynamic`)
-**Research flag:** Standard patterns — Prisma + Next.js CRUD is fully documented. No deeper research needed.
-
----
-
-### Phase 2: Streaming Chat Pipeline (Core — the hard phase)
-
-**Rationale:** This is the highest-risk phase and the one where all three research files intersect. The streaming pipeline touches Vertex AI credentials, the ReadableStream bridging pattern, system context injection, chat history reconstruction, message persistence timing, and the client-side `useChat` hook. It must be built in the right order: prove streaming works with a minimal prompt first, then add megatrend context, then wire up persistence, then add history window.
-
-**Delivers:**
-- `app/api/chat/[projectId]/route.ts` with `export const runtime = 'nodejs'`
-- Vertex AI streaming: either Path A (`streamText` + `@ai-sdk/google-vertex`) or Path B (`generateContentStream` + manual ReadableStream bridge)
-- System prompt + megatrend context injected via `systemInstruction` (not `contents`)
-- Chat history loaded from DB, formatted as `[{ role, parts }]` array, rolling window of 40 messages
-- User message persisted to DB before streaming starts; assistant message persisted in `onFinish` (Path A) or after stream closes (Path B)
-- `ChatWindow.tsx` — streaming consumption with `useChat` hook or manual `reader.read()` loop
-- `ChatInput.tsx` — disabled during active stream
-- `app/projects/[projectId]/page.tsx` — initial history loaded via Server Component
-- Streaming response headers: `X-Accel-Buffering: no`, `Cache-Control: no-cache`
-
-**Addresses from FEATURES.md:** Persistent chat history, streaming AI response, agent persona fidelity, web search grounding config
-**Avoids from PITFALLS.md:** Pitfalls 1 (Edge runtime), 2 (AsyncIterator bridging), 8 (unbounded history), 10 (system prompt in wrong field)
-**Research flag:** Needs careful implementation sequencing. Recommend building a minimal streaming smoke test (hardcoded "hello" prompt, no DB, no context) first. Validate streaming works end-to-end before adding megatrend context or history. The Vercel AI SDK Path A vs. Path B decision should be made here — try Path A first; switch to Path B only if ADC fails in the bridge layer.
-
----
-
-### Phase 3: Chat UI Polish and Pedagogical Verification
-
-**Rationale:** Once streaming works, the remaining UI work is low-complexity but requires careful testing against the pedagogical spec. Markdown rendering, loading states, and error handling are individually simple but together determine whether the app feels finished. The system prompt fidelity testing (guardrail verification) is the highest-effort item in this phase — it requires running real conversations through the agent and checking for spec violations.
-
-**Delivers:**
-- `MessageBubble.tsx` with `react-markdown` rendering (headers, bold, bullets, code blocks)
-- Loading indicator ("thinking" state) while stream is in progress
-- Error state — toast or inline error with retry affordance
-- Responsive layout — sidebar (project list) + main panel (chat); collapses on small screens
-- Guardrail testing: verify agent never produces a full slide deck, never uses "pain point" language, never invents statistics, correctly signals Session 3 bridge language
-- Vertex AI Grounding enabled and verified (real citations appearing in responses)
-
-**Addresses from FEATURES.md:** Markdown rendering, loading/error states, responsive layout, strict system prompt fidelity, challenge-first opening, web search grounding
-**Avoids from PITFALLS.md:** Pitfall 7 (proxy buffering — verify in actual deployment config), Pitfall 15 (MIME type sniffing — add `X-Content-Type-Options: nosniff`)
-**Research flag:** The guardrail testing has no engineering pattern — it requires domain knowledge of the FUND II pedagogy spec. Flag for manual QA with the course faculty or a test student. The Vertex AI Grounding configuration may need verification against current API docs (MEDIUM confidence in research).
-
----
+### Phase 5: AgentWorkspace Integration and End-to-End Verification
+**Rationale:** Wire SlidePanel into AgentWorkspace, filter visibility to Trend Mapper and Value Designer agents only, and run the "Looks Done But Isn't" checklist against real conversations — including projects that have messages from multiple agents and projects with null-agentType legacy messages.
+**Delivers:** Full end-to-end slide generation flow in the running app; verified against multi-agent and legacy message projects; correct agent-tab scoping; descriptive filenames (`fund2-trend-mapper-2026-03-22.pptx`)
+**Addresses:** Per-agent progressive disclosure, agent-tab visibility scoping
+**Avoids:** Pitfall 5 (agentType filter — full integration test), cross-agent contamination in multi-agent projects
+**Research flag:** Standard patterns — prop threading into an existing component; no phase research needed.
 
 ### Phase Ordering Rationale
 
-- Phase 0 before everything: environment misconfiguration is the single most likely source of lost time. Proving Vertex AI connectivity and document extraction before any feature work eliminates false debugging.
-- Phase 1 before Phase 2: the chat Route Handler needs a stable `projectId` to load history and persist messages. Schema migrations mid-streaming-build cause friction.
-- Phase 2 before Phase 3: streaming must be functional before UI polish is meaningful. A broken stream cannot be polished.
-- All pitfall mitigations from PITFALLS.md are front-loaded into Phase 0 and Phase 1 — they are setup-time decisions that cannot be cleanly retrofitted.
+- Server-side pipeline first (Phases 1–3) means the most dangerous failure modes (schema rejection by Vertex AI, corrupt PPTX download) are discovered and fixed before any UI masks them.
+- Phase 1 specifically validates Vertex AI structured output compatibility for each schema — this is the single highest-risk unknown and is cheapest to fix before downstream work accumulates.
+- Phase 4 UI is built knowing the exact 422 error shape from Phase 2, which is why UI follows API and not the reverse.
+- The one-way latch (Pitfall 7) and debounce (Pitfall 6) are Phase 4 concerns and must be implemented from the start, not as follow-up fixes after observing the failure.
+- Phase 5 is integration and verification, not new feature work — it surfaces cross-cutting issues that only appear with real multi-agent projects.
 
 ### Research Flags
 
-**Phases needing verification during implementation:**
-- **Phase 2 (Streaming):** `@ai-sdk/google-vertex` version stability — was in active development as of August 2025; confirm latest stable version and that `useChat` API is unchanged between AI SDK v3 and v4. If auth fails in the bridge, fall back to Path B immediately.
-- **Phase 2 (Streaming):** Vertex AI Grounding exact API config — research has MEDIUM confidence on the specific parameter name and structure; verify against current Google Cloud docs during implementation.
-- **Phase 3 (QA):** Practical per-request token quota for your GCP project/region — varies by tier; check GCP console under Vertex AI quotas before running load tests.
+All five phases use standard, well-documented patterns. No phase requires a pre-execution `/gsd:research-phase` run. The research files already contain the exact API patterns and code samples needed for each phase. The one area requiring in-execution verification rather than pre-research:
 
-**Phases with standard patterns (no deeper research needed):**
-- **Phase 0:** Document extraction with `mammoth` and `pdf-parse` — established npm libraries with stable APIs.
-- **Phase 1:** Prisma CRUD + Next.js Route Handlers — fully documented, HIGH confidence.
-- **Phase 3:** `react-markdown` rendering — standard, no research needed.
+- **Phase 1 execution:** Validate each Zod schema with a real Gemini call before writing any pptxgenjs builders. If a schema fails Vertex AI structured output validation, flatten it further and re-test before proceeding.
+- **Phase 3 execution:** Verify `new Response(buffer)` vs `new Response(new Uint8Array(buffer))` on the installed Node.js version. The PITFALLS.md notes this as a gotcha; check early in Phase 3.
 
 ---
 
@@ -253,47 +143,50 @@ All research converges on the same dependency chain: infrastructure before featu
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | MEDIUM-HIGH | Core choices (Next.js 14, Prisma, SQLite, Tailwind) are HIGH confidence. `@ai-sdk/google-vertex` is MEDIUM — version was in active development; verify before install. Confirm `ai` SDK v3 vs v4 distinction. |
-| Features | HIGH | Agent spec is fully defined and authoritative. Feature set derived from spec + well-established AI chat product patterns. No ambiguity on MVP scope. |
-| Architecture | HIGH | Next.js App Router streaming patterns verified against official docs (March 2026). Prisma singleton pattern is official. ADC credential chain is stable, well-documented behavior. |
-| Pitfalls | MEDIUM-HIGH | Critical pitfalls 1, 3, 5, 6 are HIGH confidence (verified against official sources). Pitfall 4 (token budget) is MEDIUM — actual doc token counts must be measured. Pitfall 7 (proxy buffering) depends on deployment environment. |
+| Stack | HIGH | pptxgenjs 4.0.1 official docs verified; ai@6 migration guide verified; ai@6.0.134 package types read directly from `node_modules/ai/dist/index.d.ts` lines 681–701 |
+| Features | HIGH for structure; MEDIUM for thresholds | Slide schemas derived from in-repo agent system prompts. Message count thresholds are pedagogically reasoned starting points — must be calibrated against real student conversations post-launch |
+| Architecture | HIGH | Route pattern verified against existing chat route source; `generateText`/`Output.object()` parameter shapes verified from installed package types; data flow derived from existing `UnifiedChatWindow` state shape |
+| Pitfalls | MEDIUM-HIGH | Core technical pitfalls verified against official docs and GitHub issues; UX pitfalls (button re-locking, over-firing) are first-principles analysis of the existing codebase rather than external-source findings |
 
-**Overall confidence:** MEDIUM-HIGH
+**Overall confidence:** HIGH
 
-### Gaps to Address During Implementation
+### Gaps to Address
 
-1. **Actual token count of extracted megatrend docs** — Research estimates 50,000–100,000 tokens for the three docs. This must be measured with `countTokens` before the system context strategy is finalized. If it exceeds 30,000 tokens, one-time condensed summaries are needed. This is a Phase 0 deliverable.
+- **Message count thresholds discrepancy:** ARCHITECTURE.md uses placeholder values (3 assistant messages per slide type); FEATURES.md provides rationale-backed starting values (e.g., 8 message pairs for Trend Mapper, 10 for Business Model). Use the FEATURES.md values in `thresholds.ts` and expose them as easily-tunable constants. Calibrate against real student conversations after the first live session.
 
-2. **`@ai-sdk/google-vertex` current version and API stability** — Run `npm show @ai-sdk/google-vertex version` before installing. If the package has jumped to a major version since August 2025, review the changelog. If Path A auth fails in the development environment, switch to Path B (direct SDK) without hesitation.
+- **`generateText` vs `generateObject` in ARCHITECTURE.md code samples:** ARCHITECTURE.md uses `generateObject` in its example code — this is the deprecated AI SDK v6 API. All implementation code must use `generateText` with `Output.object({ schema })`. Verify the exact import path from `node_modules/ai/` before writing any extraction code.
 
-3. **Vertex AI Grounding configuration parameter** — Research notes MEDIUM confidence on the exact API structure for enabling grounding. Verify against current `@google-cloud/vertexai` SDK docs during Phase 2.
-
-4. **GCP project quota for Vertex AI** — Per-request input token quotas vary by region and billing tier. Check the GCP console under `Vertex AI > Quotas` before running multi-user tests. If the default quota is below 100K tokens/minute, request an increase before the student cohort uses the tool.
-
-5. **System prompt fidelity cannot be verified by engineering** — The agent guardrails (challenge-first behavior, no slide deck generation, Session 3 bridge language) require pedagogical review. Plan a manual QA session with the course faculty after Phase 3 streaming is complete. Engineering cannot sign off on this — it requires someone who knows the FUND II curriculum.
+- **Node.js Buffer compatibility in `new Response()`:** PITFALLS.md flags that passing a Node.js `Buffer` directly to `new Response()` may break on some Node versions. Verify during Phase 3 whether `new Uint8Array(buffer)` is required. Test on the exact Node.js version in use.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Next.js 14/15 Route Handlers official docs (verified March 2026) — streaming patterns, `runtime = 'nodejs'`, `params` async behavior
-- Prisma documentation — SQLite provider, singleton pattern, `postinstall` hook, migration commands
-- Google Cloud ADC documentation (via `google-auth-library`) — credential resolution order, service account setup
-- FUND II Trend Mapper System Prompt (`/Trend Mapper/FUND_II_Trend_Mapper_System_Prompt.txt`) — agent behavior spec, guardrails, operating modes
-- PROJECT.md (`/.planning/PROJECT.md`) — validated requirements and constraints
+- `src/context/system-prompt.txt` (in-repo) — Trend Mapper 6-slide structure, sentence templates
+- `src/context/agents/value-designer.txt` (in-repo) — Value Designer Activities 1–6, Activity 6 consolidation outputs
+- `.planning/PROJECT.md` (in-repo) — v2.1 requirements and constraints
+- `/node_modules/ai/dist/index.d.ts` lines 681–701 (installed package) — `generateText`/`Output.object()` parameter signatures, ai@6.0.134
+- [PptxGenJS Quick Start](https://gitbrent.github.io/PptxGenJS/docs/quick-start/) — `new pptxgen()`, `addSlide()`, `addText()`, `writeFile()` API
+- [PptxGenJS Saving Presentations](https://gitbrent.github.io/PptxGenJS/docs/usage-saving/) — `write('nodebuffer')` returns `Promise<Buffer>`, browser download behavior
+- [PptxGenJS Integration](https://gitbrent.github.io/PptxGenJS/docs/integration/) — Node 18+ requirement, Next.js webpack transpilePackages note
+- [AI SDK 6 Migration Guide](https://ai-sdk.dev/docs/migration-guides/migration-guide-6-0) — `generateObject` deprecated; `generateText` + `Output.object()` is current pattern
+- [AI SDK Output Reference](https://ai-sdk.dev/docs/reference/ai-sdk-core/output) — `Output.object()` parameters, response shape
 
 ### Secondary (MEDIUM confidence)
-- `@google-cloud/vertexai` Node.js SDK (training data, August 2025) — `startChat()`, `sendMessageStream()`, `systemInstruction` field, streaming async iterator
-- Vercel AI SDK v3 documentation — `useChat`, `streamText`, `toAIStreamResponse`, `onFinish` callback
-- `@ai-sdk/google-vertex` — wraps Vertex AI for AI SDK; verify current version before use
-- Vertex AI Grounding API — specific config parameter for web search; verify against current docs
-- ChatGPT Projects / Claude Projects / Perplexity Spaces — feature pattern benchmarks for AI chat product conventions
+- [PptxGenJS npm page](https://www.npmjs.com/package/pptxgenjs) — v4.0.1 confirmed current stable, zero runtime dependencies
+- [Vercel AI SDK generateObject reference](https://ai-sdk.dev/docs/reference/ai-sdk-core/generate-object) — deprecated API surface documentation
+- [AI SDK NoObjectGeneratedError reference](https://ai-sdk.dev/docs/reference/ai-sdk-errors/ai-no-object-generated-error) — error handling patterns
+- [AI SDK GitHub issue #9002](https://github.com/vercel/ai/issues/9002) — generateObject structured output failures
+- [AI SDK GitHub issue #7358](https://github.com/vercel/ai/issues/7358) — schema validation failures with nested objects
+- [Next.js App Router binary download discussion](https://github.com/vercel/next.js/discussions/51676) — binary response patterns
+- [Next.js maxDuration configuration](https://nextjs.org/docs/app/api-reference/file-conventions/route) — route timeout configuration
 
-### Tertiary (LOW confidence — verify before using)
-- Vertex AI per-request token quotas — varies by project/region/tier; check GCP console
-- Gemini 1.5 Pro context window practical limits — 1M tokens on paper; real-world quality degrades at high context; monitor in production
+### Tertiary (LOW confidence / inferred)
+- Message count thresholds (8 pairs for Trend Mapper, 10 for Business Model, etc.) — pedagogically reasoned; must be validated against real student conversations post-launch
+- UX pitfall analysis (button re-locking, completeness check over-firing) — first-principles analysis of the existing codebase; no external primary source
 
 ---
-*Research completed: 2026-03-21*
+*Research completed: 2026-03-22*
+*Supersedes: SUMMARY.md v1.0 (2026-03-21) — prior research covered MVP v1.0 stack and architecture*
 *Ready for roadmap: yes*

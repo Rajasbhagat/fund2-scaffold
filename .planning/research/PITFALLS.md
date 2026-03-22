@@ -1,408 +1,387 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Next.js 14 App Router + Vertex AI Gemini streaming chat + SQLite/Prisma + gcloud ADC
-**Project:** FUND II Trend Mapper
-**Researched:** 2026-03-21
-**Confidence:** MEDIUM — Core claims verified against Next.js official docs (v16.2.1, March 2026) and direct project file inspection. Vertex AI, Prisma, and ADC claims draw on training data through August 2025 with no contradicting evidence found; flagged where verification was blocked.
+**Domain:** AI-powered slide generation added to an existing Next.js multi-agent chat app (pptxgenjs + Gemini generateObject + progressive unlock)
+**Project:** FUND II — v2.1 Slide Generation milestone
+**Researched:** 2026-03-22
+**Confidence:** MEDIUM-HIGH — Core claims verified against pptxgenjs official docs, Vercel AI SDK docs, Next.js App Router route handler docs, and direct codebase inspection. generateObject behavior claims verified against multiple GitHub issues and official SDK error reference. Readiness detection and UX pitfalls drawn from first-principles analysis of the existing codebase and general LLM structured output failure modes.
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause broken streaming, silent auth failures, or rewrites.
+---
+
+### Pitfall 1: pptxgenjs Imported in a File That Reaches the Browser Bundle
+
+**What goes wrong:** pptxgenjs is a server-only library. If it is imported — even transitively — in any file that is bundled for the browser (a Client Component, a shared utility imported by both client and server code, or a context file), the build fails with `ReferenceError: window is not defined` during Next.js server-side render, or silently produces a broken bundle in the client.
+
+**Why it happens:** pptxgenjs has two distributions: a browser bundle (`pptxgen.bundle.js`) that polyfills Node APIs, and a CJS Node build (`pptxgen.cjs.js`). When Next.js bundles a file that `import`s `pptxgenjs` at the top level without the `nodejs` runtime guard, the bundler pulls in the CJS build which references `process`, `Buffer`, and `fs` — causing the error. This is especially likely if a developer creates a shared `generateSlide.ts` helper and imports it from both an API route and a Client Component.
+
+**How to avoid:** pptxgenjs must only be imported inside `app/api/` route handlers with `export const runtime = 'nodejs'` declared. Never import it from `src/components/`, `src/lib/`, or any file without a server-only boundary. Use `import 'server-only'` at the top of any utility that wraps pptxgenjs:
+```typescript
+// src/lib/slides/generate-slide.ts
+import 'server-only'
+import pptxgen from 'pptxgenjs'
+```
+This causes Next.js to throw at build time if the file is ever imported from a Client Component.
+
+**Warning signs:** Build error containing `Module not found: Can't resolve 'fs'` or `window is not defined` originating from inside `pptxgenjs/`. The error appears at `next build` time, not at runtime.
+
+**Phase to address:** Slide generation phase (v2.1), when pptxgenjs is first introduced. Set the `server-only` guard on Day 1 before writing any slide generation logic.
 
 ---
 
-### Pitfall 1: Edge Runtime Silently Breaks Vertex AI SDK
+### Pitfall 2: Using `write('nodebuffer')` and Returning the Buffer as a Response Without Correct Headers
 
-**What goes wrong:** The Vertex AI Node.js SDK (`@google-cloud/vertexai`) uses Node.js-native APIs — specifically `google-auth-library`, which uses `fs` to read credential files and `child_process` in some auth flows. If the chat API route runs under the Edge runtime (Next.js default in some configurations), these imports fail at build time or silently return empty responses at runtime.
+**What goes wrong:** The browser receives the `.pptx` file but either (a) displays it as raw binary in the browser tab instead of downloading it, or (b) the file downloads but is corrupt because the `Content-Type` or `Content-Disposition` header is wrong, causing the browser to apply text encoding to binary data.
 
-**Why it happens:** Next.js App Router routes default to Node.js runtime, but developers sometimes add `export const runtime = 'edge'` thinking it improves performance for AI routes. The Edge runtime runs a V8 sandbox without Node.js built-ins. The Vertex AI SDK is not edge-compatible.
+**Why it happens:** `pptx.write({ outputType: 'nodebuffer' })` returns a `Promise<Buffer>`. Developers pass this Buffer directly to `new Response(buffer)` without setting MIME type or disposition. The correct MIME type for PPTX is `application/vnd.openxmlformats-officedocument.presentationml.presentation` — using `application/octet-stream` works but causes some browsers to block or warn. Missing `Content-Disposition: attachment; filename="..."` means the browser renders rather than saves.
 
-**Consequences:** Build succeeds but requests fail with cryptic module errors like `Module not found: Can't resolve 'fs'` or auth silently falls back to unauthenticated requests returning 403s.
-
-**Prevention:** Explicitly declare Node.js runtime in every route that touches Vertex AI:
+**How to avoid:** The exact response construction for a PPTX binary download in an App Router route handler:
 ```typescript
-// app/api/chat/route.ts
 export const runtime = 'nodejs'
-```
-Never add `export const runtime = 'edge'` to AI routes. Verify with `next build` — the build output lists each route's runtime.
 
-**Detection:** Build warnings mentioning `fs`, `net`, `tls` in edge routes. Runtime 403 errors that work fine locally but fail in production.
+export async function POST(req: Request, { params }: ...) {
+  const pptx = new pptxgen()
+  // ... build slides ...
+  const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer
 
----
-
-### Pitfall 2: Vertex AI Streaming AsyncIterator Not Bridged to ReadableStream Correctly
-
-**What goes wrong:** The Vertex AI Node.js SDK returns streaming responses as an `AsyncIterable` (via `generateContentStream`). Wrapping it incorrectly in a `ReadableStream` causes the stream to close immediately, produce no chunks, or throw on the second iteration.
-
-**Why it happens:** Two common mistakes:
-1. Calling `for await...of` inside the `ReadableStream` constructor's `start` method (which is synchronous-context) and pushing all chunks before the stream can backpressure.
-2. Using the `.stream` property vs `.response` property incorrectly — the SDK exposes both, and using `.response` gives a Promise<complete response>, not a stream.
-
-**Consequences:** The frontend receives an empty response or the full response arrives only after the entire generation completes (defeating streaming). The UI "freezes" then dumps all text at once.
-
-**Prevention:** Use the `pull`-based `ReadableStream` constructor pattern, wrapping the async iterator explicitly:
-```typescript
-const { stream } = await vertexClient.generateContentStream(request)
-
-const readable = new ReadableStream({
-  async pull(controller) {
-    const { value, done } = await stream[Symbol.asyncIterator]().next()
-    if (done) {
-      controller.close()
-    } else {
-      const text = value.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-      controller.enqueue(new TextEncoder().encode(text))
-    }
-  }
-})
-return new Response(readable, {
-  headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-})
-```
-Alternatively, use Vercel AI SDK's `@ai-sdk/google-vertex` provider which handles this bridging automatically.
-
-**Detection:** Client receives full response with no incremental chunks. Network tab shows single large response chunk rather than a stream of small chunks.
-
----
-
-### Pitfall 3: gcloud ADC Credential File Not Found in Next.js Server Environment
-
-**What goes wrong:** `gcloud auth application-default login` writes credentials to `~/.config/gcloud/application_default_credentials.json`. When Next.js runs as a server process (especially in Docker, CI, or when started by a process manager), the home directory resolves differently and the credential file is not found. Auth silently falls back to no credentials, producing 401/403 from Vertex AI.
-
-**Why it happens:** ADC searches for credentials in this order:
-1. `GOOGLE_APPLICATION_CREDENTIALS` env var (points to a service account JSON file)
-2. `~/.config/gcloud/application_default_credentials.json` (gcloud user credentials)
-3. GCE/GKE metadata server (only on Google Cloud infrastructure)
-
-When `next dev` or `next start` is run by a different user, in a Docker container, or via a process manager that doesn't inherit the shell environment, `~` resolves to a different path or the file doesn't exist.
-
-**Consequences:** `Error: Could not load the default credentials` at runtime. Requests to Vertex AI fail with 401 or throw before reaching the API.
-
-**Prevention — local development:**
-Set `GOOGLE_APPLICATION_CREDENTIALS` explicitly in `.env.local`:
-```bash
-GOOGLE_APPLICATION_CREDENTIALS=/Users/rajas/.config/gcloud/application_default_credentials.json
-```
-Find the exact path with `gcloud auth application-default print-access-token` — if it succeeds, credentials exist; note the path from `gcloud info | grep "ADC"`.
-
-**Prevention — production deployment:**
-Never ship gcloud user credentials to production. Use a service account JSON key:
-```bash
-gcloud iam service-accounts create trend-mapper-sa
-gcloud projects add-iam-policy-binding PROJECT_ID \
-  --member="serviceAccount:trend-mapper-sa@PROJECT_ID.iam.gserviceaccount.com" \
-  --role="roles/aiplatform.user"
-gcloud iam service-accounts keys create key.json \
-  --iam-account=trend-mapper-sa@PROJECT_ID.iam.gserviceaccount.com
-```
-Set `GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json` in the production environment. Do NOT commit `key.json` to git.
-
-**Detection:** `gcloud auth application-default print-access-token` succeeds in the terminal but Next.js routes return auth errors. Check the process's actual home directory: `console.log(process.env.HOME)` in the route handler.
-
----
-
-### Pitfall 4: Megatrend Docs Exceed Practical Context Window Budget
-
-**What goes wrong:** The three megatrend .docx files total ~131KB compressed. When extracted as plain text, DOCX XML decompresses to raw text of approximately 40,000–80,000 words across the three documents. At ~1.3 tokens/word, that is roughly 50,000–100,000 tokens of megatrend context alone. Combined with the ~2,000-word system prompt (~2,600 tokens) and a multi-turn conversation with history, you can easily breach the usable context window.
-
-**Why it happens:** Gemini 1.5 Pro has a 1M token context window on paper, but:
-- Vertex AI has per-request input token quotas (default quota is often 32K tokens/minute for some regions/tiers)
-- Very long contexts degrade response quality — the model "loses focus" on recent turns when the context is dominated by static documents
-- Per-request costs scale with tokens, and every chat turn re-sends the entire context including all documents
-- The PDF/handout in the megatrend folder (Spotting_Big_Trends_Megatrends_Handout.pdf, 31KB) has not been extracted — if injected as raw binary it produces garbage
-
-**Consequences:** Requests fail with `400 Request too large` or `quota exceeded` errors. Costs balloon as every message re-sends ~80K tokens. Response quality degrades for long conversations as the system prompt pedagogy gets buried.
-
-**Prevention:**
-1. Extract documents to plain text at build time (not at request time) using a script. Store extracted text in `lib/context/` as `.txt` files.
-2. Measure token count with the Vertex AI `countTokens` API before committing to a strategy.
-3. Truncate aggressively: the handout PDF is likely ~5,000 tokens of actual content; the deep research DOCX files may be 20,000–40,000 tokens each. Budget a maximum of 30,000 tokens for megatrend context.
-4. If docs exceed budget, summarize each document into a condensed reference (3,000–5,000 tokens each) rather than injecting full text. Do this once at setup, not per-request.
-5. Place megatrend context in the `systemInstruction` field (not in `contents`), as Vertex AI handles system instructions more efficiently.
-
-**Detection:** Run `countTokens` on the assembled prompt before going live. Alert if total prompt tokens exceed 40,000.
-
----
-
-### Pitfall 5: Prisma Client Instantiated per Hot-Reload in Next.js Development
-
-**What goes wrong:** In Next.js `next dev`, the module cache is refreshed on every file change. If `new PrismaClient()` is called at module level (e.g., `const prisma = new PrismaClient()` in `lib/prisma.ts`), each hot-reload creates a new client instance. Prisma's SQLite driver opens new file handles with each instance. After a few reloads, you hit the SQLite `SQLITE_BUSY` or `too many open connections` error.
-
-**Why it happens:** Node.js hot module replacement (HMR) doesn't fully close previous module instances. Each reload calls the module initializer again, creating another live `PrismaClient`.
-
-**Consequences:** `PrismaClientInitializationError: Unable to open the database file` or random `SQLITE_BUSY: database is locked` errors during development that disappear on a cold server restart.
-
-**Prevention:** Use the global singleton pattern recommended by Prisma for Next.js:
-```typescript
-// lib/prisma.ts
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-
-export const prisma =
-  globalForPrisma.prisma ?? new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'Content-Disposition': 'attachment; filename="trend-mapper-slide.pptx"',
+      'Content-Length': buffer.length.toString(),
+      'Cache-Control': 'no-store',
+    },
+  })
 }
 ```
-`globalThis` persists across HMR cycles, so only one client is ever created per server process lifetime.
+Do not use `NextResponse.json()` for binary responses. `NextResponse` wraps responses in JSON serialization that corrupts binary data.
 
-**Detection:** SQLite lock errors that appear only after editing files and saving, but work after `Ctrl+C` + `npm run dev`. Error count increases with each file save.
+**Warning signs:** Downloaded file opens in PowerPoint with "File is corrupt" error. File size is much smaller or larger than expected. Browser opens a new tab with garbled content instead of triggering a download.
+
+**Phase to address:** Slide generation API route (v2.1). Smoke-test the download end-to-end with a minimal single-slide deck before wiring up any real content.
 
 ---
 
-### Pitfall 6: SQLite WAL Mode Not Enabled — Concurrent Reads Block Writes
+### Pitfall 3: generateObject Called With All Required Fields — Model Hallucinates Missing Content
 
-**What goes wrong:** By default, SQLite uses journal mode `DELETE` (rollback journal). In a Next.js app with multiple simultaneous API requests (e.g., loading the project list while a chat is streaming), a write transaction on one request blocks all reads on other requests. Under any real usage with streaming (long-lived write transactions), this produces `SQLITE_BUSY` for every concurrent read.
+**What goes wrong:** When the Zod schema for slide extraction makes all fields required (e.g., `trendName: z.string()`, `keyInsight: z.string()`), Gemini will always populate every field — even when the conversation does not contain that information. It hallucinates plausible-sounding content for fields that are absent from the conversation, producing slides with fabricated trend names or made-up statistics.
 
-**Why it happens:** SQLite's default locking model allows only one writer at a time and blocks all readers during writes. Chat message persistence (writing each message) holds a write lock for the duration of the INSERT, which can be milliseconds but during streaming may be called repeatedly.
+**Why it happens:** `generateObject` uses Gemini's structured output mode (JSON schema enforcement). The model is constrained to return a valid object matching the schema. If a required field has no corresponding information in the conversation history, the model invents something rather than failing validation.
 
-**Consequences:** The project list page fails to load while a chat is active. API calls return 500 with `SQLITE_BUSY` or just hang.
+**How to avoid:** Mark fields that may legitimately be absent as `.optional()` or `.nullable()` in Zod:
+```typescript
+const TrendSlideSchema = z.object({
+  trendName: z.string().describe('The primary megatrend name identified'),
+  headline: z.string().describe('One-line summary of the trend'),
+  keyInsight: z.string().optional().describe('Most important insight — omit if not discussed'),
+  evidence: z.array(z.string()).optional().describe('Specific evidence points mentioned — omit if none'),
+  implication: z.string().optional().describe('Strategic implication — omit if not discussed'),
+})
+```
+Then handle optional fields in pptxgenjs slide construction: only add a text box if the field is defined. This produces a sparser but honest slide rather than a complete but fabricated one.
 
-**Prevention:** Enable WAL mode (Write-Ahead Logging) and set a busy timeout in the Prisma schema:
-```prisma
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+**Warning signs:** Generated slides contain plausible but unrecognizable content. Fields show boilerplate text like "N/A" or generic trend descriptions that don't match the actual conversation. Students report the slides don't reflect what they discussed.
+
+**Phase to address:** Slide generation API route (v2.1). Define the Zod schema with `.optional()` from the start. Verify with real conversation transcripts, not synthetic test data.
+
+---
+
+### Pitfall 4: generateObject Throws `NoObjectGeneratedError` — No Error Boundary in the Route Handler
+
+**What goes wrong:** When Gemini fails to produce a valid JSON object conforming to the Zod schema (network error, token budget exceeded, model refusal, or schema too complex), the AI SDK throws `AI_NoObjectGeneratedError`. If the route handler has no try/catch around the `generateObject` call, this produces an unhandled 500 with no actionable message for the student.
+
+**Why it happens:** Developers who successfully test `generateObject` in a happy path often skip error handling. The failure modes are not obvious during development (they appear under production-like token loads or with certain conversation patterns). The error is not a network error — it's a validation error thrown by the SDK after receiving a response.
+
+**How to avoid:** Always wrap `generateObject` in a try/catch and return structured errors:
+```typescript
+import { generateObject, NoObjectGeneratedError } from 'ai'
+
+try {
+  const { object } = await generateObject({ model, schema: TrendSlideSchema, prompt })
+  // ... proceed
+} catch (err) {
+  if (err instanceof NoObjectGeneratedError) {
+    return NextResponse.json(
+      { error: 'Could not extract slide content from this conversation. Try continuing the conversation.', code: 'EXTRACTION_FAILED' },
+      { status: 422 }
+    )
+  }
+  // ... other errors
 }
 ```
-Then run a PRAGMA at connection time via Prisma's `$executeRaw`:
+Do not retry automatically more than once — repeated `generateObject` calls on a long conversation double the Vertex AI cost per generation attempt.
+
+**Warning signs:** Unhandled `NoObjectGeneratedError` in server logs. Frontend shows generic "500 Internal Server Error" with no helpful message when students click Generate. Occurs more frequently with very short conversations (fewer than 6 messages) where schema fields have no content to extract.
+
+**Phase to address:** Slide generation API route (v2.1). Handle this error before the feature goes to any user testing.
+
+---
+
+### Pitfall 5: Wrong `agentType` Filter When Reading Conversation History for Slide Extraction
+
+**What goes wrong:** The `generateObject` prompt is built by fetching message history from the database. If the Prisma query omits the `agentType` filter, it returns messages from all agents (Trend Mapper, Value Designer, SPI, FARO) interleaved. The slide extractor receives a mixed, incoherent conversation and produces garbage or hallucinates content from a different agent's topic.
+
+**Why it happens:** This is unique to the multi-agent architecture added in v2.0. The `Message` table has an `agentType` column, but it is `String?` (nullable) for Trend Mapper messages created before v2.0 (when `agentType` was added). A developer writing a new slide API route may query `Message.findMany({ where: { projectId } })` — correct for the original single-agent app, catastrophically wrong for the multi-agent app.
+
+**How to avoid:** Every query to `Message` for slide generation must filter by both `projectId` and `agentType`:
 ```typescript
-// After prisma client creation
-await prisma.$executeRaw`PRAGMA journal_mode=WAL;`
-await prisma.$executeRaw`PRAGMA busy_timeout=5000;`
-```
-Or use a `previewFeatures` `tracing` approach or a connection initialization hook if available in your Prisma version.
-
-**Detection:** Requests to non-chat routes return 500 while a chat stream is in progress. Logs show `SQLITE_BUSY` or `P2024` Prisma errors.
-
----
-
-## Moderate Pitfalls
-
----
-
-### Pitfall 7: Streaming Response Not Flushed — Buffering by Reverse Proxy or Next.js
-
-**What goes wrong:** When running behind nginx, Caddy, or certain CDN/proxy configurations, the streaming response from the Next.js route handler gets buffered. The client sees no chunks until the entire response is buffered and flushed at once, or the request times out.
-
-**Why it happens:** HTTP/1.1 chunked transfer encoding requires the proxy to not buffer. Many proxies default to buffering. Additionally, the `Content-Type` header matters: some proxies buffer `text/plain` but not `text/event-stream`.
-
-**Prevention:**
-- Set response headers explicitly:
-  ```typescript
-  headers: {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'X-Accel-Buffering': 'no',      // disables nginx buffering
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive',
-  }
-  ```
-- If using SSE (Server-Sent Events) format, use `text/event-stream` — proxies rarely buffer this.
-- For local development with `next dev`, buffering is not an issue. Test against actual deployment config.
-
-**Detection:** Streaming works in `next dev` but not in production. Network tab in the browser shows the response arriving in a single chunk after a long wait.
-
----
-
-### Pitfall 8: Chat History Grows Without Bound — Context Window Overflows in Long Sessions
-
-**What goes wrong:** Every chat turn is saved to SQLite and re-sent to Gemini as the full conversation history. After 20–30 turns with detailed responses, the accumulated conversation history alone can exceed 10,000 tokens. Combined with the megatrend docs in the system prompt, a long session approaches the practical effective context limit.
-
-**Why it happens:** Stateless API design requires the entire conversation history to be sent on each request. There is no server-side session memory in the Vertex AI API.
-
-**Consequences:** Requests start failing with token limit errors, or early turns in the conversation get truncated, causing the model to "forget" earlier context.
-
-**Prevention:**
-1. Implement a sliding window: send only the last N turns (e.g., last 20 messages) plus the first 2 (which establish the student's topic and initial context).
-2. Measure the token count of conversation history before sending; if it exceeds a threshold (e.g., 8,000 tokens), drop the oldest turns first.
-3. Never truncate from the end — always drop from the middle of history, preserving the first 2 turns and last 10.
-
-**Detection:** Monitor token usage per request. Log `usageMetadata.promptTokenCount` from Vertex AI responses.
-
----
-
-### Pitfall 9: Prisma Migrations Fail Silently in Production — Database Schema Out of Sync
-
-**What goes wrong:** `prisma migrate deploy` (the production command) silently skips migrations if the migration lock is stale or if the database file doesn't exist at the path specified in `DATABASE_URL`. The app starts, Prisma doesn't error on import, but queries fail at runtime with `no such table` errors.
-
-**Why it happens:** `prisma migrate deploy` applies pending migrations but does not create the database file itself — the SQLite file must exist or must be created by the migrate command. If `DATABASE_URL` points to a path like `file:./prisma/dev.db` but the working directory at deployment time is different from development, the file is created in an unexpected location.
-
-**Prevention:**
-1. Always use an absolute path in production or a path relative to a known anchor:
-   ```bash
-   DATABASE_URL="file:/app/data/trend-mapper.db"
-   ```
-2. Run `prisma migrate deploy` as part of the startup script, not as a build step.
-3. After migration, run a smoke query: `prisma.$queryRaw\`SELECT 1\`` — if it returns without error, the DB is ready.
-4. Keep `prisma/migrations/` in version control. Never use `prisma db push` in production (it can silently drop columns).
-
-**Detection:** Application starts without errors but first database query returns `PrismaClientKnownRequestError: no such table`.
-
----
-
-### Pitfall 10: System Prompt + Megatrend Docs Included in `contents` Array Instead of `systemInstruction`
-
-**What goes wrong:** The Vertex AI Gemini API has a distinct `systemInstruction` field separate from the `contents` array (conversation turns). Developers unfamiliar with this structure put the system prompt as the first `user` message in `contents`. This works but has two problems:
-1. The system prompt competes with megatrend docs and conversation history for the context window in a less efficient way.
-2. The model may treat the system instructions as something the user typed and respond to them conversationally.
-
-**Why it happens:** OpenAI-style APIs use a `role: 'system'` message in the messages array. The Vertex AI API uses a separate top-level `systemInstruction` field. Developers porting from OpenAI patterns apply the wrong structure.
-
-**Prevention:** Use the correct Vertex AI API structure:
-```typescript
-const request = {
-  systemInstruction: {
-    role: 'system',
-    parts: [{ text: systemPrompt + '\n\n' + megatrendContext }]
+// For Trend Mapper slide generation
+const messages = await prisma.message.findMany({
+  where: {
+    projectId,
+    agentType: 'trend-mapper',  // REQUIRED
   },
-  contents: conversationHistory,  // only user/model turns here
-  generationConfig: { ... }
+  orderBy: { createdAt: 'asc' },
+})
+```
+Additionally, the `agentType` column is nullable for legacy Trend Mapper messages (pre-v2.0). Use `OR` logic to include null-agentType messages for backward compatibility when querying Trend Mapper history:
+```typescript
+where: {
+  projectId,
+  OR: [
+    { agentType: 'trend-mapper' },
+    { agentType: null },  // legacy messages from v1.0
+  ],
 }
 ```
 
-**Detection:** Model occasionally references or responds to parts of the system prompt as if they were user messages. Conversation flow feels confused in early turns.
+**Warning signs:** Slide generated for Value Designer contains trend research content. Slide generated for Trend Mapper contains persona or business model content. Symptoms are intermittent and depend on which agents the student has used.
+
+**Phase to address:** Slide generation API route (v2.1), in the prompt-building step. Write a test with a project that has messages from multiple agents before shipping.
 
 ---
 
-### Pitfall 11: `prisma generate` Not Run After Schema Changes — Stale Type Definitions
+### Pitfall 6: Readiness Heuristic Is True But LLM Completeness Check Is Called on Every Render
 
-**What goes wrong:** After modifying `schema.prisma` (e.g., adding a `title` field to the `Project` model), the TypeScript types used throughout the application still reflect the old schema. The build may succeed because `@prisma/client` exports are cached. Runtime insertions fail with `Unknown field` errors from Prisma.
+**What goes wrong:** The two-stage readiness check (message-count heuristic → Gemini completeness check) is designed so the cheap heuristic runs first. If the completeness check is triggered on every component render (e.g., in a `useEffect` with no debounce, called every time the message list re-renders), the app makes a Gemini API call for every new message received — including mid-stream. This costs real money and introduces noticeable latency to every chat turn.
 
-**Why it happens:** Prisma generates TypeScript types into `node_modules/@prisma/client` at `prisma generate` time. This is not automatic. Schema changes without a generate step leave stale types.
+**Why it happens:** React state updates from streaming trigger re-renders. A `useEffect` that watches `messages.length` and triggers the completeness check fires once per message chunk if the streaming UI updates incrementally, or once per turn if updates are batched. Developers often write the initial version as `useEffect(() => { checkReadiness() }, [messages])` without considering streaming re-renders.
 
-**Prevention:**
-1. Add `prisma generate` to the `postinstall` script in `package.json`:
-   ```json
-   "scripts": {
-     "postinstall": "prisma generate"
-   }
-   ```
-2. Create a migration and run generate together: `prisma migrate dev --name add_title` automatically runs `prisma generate` after the migration.
-3. Add `prisma generate` to the CI pipeline.
+**How to avoid:**
+1. Run the Gemini completeness check only when the heuristic threshold is first crossed, not on every render after that.
+2. Debounce the check: wait 2 seconds after the last message before calling the completeness API.
+3. Cache the result: once `isReady: true` is returned, store it in state and do not re-check until a new user message is sent.
+4. Run the completeness check server-side as part of the chat response (append a `readiness` metadata field to the chat response), so no separate client-initiated API call is needed.
 
-**Detection:** TypeScript autocomplete shows old fields. `Argument unknown: title` runtime errors from Prisma after schema changes.
+**Warning signs:** Network tab shows repeated calls to `/api/slides/readiness` during a single chat turn. Each call corresponds to a streaming chunk update. Server logs show the completeness check running 10-15 times per conversation turn.
+
+**Phase to address:** Readiness detection implementation (v2.1). Establish the debounce + cache pattern in the initial implementation, not as a follow-up optimization.
 
 ---
 
-### Pitfall 12: Vertex AI `GOOGLE_CLOUD_PROJECT` and `GOOGLE_CLOUD_LOCATION` Not Set — Wrong Default Region
+### Pitfall 7: Button Unlocks Then Re-Locks — Student Confusion and Lost Context
 
-**What goes wrong:** The `@google-cloud/vertexai` SDK requires `project` and `location` at client initialization. If omitted, it may attempt to autodiscover from the GCE metadata server (which doesn't exist locally) or throw an unclear initialization error. If hardcoded to the wrong region (e.g., `us-central1` vs `europe-west4`), quota errors appear in certain project configurations.
+**What goes wrong:** The "Generate Slide" button unlocks when the completeness check returns `true`. But if the student continues the conversation after that point, the next re-render triggers another completeness check (if not cached), which returns a different result (model non-determinism, or a stricter prompt), and the button re-locks. Students who saw the button become active are confused when it disappears.
 
-**Why it happens:** Developers initialize `new VertexAI({})` with no parameters expecting autodiscovery, or copy examples that hardcode `us-central1` without verifying their project's enabled region.
+**Why it happens:** LLM completeness checks are non-deterministic. The same conversation re-evaluated twice at different temperatures or with slightly different prompting may return `ready: false` after previously returning `ready: true`. If the button state is driven purely by live re-evaluation without hysteresis, it oscillates.
 
-**Prevention:** Always explicitly provide project and location from environment variables:
+**How to avoid:** Apply a one-way latch: once a slide type is marked ready, it stays ready for the duration of the session unless the conversation is explicitly reset. Do not re-evaluate readiness after the threshold is crossed:
 ```typescript
-const vertexAI = new VertexAI({
-  project: process.env.GOOGLE_CLOUD_PROJECT!,
-  location: process.env.GOOGLE_CLOUD_LOCATION ?? 'us-central1',
+const [readySlides, setReadySlides] = useState<Set<string>>(new Set())
+
+// Only update to true — never remove from the set
+function markReady(slideType: string) {
+  setReadySlides(prev => new Set([...prev, slideType]))
+}
+```
+This means a button that unlocked never re-locks, which is the correct UX: once there's enough content, there's always enough content.
+
+**Warning signs:** Button is visible during one session, then absent in the next without the conversation changing. Students report "the button appeared and then disappeared." Completeness check API is called multiple times per session.
+
+**Phase to address:** Readiness detection + button UI (v2.1). Implement the one-way latch from the start, not as a bug fix after user confusion.
+
+---
+
+### Pitfall 8: `generateObject` Context Budget Blown by Full Conversation History
+
+**What goes wrong:** The slide extraction prompt passes the full conversation history (potentially 30+ turns, with megatrend docs already injected by the chat agent). When the conversation is long, the `generateObject` call exceeds the token budget for the model or produces a truncated extraction because the model runs out of output tokens mid-schema.
+
+**Why it happens:** This project already uses a rolling window for chat (FIRST_KEEP=4, LAST_KEEP=40 = 44 messages max). However, for slide extraction, 44 messages of detailed research conversation — each turn potentially 500-1000 tokens — can total 20,000–40,000 tokens. The slide extraction schema is also injected as a system prompt. Combined, this can approach Gemini 2.5 Flash's effective output budget for structured generation.
+
+**How to avoid:**
+1. For slide extraction, do not re-inject the megatrend docs. The conversation already contains the synthesized insights — inject only the raw conversation turns.
+2. Apply a tighter rolling window for extraction: last 20 messages (10 turns) is sufficient for slide content that reflects the most recent conclusions.
+3. Instruct the model to extract only what is present, not to summarize exhaustively.
+4. Set `maxTokens` explicitly on the `generateObject` call to bound output size.
+
+**Warning signs:** `generateObject` takes > 8 seconds for slide extraction on long conversations. Schema validation fails intermittently on long sessions but succeeds on short ones. Partial objects returned (some fields populated, others empty) on dense conversations.
+
+**Phase to address:** Slide generation API route (v2.1), in the prompt assembly step.
+
+---
+
+### Pitfall 9: pptxgenjs Runs in the Same Request as generateObject — Combined Latency Exceeds Default Route Timeout
+
+**What goes wrong:** A single slide generation request does: (1) DB query for conversation history, (2) `generateObject` LLM call (5–15 seconds), (3) pptxgenjs slide build (synchronous, 100ms), (4) binary response. This can run 10–20 seconds total. On Vercel's Hobby plan, serverless functions time out at 10 seconds. On the Pro plan, the default is 15 seconds without explicit `maxDuration`.
+
+**Why it happens:** Self-hosted Next.js (as used here, run locally) has no serverless timeout, so developers don't notice the issue during development. If the app is later deployed to Vercel or a container with a proxy that has a 10-second gateway timeout, the generation silently fails at the proxy level — the server finishes but the client receives a 504.
+
+**How to avoid:** Add `export const maxDuration = 60` to the slide generation route handler. This is a no-op for local Next.js but essential for any hosted environment:
+```typescript
+export const runtime = 'nodejs'
+export const maxDuration = 60  // seconds — required for Vercel Pro+
+
+export async function POST(req: Request, ...) { ... }
+```
+Also add a loading state in the UI that makes a 15-second wait feel acceptable rather than broken.
+
+**Warning signs:** Slide generation works consistently in `next dev` but fails in production after exactly N seconds (the proxy timeout). Client receives empty response or 504 with no error message.
+
+**Phase to address:** Slide generation API route (v2.1). Add `maxDuration` even if currently self-hosted — it future-proofs deployment.
+
+---
+
+### Pitfall 10: Zod Schema Has Deeply Nested Objects — Vertex AI/Gemini Structured Output Rejects the Schema
+
+**What goes wrong:** Gemini's structured output mode (used by `generateObject`) does not support all JSON Schema features that Zod produces. Specifically: recursive schemas, `z.union()` with more than 2-3 members, `z.discriminatedUnion()`, and deeply nested objects (more than 3 levels) can cause the structured output call to fail with a `400 Bad Request` or produce a `NoObjectGeneratedError` even when the prompt is correct.
+
+**Why it happens:** The path from Zod → JSON Schema (via `zod-to-json-schema`) → Vertex AI structured output introduces two layers of translation. The JSON schema representation Vertex AI accepts is a strict subset of full JSON Schema. Complex Zod types that serialize to `oneOf`, `anyOf`, or `$ref` patterns in JSON Schema fail at the Vertex AI layer.
+
+**How to avoid:** Keep slide extraction schemas flat. For 5 slide types, use 5 separate simple schemas rather than one polymorphic schema:
+```typescript
+// GOOD: flat, 1 level of nesting max
+const TrendMapperSlideSchema = z.object({
+  trendName: z.string(),
+  headline: z.string(),
+  insights: z.array(z.string()),  // array of strings, not array of objects
+})
+
+// BAD: nested objects inside arrays inside objects
+const BadSchema = z.object({
+  sections: z.array(z.object({
+    title: z.string(),
+    items: z.array(z.object({ label: z.string(), value: z.string() }))
+  }))
 })
 ```
-And set in `.env.local`:
-```bash
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=us-central1
-```
-Verify the correct region with `gcloud ai models list --region=us-central1` — if Gemini models appear, that region is active for your project.
+Test each schema with the actual Gemini model and a representative prompt before building slide logic on top of it.
 
-**Detection:** `Error: Unable to detect a Project ID in the current environment` on SDK initialization, or `404 Model not found` when the model string is correct but the region is wrong.
+**Warning signs:** `generateObject` call fails with 400 or produces `NoObjectGeneratedError` on the first call, before any token budget issues. Replacing a complex schema with a simpler one fixes it immediately.
+
+**Phase to address:** Slide schema design (v2.1), before writing any pptxgenjs rendering code. Validate the schema works with a real Gemini call first.
 
 ---
 
-## Minor Pitfalls
+## Technical Debt Patterns
+
+Shortcuts that seem reasonable but create long-term problems.
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Making all schema fields required | Simpler code, always-complete slides | Slides contain hallucinated content for absent fields | Never acceptable |
+| Single `/api/slides/generate` route that handles all 5 slide types via a `type` query param | One route to maintain | Mixing schemas and pptxgenjs templates in one file; hard to test and extend | MVP only if clearly commented and separated into functions |
+| Running completeness check on every message | Simplest implementation | Gemini calls on every chat turn; cost and latency visible to users | Never acceptable — debounce from day one |
+| Returning `base64` instead of `nodebuffer` from pptxgenjs and decoding client-side | Avoids binary response complexity | Base64 is 33% larger; decode in browser adds JS work; CORS + fetch complexity | Never acceptable — binary from server is cleaner |
+| Building slide templates inline in the route handler | Fast initial development | Slide styling becomes unmaintainable; impossible to iterate on design | MVP only |
 
 ---
 
-### Pitfall 13: `next dev` Caches GET Route Handlers — API Responses Appear Stale
+## Integration Gotchas
 
-**What goes wrong:** Next.js 15 changed the default caching for GET route handlers from static (cached) to dynamic (uncached). However, in Next.js 14 (as used in this project), GET handlers may be cached if they don't use dynamic functions. A GET `/api/projects` route that doesn't read request headers or cookies may return a stale cached response.
+Common mistakes when connecting to existing systems.
 
-**Prevention:** For any route that reads from SQLite (always dynamic), add:
-```typescript
-export const dynamic = 'force-dynamic'
-```
-Or use POST for all data-fetching operations that require fresh data (chat history retrieval, project listing in a client component).
-
----
-
-### Pitfall 14: DOCX Extraction Produces Garbage — XML Tags in Context
-
-**What goes wrong:** DOCX files are ZIP archives containing XML. Reading them with `fs.readFileSync` and passing the raw buffer to the model produces binary/XML garbage, not readable text. The model cannot process this and produces nonsense or errors.
-
-**Prevention:** Use a proper DOCX-to-text extraction library at build time:
-- `mammoth` (npm) — extracts clean plain text from DOCX, widely used
-- `docx-parser` or `officeparser` — alternatives
-
-Extract once at build/startup, not per request:
-```typescript
-// scripts/extract-docs.ts  (run once, output saved to lib/context/)
-import mammoth from 'mammoth'
-const result = await mammoth.extractRawText({ path: './docs/megatrends.docx' })
-fs.writeFileSync('./lib/context/megatrends.txt', result.value)
-```
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| pptxgenjs + Next.js App Router | Importing pptxgenjs in a shared util file that is also imported by Client Components | Import only inside `app/api/` routes; add `import 'server-only'` to any slide utility module |
+| generateObject + Vertex AI (via @ai-sdk/google-vertex) | Assuming generateObject uses the same `vertex()` instance as streamText without checking structured output support | Verify `gemini-2.5-flash` supports structured output via the AI SDK provider; test with a real call |
+| Slide generation + existing Message schema | Querying messages without `agentType` filter returns cross-agent conversation | Always filter by `agentType` in slide generation queries; handle nullable agentType for v1.0 Trend Mapper messages |
+| pptxgenjs Buffer + Next.js Response | Passing a Node.js `Buffer` to `new Response()` directly — works in some Node versions, breaks in others | Convert to `Uint8Array`: `new Uint8Array(buffer)` or use `Buffer.from()` explicitly; test on the exact Node.js version used |
+| Readiness check + streaming chat | Triggering readiness check while streaming is in progress | Check only on `onFinish` events (assistant message completed), never on partial chunks |
 
 ---
 
-### Pitfall 15: Missing `X-Content-Type-Options` on Streaming Route — Browser Sniffs MIME Type
+## Performance Traps
 
-**What goes wrong:** Browsers that sniff MIME types may interpret a `text/plain` streaming response as HTML and attempt to render it, breaking the incremental display. Specifically, Internet Explorer and some Edge configurations do this; modern Chrome does not, but the header is still good practice.
+Patterns that work at small scale but fail as usage grows.
 
-**Prevention:** Add `X-Content-Type-Options: nosniff` to streaming response headers. This is low-priority for an internal tool but costs nothing to add.
-
----
-
-### Pitfall 16: Forgetting to `await params` in Next.js 15-style Route Handlers
-
-**What goes wrong:** As noted in the Next.js changelog, from v15.0.0-RC onwards, `context.params` is a Promise and must be awaited. If this project is upgraded from 14 to 15, any route using `params` (e.g., `/api/projects/[id]/messages`) will break silently — `params.id` will be `undefined` rather than the actual ID.
-
-**Prevention:** Write routes defensively even on Next.js 14:
-```typescript
-// Safe in both Next.js 14 and 15:
-const { id } = await Promise.resolve(params)
-```
-Or simply document that a migration to `await params` is required on Next.js upgrade.
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Completeness check called per render | Gemini API calls per chat chunk; visible latency | One-way latch + debounce; check only on message completion | At first real student session |
+| Full conversation + megatrend docs in generateObject prompt | 20–40 second extraction on long sessions | Strip megatrend docs from extraction prompt; use last 20 messages only | Long conversations (15+ turns) |
+| pptxgenjs building complex multi-image slides | Synchronous image embedding blocks the Node thread | Keep slides text-only for MVP; images are a post-MVP feature | Slides with embedded images |
+| All 5 slide types regenerated in a single request | One slow request blocks the entire UI | Generate one slide type per request; let UI trigger generation individually | First multi-slide project |
 
 ---
 
-## Phase-Specific Warnings
+## UX Pitfalls
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Setting up Vertex AI route | Edge runtime breaking SDK | Add `export const runtime = 'nodejs'` to all AI routes immediately |
-| First streaming implementation | AsyncIterator not bridged correctly | Test with a minimal echo stream before adding megatrend context |
-| Injecting megatrend docs | Raw DOCX binary sent as context | Extract to text in a setup script; measure tokens before wiring up |
-| Prisma schema setup | `prisma generate` not in postinstall | Add to `package.json` `postinstall` before writing any Prisma queries |
-| Local dev with hot reload | Multiple PrismaClient instances | Add global singleton pattern on Day 1; not retrofittable without disruption |
-| Production deployment | ADC not found outside gcloud CLI context | Set `GOOGLE_APPLICATION_CREDENTIALS` in `.env.local`; use service account for prod |
-| Long chat sessions | History overflowing context budget | Build sliding window into the chat API handler from the start |
-| SQLite under load | Concurrent reads/writes blocking | Enable WAL mode and busy_timeout before first load test |
+Common user experience mistakes in this domain.
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Button unlocks and re-locks non-deterministically | Student confusion; "why did the button disappear?" | One-way latch: once unlocked, never re-locks in the same session |
+| No progress indicator during generation (10-15s wait) | Students click Generate multiple times thinking it failed | Show a spinner or "Generating..." state immediately; disable button during generation |
+| Generated slide filename is generic ("slide.pptx") | Multiple downloads in the same session are indistinguishable | Use project name + slide type + timestamp: `fund2-trend-mapper-2026-03-22.pptx` |
+| Error message says "Internal Server Error" when extraction fails | Student has no idea whether to try again or if something is wrong | Return specific error: "Not enough conversation content yet — continue the discussion and try again" |
+| Completeness check shows button only for the current agent tab | Student forgets which agents have ready slides | Consider a subtle indicator on all agent tabs, not just the active one |
 
 ---
 
-## Confidence Notes
+## "Looks Done But Isn't" Checklist
 
-| Claim | Confidence | Source |
-|-------|------------|--------|
-| Edge runtime breaks Vertex AI Node SDK | HIGH | Verified: Node.js SDK uses `fs` (confirmed); Edge runtime blocks `fs` (Next.js docs) |
-| Vertex AI uses separate `systemInstruction` field | HIGH | Training data; consistent with Google AI SDK design; verify against current SDK docs |
-| ADC credential lookup order | HIGH | Training data (google-auth-library is well-documented behavior, stable) |
-| Gemini 1.5 Pro context window = 1M tokens | MEDIUM | Training data; verify current limits at cloud.google.com/vertex-ai |
-| Practical per-request token quota limits | LOW | Varies by project/region/tier; verify in GCP console under Vertex AI quotas |
-| Prisma global singleton pattern | HIGH | Official Prisma Next.js guide; well-established pattern |
-| WAL mode syntax for Prisma SQLite | MEDIUM | Training data; `$executeRaw` PRAGMA approach is correct, verify Prisma version compatibility |
-| Next.js 15 `params` async change | HIGH | Verified: documented in Next.js route.js version history (v15.0.0-RC) |
+Things that appear complete but are missing critical pieces.
+
+- [ ] **pptxgenjs integration:** Route generates and returns data — verify the downloaded file actually opens in PowerPoint/Keynote, not just that the download triggers.
+- [ ] **generateObject schema:** Schema validates against training data — verify against a real conversation from the app, not a hand-crafted test prompt.
+- [ ] **agentType filter:** Query returns messages — verify it returns ONLY Trend Mapper messages on a project that also has Value Designer messages.
+- [ ] **Readiness button:** Button unlocks — verify it does not re-lock when a new message arrives after unlocking.
+- [ ] **Binary response headers:** File downloads — verify the MIME type is correct and PowerPoint recognizes it as a valid presentation (not just an unrecognized binary blob).
+- [ ] **Error handling:** Error path tested — verify `NoObjectGeneratedError` returns a 422 with a human-readable message, not a 500.
+- [ ] **Timeout handling:** Works in dev — verify `export const maxDuration` is set for any hosted environment.
+- [ ] **Legacy messages:** Slide generation works for the current project — verify it also works on a project that has messages from v1.0 (null agentType).
+
+---
+
+## Recovery Strategies
+
+When pitfalls occur despite prevention, how to recover.
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| pptxgenjs imported in client bundle | LOW | Move import to `app/api/` route; add `server-only` guard; `next build` confirms fix |
+| Corrupt PPTX download | LOW | Check `Content-Type` and `Content-Disposition` headers in Network tab; verify `outputType: 'nodebuffer'` is used, not `'base64'` |
+| generateObject hallucinating required fields | MEDIUM | Change required fields to `.optional()` in Zod schema; update pptxgenjs renderer to handle undefined fields; re-test |
+| Completeness check over-firing | LOW | Add debounce + one-way latch; no schema or API changes required |
+| Cross-agent message contamination | LOW | Add `agentType` filter to Prisma query; handle null agentType for legacy messages |
+| NoObjectGeneratedError in production | LOW | Add try/catch with 422 response; optionally add one retry |
+| Schema rejected by Vertex AI structured output | MEDIUM | Flatten schema; remove nested objects; test each schema independently; rebuild pptxgenjs templates to match flatter data structure |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+How roadmap phases should address these pitfalls.
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| pptxgenjs bundled in client | Slide generation API route setup | `next build` output shows no client-side pptxgenjs import |
+| Wrong binary response headers | Slide download route implementation | Downloaded file opens correctly in PowerPoint |
+| Required fields causing hallucination | Zod schema design | Review schema; all fields that may be absent are `.optional()` |
+| NoObjectGeneratedError unhandled | Slide generation API route | Test with a 2-message conversation (insufficient content) |
+| Wrong agentType filter | Slide generation API route | Test on a project with messages from 2+ agents |
+| Completeness check over-firing | Readiness detection implementation | Network tab shows at most 1 completeness check per completed assistant turn |
+| Button re-locking | Readiness button UI | Button never disappears once it appears in a session |
+| Context budget blown by conversation + docs | Prompt assembly for generateObject | Measure tokens before and after stripping megatrend docs from extraction prompt |
+| Combined latency timeout | Slide generation API route setup | Add `maxDuration = 60` to route; test with a 30-turn conversation |
+| Complex Zod schema rejected | Slide schema design (before any rendering code) | Each schema tested independently with a real Gemini call |
 
 ---
 
 ## Sources
 
-- Next.js Route Handlers official docs (verified, March 2026): https://nextjs.org/docs/app/api-reference/file-conventions/route
-- PROJECT.md — project constraints and stack decisions (read directly)
-- FUND_II_Trend_Mapper_System_Prompt.txt — system prompt length and structure (read directly)
-- Megatrend doc file sizes (measured directly): ~131KB compressed across 3 DOCX + 1 PDF
-- google-auth-library ADC credential chain: training data (August 2025), HIGH confidence for well-established behavior
-- Prisma Next.js best practices: training data + known official pattern
-- Vertex AI Node.js SDK streaming API: training data (August 2025), MEDIUM confidence — verify against current SDK version
+- pptxgenjs official saving docs (verified 2026-03): https://gitbrent.github.io/PptxGenJS/docs/usage-saving/
+- Vercel AI SDK generateObject reference: https://ai-sdk.dev/docs/reference/ai-sdk-core/generate-object
+- Vercel AI SDK error reference (NoObjectGeneratedError): https://ai-sdk.dev/docs/reference/ai-sdk-errors/ai-no-object-generated-error
+- AI SDK GitHub issue — generateObject fails without structuredOutputs: https://github.com/vercel/ai/issues/9002
+- AI SDK GitHub issue — schema validation failures with embedded objects: https://github.com/vercel/ai/issues/7358
+- Next.js App Router route handlers — binary download patterns: https://github.com/vercel/next.js/discussions/51676
+- Next.js maxDuration configuration: https://nextjs.org/docs/app/api-reference/file-conventions/route
+- pptxgenjs GitHub — HTTP streaming issue (Node.js binary encoding): https://github.com/gitbrent/PptxGenJS/issues/35
+- Existing project codebase — Message schema, agentType nullable column, rolling window implementation: read directly
+
+---
+*Pitfalls research for: AI-powered slide generation added to existing Next.js multi-agent chat app*
+*Researched: 2026-03-22*

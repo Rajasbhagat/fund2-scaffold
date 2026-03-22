@@ -1,585 +1,427 @@
-# Architecture Patterns
+# Architecture Research
 
-**Project:** FUND II Trend Mapper
-**Researched:** 2026-03-21
-**Confidence:** HIGH — based on Next.js 15/App Router official docs (verified), Vertex AI Node SDK training knowledge (MEDIUM), Prisma SQLite patterns (HIGH), gcloud auth behavior (HIGH)
-
----
-
-## Recommended Architecture
-
-A single Next.js 14+ App Router application. The server owns all Vertex AI calls — Route Handlers act as the API boundary. React Client Components handle the chat UI. SQLite via Prisma stores all persistent state. There is no separate backend process.
-
-```
-Browser (React)
-    │  REST calls (fetch)
-    ▼
-Next.js Route Handlers  ←── runs in Node.js process
-    │  @google-cloud/vertexai SDK
-    ▼
-Vertex AI Gemini API  (streaming)
-    │
-    ▼ (SSE / ReadableStream back to browser)
-Browser (renders tokens as they arrive)
-
-Prisma Client
-    │
-    ▼
-SQLite file (prisma/dev.db)
-```
+**Domain:** Slide Generation Integration — Next.js 16.2.1 multi-agent chat app (v2.1 milestone)
+**Researched:** 2026-03-22
+**Confidence:** HIGH — verified against installed ai@6.0.134 package types (`dist/index.d.ts` lines 681–701), pptxgenjs 4.0.1 official docs, existing route handler source (`app/api/chat/[projectId]/route.ts`), existing client component source (`src/components/UnifiedChatWindow.tsx`)
 
 ---
 
-## Directory / File Structure
+## Integration Context
 
-```
-fund2-trend-mapper/
-├── app/
-│   ├── layout.tsx                    # Root layout, global fonts/styles
-│   ├── page.tsx                      # Dashboard — project list
-│   ├── projects/
-│   │   └── [projectId]/
-│   │       └── page.tsx              # Chat view for a specific project
-│   └── api/
-│       ├── projects/
-│       │   ├── route.ts              # GET /api/projects, POST /api/projects
-│       │   └── [projectId]/
-│       │       └── route.ts          # GET, PATCH, DELETE /api/projects/:id
-│       └── chat/
-│           └── [projectId]/
-│               └── route.ts          # POST /api/chat/:projectId  (streaming)
-│
-├── components/
-│   ├── ProjectCard.tsx
-│   ├── ProjectForm.tsx               # Create/rename modal
-│   ├── ChatWindow.tsx                # Client Component — renders messages + stream
-│   ├── ChatInput.tsx                 # Client Component — textarea + send
-│   └── MessageBubble.tsx
-│
-├── lib/
-│   ├── prisma.ts                     # Prisma singleton (prevents hot-reload duplication)
-│   ├── vertexai.ts                   # Vertex AI client singleton + chat builder
-│   ├── context.ts                    # Loads system prompt + megatrend docs at startup
-│   └── types.ts                      # Shared TypeScript interfaces
-│
-├── prisma/
-│   ├── schema.prisma
-│   └── dev.db                        # SQLite file (gitignored)
-│
-├── public/
-│   └── (static assets)
-│
-├── Trend Mapper/                     # Source docs — read at server startup
-│   ├── FUND_II_Trend_Mapper_System_Prompt.txt
-│   └── MEGATRENDS Docs for TrendMapper/
-│       ├── Deep Research Report ChaqtGPT.docx
-│       ├── Global_Megatrends_Impact_Impulse_Matrix_2025-2050 (Claude).docx
-│       ├── Spotting_Big_Trends_Megatrends_Handout.pdf
-│       └── The Great Fragmentation GEMINI Deep Research.docx
-│
-├── .env.local                        # GOOGLE_CLOUD_PROJECT, MODEL_ID
-├── next.config.ts
-└── package.json
-```
+This is a subsequent-milestone addition. The existing system is working: Next.js 16.2.1 App Router, route handlers at `app/api/chat/[agentType]/[projectId]/route.ts`, `ai@6.0.134` `streamText` pipeline, Prisma 7 + SQLite, and `UnifiedChatWindow` holding full message history in React state. No existing files are deleted. The integration adds one new API route family and one new client-side state concern.
 
-**Key decisions:**
-- Route Handlers (`app/api/`) not Server Actions for chat — streaming responses require a Route Handler; Server Actions cannot return a `ReadableStream`.
-- Server Actions are acceptable for project CRUD (non-streaming mutations) but Route Handlers keep everything consistent and easier to test with curl.
-- `lib/context.ts` reads and caches the megatrend docs once at module load time (Node.js module cache). No hot-reload risk in production.
+**Constraint from PROJECT.md:** No DB schema changes for this milestone.
 
 ---
 
-## Data Model
+## Decision 1: Where the generateObject Call Lives
 
-### Prisma Schema (`prisma/schema.prisma`)
+**Answer: New dedicated route — `app/api/slides/[type]/[projectId]/route.ts`**
 
-```prisma
-generator client {
-  provider = "prisma-client-js"
-}
+Do not add `generateObject` to the existing chat routes. Reasons:
 
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
+1. The chat routes commit to `text/event-stream` streaming immediately via `streamText`. `generateObject` is blocking and returns structured JSON — it cannot share a response stream with SSE tokens.
+2. Slide generation is triggered by a button click, not a chat submission. Coupling it to the chat POST would require a flag parameter and conditional branching that splits route responsibility.
+3. The slide route needs binary response headers (`Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation`, `Content-Disposition: attachment`). These cannot co-exist with SSE headers in the same handler.
+4. Five slide types (Trend Mapper + 4 Value Designer) map cleanly to a `[type]` path segment, matching the existing `[agentType]` convention.
 
-model Project {
-  id        String    @id @default(cuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  messages  Message[]
-}
+The new route family:
 
-model Message {
-  id        String   @id @default(cuid())
-  projectId String
-  role      String   // "user" | "model"
-  content   String
-  createdAt DateTime @default(now())
-
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId, createdAt])
-}
+```
+app/api/slides/
+  [type]/
+    [projectId]/
+      route.ts     POST: readiness check + generateObject + pptxgenjs + buffer response
 ```
 
-**Design notes:**
-- `role` matches Vertex AI's `Content.role` field values (`"user"` and `"model"`) exactly — no translation needed when reconstructing chat history.
-- `onDelete: Cascade` means deleting a project removes all its messages automatically.
-- `@@index([projectId, createdAt])` — the only query pattern is "all messages for project X ordered by time"; this covers it.
-- No `userId` column — MVP has no auth, single shared workspace.
-- `content` stores plain text. Do not store the injected system prompt or megatrend docs in the DB — they are injected at request time from the file system.
-
-### SQL Table Equivalents
-
-```sql
--- Project
-id        TEXT PRIMARY KEY      -- cuid, e.g. "clxyz..."
-name      TEXT NOT NULL
-createdAt DATETIME DEFAULT now()
-updatedAt DATETIME
-
--- Message
-id        TEXT PRIMARY KEY
-projectId TEXT NOT NULL REFERENCES Project(id) ON DELETE CASCADE
-role      TEXT NOT NULL CHECK(role IN ('user', 'model'))
-content   TEXT NOT NULL
-createdAt DATETIME DEFAULT now()
-```
+The `[type]` values mirror the existing agent naming convention:
+`trend-mapper`, `opportunity`, `value-prop`, `customer-segment`, `business-model`
 
 ---
 
-## API Route Design
+## Decision 2: Passing Conversation History to the Generation Endpoint
 
-### Projects API
+**Answer: Client sends the full messages array in the POST body — same pattern as the unified chat route.**
 
-| Method | Path | Body | Response | Purpose |
-|--------|------|------|----------|---------|
-| GET | `/api/projects` | — | `Project[]` | List all projects |
-| POST | `/api/projects` | `{ name: string }` | `Project` | Create project |
-| GET | `/api/projects/:id` | — | `Project + Message[]` | Load project with history |
-| PATCH | `/api/projects/:id` | `{ name: string }` | `Project` | Rename project |
-| DELETE | `/api/projects/:id` | — | `{ ok: true }` | Delete project + messages |
+`UnifiedChatWindow` already maintains the full messages array in React state and sends it on every chat POST. The slide route uses the same contract, which is already established and working.
 
-### Chat API
-
-| Method | Path | Body | Response | Purpose |
-|--------|------|------|----------|---------|
-| POST | `/api/chat/:projectId` | `{ message: string }` | `ReadableStream` (SSE text) | Send message, stream reply |
-
-The chat endpoint does NOT return JSON. It returns a streaming `text/plain` response where chunks are raw UTF-8 text tokens as they arrive from Vertex AI.
+Request body schema:
 
 ```typescript
-// app/api/chat/[projectId]/route.ts (outline)
-export const runtime = 'nodejs'  // Required — Edge runtime cannot use gcloud auth
-
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  const { projectId } = await params
-  const { message } = await request.json()
-
-  // 1. Load chat history from DB
-  // 2. Persist the new user message
-  // 3. Build Vertex AI chat with system prompt + megatrend context + history
-  // 4. Call generateContentStream
-  // 5. Bridge the async iterator into a ReadableStream
-  // 6. After stream ends, persist the completed assistant message
-  // 7. Return the ReadableStream as the HTTP response
-
-  const stream = new ReadableStream({ ... })
-  return new Response(stream, {
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  })
+{
+  messages: Array<{ role: string; content: string; agentType?: string | null }>;
+  // No currentSession or deepResearch — generation is stateless
 }
 ```
+
+The route handler filters messages to agent-relevant turns before passing to `generateObject`. For a `trend-mapper` slide:
+
+```typescript
+const agentMessages = body.messages.filter(
+  (m) => m.role === 'user' || m.agentType === 'trend-mapper'
+);
+```
+
+Then passes to `generateObject` using the `messages` parameter (confirmed in ai@6.0.134 `Prompt` interface — `dist/index.d.ts` line 701: `messages: Array<ModelMessage>`):
+
+```typescript
+const { object } = await generateObject({
+  model: vertex('gemini-2.5-flash'),
+  system: SLIDE_EXTRACTION_PROMPT,   // Zod-guided extraction prompt for this slide type
+  messages: agentMessages.map(m => ({
+    role: m.role === 'user' ? 'user' : 'assistant',
+    content: m.content,
+  })),
+  schema: slideSchema,               // Zod schema per slide type
+});
+```
+
+No DB read is needed in the slide route. The client holds the live message history. The existing rolling window already ensures the payload stays bounded (~44 messages max = ~10–20 KB JSON).
 
 ---
 
-## Streaming: Next.js App Router + Vertex AI
+## Decision 3: pptxgenjs — Delivering the .pptx Buffer to the Browser
 
-**Confirmed approach (HIGH confidence):** Next.js Route Handlers support returning a `ReadableStream` directly via `new Response(stream)`. The Vertex AI Node SDK's `generateContentStream` returns an async iterable. Bridge them with an iterator-to-stream adapter.
+**pptxgenjs is not installed.** `package.json` has no `pptxgenjs` entry. Add: `npm install pptxgenjs`. Current stable version is 4.0.1.
 
-### Pattern: Iterator → ReadableStream
+pptxgenjs is Node.js only — it never runs in a browser or Edge runtime. The route handler must declare `export const runtime = 'nodejs'` (same as all existing chat routes).
 
-```typescript
-// lib/vertexai.ts
-import { VertexAI } from '@google-cloud/vertexai'
-import { getSystemPromptWithContext } from './context'
-
-// Singleton — one client per Node process
-const vertexAI = new VertexAI({
-  project: process.env.GOOGLE_CLOUD_PROJECT!,
-  location: 'us-central1',
-})
-
-export function buildGenerativeModel() {
-  return vertexAI.getGenerativeModel({
-    model: process.env.VERTEX_MODEL_ID ?? 'gemini-1.5-pro-002',
-    // Web search grounding tool is configured here if needed
-  })
-}
-
-export async function streamChatResponse(
-  history: Array<{ role: string; parts: Array<{ text: string }> }>,
-  userMessage: string
-): Promise<ReadableStream<Uint8Array>> {
-  const model = buildGenerativeModel()
-  const systemPrompt = getSystemPromptWithContext() // cached, see Context section
-
-  const chat = model.startChat({
-    history,
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-  })
-
-  const result = await chat.sendMessageStream(userMessage)
-  const encoder = new TextEncoder()
-
-  return new ReadableStream({
-    async start(controller) {
-      for await (const chunk of result.stream) {
-        const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-        if (text) {
-          controller.enqueue(encoder.encode(text))
-        }
-      }
-      controller.close()
-    },
-  })
-}
-```
-
-### Pattern: Persist after stream completes
-
-The stream must fully finish before the completed assistant message can be saved. Use a separate mechanism to do this — do not try to save inside the ReadableStream `start()` callback in the same response.
-
-**Recommended approach:** After the stream is returned to the client, the Route Handler wraps the stream in a transform that buffers the full response text in a closure, then calls `prisma.message.create()` when the stream closes.
+**Delivery pattern — `write()` to NodeBuffer, return as `NextResponse`:**
 
 ```typescript
-// In the route handler:
-let fullResponse = ''
+export const runtime = 'nodejs';
 
-const persistingStream = new ReadableStream({
-  async start(controller) {
-    for await (const chunk of result.stream) {
-      const text = chunk.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-      if (text) {
-        fullResponse += text
-        controller.enqueue(encoder.encode(text))
-      }
-    }
-    // Stream closed — persist now
-    await prisma.message.create({
-      data: { projectId, role: 'model', content: fullResponse }
-    })
-    controller.close()
+import pptxgen from 'pptxgenjs';
+import { NextResponse } from 'next/server';
+
+// After building the pptx object from the generateObject output...
+const pptx = new pptxgen();
+// ... add slides using object fields ...
+
+const buffer = await pptx.write({ outputType: 'nodebuffer' }) as Buffer;
+
+return new NextResponse(buffer, {
+  status: 200,
+  headers: {
+    'Content-Type':
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'Content-Disposition': `attachment; filename="slide-${type}-${projectId}.pptx"`,
+    'Content-Length': String(buffer.byteLength),
   },
-})
+});
 ```
 
-**Why this works:** Next.js Route Handlers on the Node.js runtime keep the server-side execution alive until the stream controller closes, even after the first byte is sent to the client.
+`pptx.write({ outputType: 'nodebuffer' })` returns `Promise<Buffer>`. This is preferred over:
+- `pptx.stream()` — returns binary string, requires the deprecated `new Buffer(data, 'binary')` constructor
+- `pptx.writeFile()` — writes to disk, requires tmp directory management and cleanup
 
-### Client-side consumption
+**Client-side download trigger** (in `SlideGenerateButton`):
 
 ```typescript
-// components/ChatWindow.tsx (simplified)
-'use client'
+const response = await fetch(`/api/slides/${type}/${projectId}`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ messages }),
+});
+if (!response.ok) {
+  const { reason } = await response.json();
+  setLastError(reason);
+  return;
+}
+const blob = await response.blob();
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `slide-${type}.pptx`;
+a.click();
+URL.revokeObjectURL(url);
+```
 
-async function sendMessage(projectId: string, message: string) {
-  const res = await fetch(`/api/chat/${projectId}`, {
-    method: 'POST',
-    body: JSON.stringify({ message }),
-    headers: { 'Content-Type': 'application/json' },
-  })
+No server-side file storage, no cleanup, no extra round-trip. The blob URL approach works without any DOM link element persisted to the page.
 
-  const reader = res.body!.getReader()
-  const decoder = new TextDecoder()
-  let assistantText = ''
+---
 
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) break
-    assistantText += decoder.decode(value, { stream: true })
-    setStreamingMessage(assistantText) // React state update per chunk
-  }
+## Decision 4: Button Unlock State — Where It Lives
+
+**Answer: Client-side derived state only. No DB persistence.**
+
+The unlock logic has two stages:
+
+**Stage 1 — message-count heuristic (synchronous, zero cost):**
+Computed from the messages array already in React state on every render:
+
+```typescript
+const THRESHOLD: Record<string, number> = {
+  'trend-mapper': 3,
+  'opportunity': 3,
+  'value-prop': 3,
+  'customer-segment': 3,
+  'business-model': 3,
+};
+
+function meetsThreshold(messages: UnifiedMessage[], slideType: string, agentType: string): boolean {
+  const agentAssistantMsgs = messages.filter(
+    m => m.role === 'assistant' && m.agentType === agentType
+  );
+  return agentAssistantMsgs.length >= THRESHOLD[slideType];
 }
 ```
 
-**Important:** Set `export const runtime = 'nodejs'` in the chat Route Handler. The Edge runtime does not support `@google-cloud/vertexai` or the gcloud credential chain.
+Button renders disabled until threshold is met. No network call, no DB.
 
----
+**Stage 2 — Gemini completeness check (async, inline in generation route):**
+Rather than a separate readiness endpoint, the generation route performs the completeness check itself and returns `422` with `{ ready: false, reason: string }` if content is insufficient. The client handles this as an error state on the button. This eliminates a separate round-trip and keeps the route self-contained.
 
-## Context Management: System Prompt + Megatrend Docs
-
-### Strategy: Full-context injection (not RAG)
-
-For MVP, the entire system prompt plus all three megatrend documents are concatenated and passed as the `systemInstruction` in every chat request. This is the right call because:
-- The megatrend docs are fixed and finite (estimated 30,000–60,000 tokens total across three docs)
-- Gemini 1.5 Pro supports a 1M token context window; 1.5 Flash supports 1M as well
-- RAG adds significant complexity with marginal benefit when the corpus is small and static
-
-**Token budget estimate:**
-- System prompt: ~2,000 tokens
-- Three megatrend docs (docx/pdf, extracted text): ~30,000–50,000 tokens estimated
-- Chat history (rolling 20 turns): ~5,000–10,000 tokens
-- User message: ~200 tokens
-- **Total per request: ~40,000–65,000 tokens** — well within Gemini 1.5 Pro's limit
-
-### Loading strategy
+**State shape in `SlidePanel`:**
 
 ```typescript
-// lib/context.ts
-import fs from 'fs'
-import path from 'path'
-
-// Loaded once at module import time — cached by Node module system
-// In development, next.config.ts can configure serverComponentsExternalPackages
-// to avoid re-evaluation, or use a simple global singleton
-
-let _cachedContext: string | null = null
-
-export function getSystemPromptWithContext(): string {
-  if (_cachedContext) return _cachedContext
-
-  const trendMapperDir = path.join(process.cwd(), 'Trend Mapper')
-
-  // System prompt — plain text, read directly
-  const systemPrompt = fs.readFileSync(
-    path.join(trendMapperDir, 'FUND_II_Trend_Mapper_System_Prompt.txt'),
-    'utf-8'
-  )
-
-  // Megatrend docs — must be pre-extracted to .txt or .md files
-  // DOCX and PDF cannot be read with fs.readFileSync; a build-time extraction step is needed
-  const docsDir = path.join(trendMapperDir, 'MEGATRENDS Docs for TrendMapper')
-  const extractedDocs = fs.readdirSync(docsDir)
-    .filter(f => f.endsWith('.txt') || f.endsWith('.md'))
-    .map(f => fs.readFileSync(path.join(docsDir, f), 'utf-8'))
-    .join('\n\n---\n\n')
-
-  _cachedContext = `${systemPrompt}\n\n[MEGATREND KNOWLEDGE BASE]\n\n${extractedDocs}`
-  return _cachedContext
-}
+type SlideButtonState = Record<string, {
+  thresholdMet: boolean;    // derived from message count, recomputes on render
+  isGenerating: boolean;    // true while POST is in flight
+  lastError: string | null; // from 422 response or fetch error
+}>;
 ```
 
-**Critical: Document extraction.** The megatrend docs are `.docx` and `.pdf` files. These cannot be passed as raw bytes to Vertex AI's text model via the Node SDK in the same way images can. They must be pre-extracted to plain text. Two options:
+This state lives in `SlidePanel`. It does not survive page refresh — the threshold recomputes from message history on next load, which is correct because the history is also reloaded.
 
-1. **One-time manual extraction (MVP):** Run a script using `mammoth` (for .docx) and `pdf-parse` (for .pdf) to produce `.txt` files in the same directory. Commit the `.txt` files. The `context.ts` module reads them at startup.
-
-2. **Build-step extraction:** Add a `prebuild` npm script that runs extraction. Regenerate when docs change.
-
-**Recommended for MVP: Option 1.** Extract once, commit the `.txt` files, read them at startup.
-
-```bash
-# One-time extraction script (scripts/extract-docs.ts)
-# npm install mammoth pdf-parse
-# npx ts-node scripts/extract-docs.ts
-```
-
-### Chat history window
-
-To prevent unbounded token growth in long projects, apply a rolling window:
-
-```typescript
-// lib/vertexai.ts
-const MAX_HISTORY_MESSAGES = 40  // 20 turns (user + model pairs)
-
-function buildHistory(messages: Message[]) {
-  // Take the most recent N messages, always include full history from start
-  // for short conversations; truncate oldest first for long ones
-  const recent = messages.slice(-MAX_HISTORY_MESSAGES)
-  return recent.map(m => ({
-    role: m.role,
-    parts: [{ text: m.content }],
-  }))
-}
-```
-
-Vertex AI's `startChat()` takes a `history` array of `Content` objects. The format must be alternating `user`/`model` turns. Load messages from DB ordered by `createdAt ASC`, exclude the new user message (it is passed to `sendMessageStream` separately).
+No DB column, no `AppSettings` entry, no `useEffect` to persist anything.
 
 ---
 
-## gcloud CLI Auth Server-Side
-
-### How it works (HIGH confidence)
-
-The `@google-cloud/vertexai` Node SDK uses Application Default Credentials (ADC). ADC resolves credentials in this order:
-
-1. `GOOGLE_APPLICATION_CREDENTIALS` env variable (path to a service account JSON key)
-2. `gcloud auth application-default login` — stores credentials in `~/.config/gcloud/application_default_credentials.json`
-3. Metadata server (when running on GCP — Cloud Run, GCE, etc.)
-
-For local development where you have run `gcloud auth application-default login`, the SDK automatically finds the credentials file. No environment variable is required.
-
-### Local development setup
-
-```bash
-# One-time setup — already done per project context
-gcloud auth application-default login
-
-# Verify credentials are available
-gcloud auth application-default print-access-token
-```
-
-The Next.js Node.js process (running as your user on localhost) inherits the same home directory and can read `~/.config/gcloud/application_default_credentials.json`.
-
-### .env.local required variables
-
-```bash
-# .env.local
-GOOGLE_CLOUD_PROJECT=your-gcp-project-id
-VERTEX_MODEL_ID=gemini-1.5-pro-002
-# GOOGLE_APPLICATION_CREDENTIALS is NOT needed for local dev with gcloud ADC
-```
-
-### Production deployment
-
-For any non-GCP host (e.g., a VPS, DigitalOcean, EC2):
-
-1. Create a service account with the `Vertex AI User` role in GCP IAM
-2. Download the JSON key file
-3. Set `GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json` as an environment variable in the deployment environment
-4. Do NOT commit the key file to git
-
-For GCP-native deployment (Cloud Run, App Engine): no key needed — assign the service account to the Cloud Run service and ADC resolves via the metadata server automatically.
-
-### Why Route Handlers and not Edge functions
-
-The `@google-cloud/vertexai` SDK requires Node.js APIs (file system access for credentials, Node crypto for signing). It cannot run in the Edge runtime. Always export `runtime = 'nodejs'` from any Route Handler that calls Vertex AI.
-
----
-
-## Component Boundaries
-
-| Component | Type | Responsibility | Communicates With |
-|-----------|------|---------------|-------------------|
-| `app/page.tsx` | Server Component | Renders project list (fetches from DB directly via Prisma) | Prisma, `ProjectCard` |
-| `app/projects/[id]/page.tsx` | Server Component | Initial render with project + message history | Prisma, `ChatWindow` |
-| `ChatWindow.tsx` | Client Component | Manages streaming state, message list, scroll | `/api/chat/:id` via fetch |
-| `ChatInput.tsx` | Client Component | Textarea, submit button, disabled state during stream | `ChatWindow` (callback) |
-| `MessageBubble.tsx` | Client Component | Renders markdown in messages | — |
-| `/api/projects/route.ts` | Route Handler | CRUD for projects | Prisma |
-| `/api/chat/[id]/route.ts` | Route Handler (Node) | Streaming chat with Vertex AI | Prisma, `lib/vertexai.ts`, `lib/context.ts` |
-| `lib/prisma.ts` | Singleton module | One PrismaClient instance per process | All DB-touching modules |
-| `lib/vertexai.ts` | Module | VertexAI client, `streamChatResponse()` | `@google-cloud/vertexai` |
-| `lib/context.ts` | Module | Load and cache system prompt + megatrend text | File system (once) |
-
-### Data Flow: New Chat Message
+## System Overview
 
 ```
-User types message → ChatInput.tsx (client)
-    │  POST /api/chat/:projectId { message }
-    ▼
-Route Handler: app/api/chat/[projectId]/route.ts (server, Node.js)
-    │  prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })
-    ▼
-SQLite (load history)
-    │
-    ▼ history array
-Route Handler
-    │  prisma.message.create({ data: { role: 'user', content: message } })
-    ▼
-SQLite (persist user message)
-    │
-    ▼
-lib/vertexai.ts: streamChatResponse(history, userMessage)
-    │  vertexAI client → Vertex AI API (generateContentStream)
-    ▼
-Vertex AI Gemini (streaming)
-    │  async iterator of chunks
-    ▼
-ReadableStream (bridging iterator → Web Stream API)
-    │  tokens enqueued as they arrive, full response buffered in closure
-    ▼
-new Response(stream) returned from Route Handler
-    │  HTTP response with streaming body
-    ▼
-ChatWindow.tsx: reader.read() loop
-    │  setStreamingMessage(accumulated) on each chunk
-    ▼
-React renders partial message
-    │  stream closes
-    ▼
-Route Handler: prisma.message.create({ role: 'model', content: fullResponse })
-SQLite (persist complete assistant message)
+┌──────────────────────────────────────────────────────────────────────┐
+│  Browser (Client Components)                                          │
+│                                                                       │
+│  AgentWorkspace                                                       │
+│    UnifiedChatWindow                                                  │
+│      messages: UnifiedMessage[]  ← full project history in state      │
+│      activeAgent: string                                              │
+│                                                                       │
+│    SlidePanel  (new)                                                  │
+│      receives: messages[], activeAgent                                │
+│      SlideGenerateButton x5                                           │
+│        thresholdMet: derived(messages, slideType)  ← recomputes      │
+│        isGenerating: boolean                                          │
+│        lastError: string | null                                       │
+│        onClick → POST /api/slides/[type]/[projectId]                 │
+│               → blob → synthetic <a>.click() download               │
+└───────────────────────────┬──────────────────────────────────────────┘
+                            │ HTTP POST  body: { messages[] }
+                            │
+┌───────────────────────────▼──────────────────────────────────────────┐
+│  app/api/slides/[type]/[projectId]/route.ts  (NEW)                    │
+│  export const runtime = 'nodejs'                                      │
+│                                                                       │
+│  1. Parse [type] param + body.messages                                │
+│  2. Filter messages to agent-relevant turns                           │
+│  3. generateObject(vertex, slideSchema[type], filtered messages)      │
+│     → structured slide content (Zod-validated)                       │
+│  4. If content insufficient → return 422 { ready:false, reason }     │
+│  5. Build pptx via pptxgenjs using object fields                      │
+│  6. pptx.write({ outputType: 'nodebuffer' }) → Buffer                │
+│  7. return NextResponse(buffer, PPTX headers)                         │
+└──────────┬────────────────┬──────────────────────────────────────────┘
+           │                │
+    Vertex AI          pptxgenjs 4.0.1
+    generateObject     (Node.js only)
+    (same vertex        No DB access
+    instance as         (history from client)
+    chat routes)
 ```
 
 ---
 
-## Anti-Patterns to Avoid
+## Recommended Project Structure — New Files Only
 
-### Anti-Pattern 1: Server Actions for streaming
+```
+app/
+  api/
+    slides/
+      [type]/
+        [projectId]/
+          route.ts          New route handler — POST only
 
-**What:** Using `'use server'` functions for the chat submit handler.
-**Why bad:** Server Actions return serializable values or throw. They cannot return a `ReadableStream`. Attempting to stream from a Server Action requires a workaround that adds complexity without benefit.
-**Instead:** Use a Route Handler (`app/api/chat/[projectId]/route.ts`) with `runtime = 'nodejs'`.
+src/
+  components/
+    SlidePanel.tsx            New — 5 slide buttons, owns SlideButtonState map
+    SlideGenerateButton.tsx   New — single button with threshold / loading / error states
 
-### Anti-Pattern 2: Edge runtime for Vertex AI calls
-
-**What:** Adding `export const runtime = 'edge'` to the chat Route Handler.
-**Why bad:** The Edge runtime does not have access to the Node.js file system (`fs`), which the gcloud credential resolution requires. The SDK will fail at credential lookup.
-**Instead:** Always use `runtime = 'nodejs'` (the default) for any Route Handler calling Vertex AI.
-
-### Anti-Pattern 3: Instantiating PrismaClient in every module
-
-**What:** `new PrismaClient()` in each file that needs DB access.
-**Why bad:** In Next.js development with hot reload, each module re-evaluation creates a new Prisma client, quickly exhausting SQLite connections and emitting warnings.
-**Instead:** Use the singleton pattern in `lib/prisma.ts`:
-
-```typescript
-// lib/prisma.ts
-import { PrismaClient } from '@prisma/client'
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
-
-export const prisma =
-  globalForPrisma.prisma ?? new PrismaClient({ log: ['error'] })
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma
-}
+  lib/
+    slides/
+      schemas.ts             Zod schemas for each slide type's structured output
+      builders.ts            pptxgenjs construction functions, one per slide type
+      thresholds.ts          THRESHOLD map: slideType → min assistant message count
+      prompts.ts             SLIDE_EXTRACTION_PROMPT strings, one per slide type
 ```
 
-### Anti-Pattern 4: Injecting raw .docx / .pdf bytes as context
+### What Is Modified (Not Created)
 
-**What:** Passing the binary content of `.docx` files directly into the Vertex AI text prompt.
-**Why bad:** Binary data is not valid UTF-8 text and will produce garbled or error results. Gemini's multimodal document understanding via the Node SDK requires the File API or inline base64 for supported formats — `.docx` is not a supported inline format.
-**Instead:** Pre-extract megatrend docs to plain text with `mammoth` / `pdf-parse` and pass clean UTF-8 text as context.
+| File | Change Required |
+|------|-----------------|
+| `src/components/AgentWorkspace.tsx` | Add `<SlidePanel messages={messages} activeAgent={activeAgent} />` below or beside `UnifiedChatWindow` |
+| `package.json` | Add `"pptxgenjs": "^4.0.1"` to dependencies |
 
-### Anti-Pattern 5: Storing system prompt + docs in the database
-
-**What:** Saving the full system prompt or megatrend text in the `Message` table on every turn to reconstruct context.
-**Why bad:** Massively inflates DB size; the system prompt is static per-deployment.
-**Instead:** Inject from the file system via `lib/context.ts` at request time. Only store actual user/model conversation turns in the DB.
-
-### Anti-Pattern 6: Unbounded chat history in the Vertex AI request
-
-**What:** Loading all messages for a project (potentially hundreds) into the history array.
-**Why bad:** As a project grows, history can exceed the context window or produce excessively high token costs.
-**Instead:** Apply a rolling window (`slice(-40)`) when building the history array. For this app, 40 messages (20 turns) is generous while staying well under the 1M token limit.
+No changes to existing route handlers, context loaders, Prisma schema, or SQLite DB.
 
 ---
 
-## Scalability Considerations
+## Data Flow
 
-| Concern | At 10 users (MVP) | At 100 users | At 1,000+ users |
-|---------|-------------------|--------------|-----------------|
-| Database | SQLite fine | SQLite fine (read-mostly, low concurrency) | Migrate to PostgreSQL |
-| Credential management | gcloud ADC (local) or SA key | Same | Consider Workload Identity if on GCP |
-| Context injection | Read files at startup, cache in memory | Same | Same (docs don't change) |
-| Chat history | Full load from DB | Full load fine for SQLite | Add pagination / window at DB layer |
-| Next.js deployment | `next dev` or `next start` on any VPS | PM2 + reverse proxy | Cloud Run or Vercel |
-| Streaming connections | Handled by Node.js natively | Same | Same — each stream is short-lived |
+### Slide Generation Request (Happy Path)
+
+```
+Student clicks "Generate Slide" (threshold already met)
+    ↓
+SlideGenerateButton.handleClick()
+  setIsGenerating(true)
+    ↓
+POST /api/slides/trend-mapper/{projectId}
+  body: { messages: [...full history from UnifiedChatWindow state...] }
+    ↓
+route.ts:
+  filter to trend-mapper turns
+  generateObject(vertex, trendMapperSlideSchema, filtered)
+    ↓ (Zod-validated object returned)
+  build pptxgen from object fields
+  pptx.write({ outputType: 'nodebuffer' })
+    ↓
+  return 200  Buffer + Content-Type: application/vnd...presentation
+    ↓
+client:
+  response.blob()
+  URL.createObjectURL(blob)
+  synthetic <a>.click()
+  browser shows Save dialog
+  URL.revokeObjectURL(url)
+  setIsGenerating(false)
+```
+
+### Slide Generation Request (Content Insufficient)
+
+```
+POST /api/slides/trend-mapper/{projectId}
+    ↓
+route.ts:
+  generateObject fails Zod validation or readiness check fails
+  return 422  { ready: false, reason: "Conversation needs more trend analysis before generating this slide." }
+    ↓
+client:
+  setLastError(reason)
+  setIsGenerating(false)
+  button shows inline error message
+```
+
+### Button State Lifecycle
+
+```
+New chat message arrives → messages state updated in UnifiedChatWindow
+    ↓
+SlidePanel re-renders (receives updated messages prop)
+    ↓
+for each slideType:
+  count = messages.filter(agentType === relevant && role === 'assistant').length
+  thresholdMet = count >= THRESHOLD[slideType]
+    ↓
+  button renders as:
+    disabled   when thresholdMet = false
+    enabled    when thresholdMet = true, isGenerating = false, lastError = null
+    loading    when isGenerating = true
+    error msg  when lastError != null
+```
+
+---
+
+## Integration Points
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Vertex AI (`generateObject`) | Same `createVertex` instance as existing chat routes | Reuse — no new credentials or config |
+| pptxgenjs | `pptx.write({ outputType: 'nodebuffer' })` in Node.js route | Must `npm install pptxgenjs`; not in package.json yet |
+
+### Internal Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| `SlidePanel` → slide route | `fetch` POST with JSON body | Same pattern as `UnifiedChatWindow` chat submit |
+| `AgentWorkspace` → `SlidePanel` | Props: `messages`, `activeAgent` | No context provider needed |
+| slide route → `generateObject` | Direct import from `ai` package | Same SDK already in use |
+| slide route → `pptxgenjs` | `import pptxgen from 'pptxgenjs'` | Node.js runtime only |
+| slide route → DB | None | Client sends messages; no Prisma query needed |
+
+---
+
+## Suggested Build Order
+
+Five steps, ordered by testability — each step is independently verifiable before the next begins:
+
+| Step | Deliverable | Depends On | Test Method |
+|------|-------------|------------|-------------|
+| **v2.1-01** | `src/lib/slides/schemas.ts` (5 Zod schemas) + `prompts.ts` (5 extraction prompts) + `thresholds.ts` | Nothing | TypeScript compilation; manual prompt review |
+| **v2.1-02** | `app/api/slides/[type]/[projectId]/route.ts` returning structured JSON (skip pptxgenjs for now; return `object` as JSON 200) | v2.1-01 | `curl -X POST` with hard-coded messages payload; verify schema output |
+| **v2.1-03** | `src/lib/slides/builders.ts` + wire pptxgenjs into route to return actual `.pptx` buffer | v2.1-02 | `curl` to download file; open in PowerPoint/LibreOffice to verify |
+| **v2.1-04** | `SlideGenerateButton.tsx` + `SlidePanel.tsx` | v2.1-03 | Component renders; button triggers fetch; download dialog appears |
+| **v2.1-05** | Wire `SlidePanel` into `AgentWorkspace`; show only for Trend Mapper + Value Designer agents | v2.1-04 | End-to-end browser test |
+
+Steps v2.1-01 through v2.1-03 are pure server-side and require no UI changes. The API contract is fixed and manually verified before any React code is written.
+
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: generateObject Inside the Chat Route
+
+**What people do:** Add a `slideType` flag to the existing chat POST and branch between `streamText` and `generateObject` in the same handler.
+**Why it's wrong:** `streamText` commits to a streaming SSE response immediately. `generateObject` is blocking and returns JSON. The two response shapes cannot be unified in one handler without duplicating all response-building code. The route's responsibility becomes ambiguous.
+**Do this instead:** Separate route at `app/api/slides/[type]/[projectId]/route.ts`.
+
+### Anti-Pattern 2: Persisting Button State to the DB
+
+**What people do:** Add a `readinessChecked: boolean` column to `Message` or `Project`, or an `AppSettings` entry, to cache the completeness check result.
+**Why it's wrong:** PROJECT.md explicitly constrains this milestone to no DB schema changes. Also unnecessary — threshold derivation is a free count filter on client-side state; the Gemini completeness check runs inline in the generation route only when the student actually clicks Generate.
+**Do this instead:** Derive from the messages array in `SlidePanel` render; cache inline 422 reason in `useState` keyed by slideType.
+
+### Anti-Pattern 3: Writing pptx to Disk and Serving a File URL
+
+**What people do:** `pptx.writeFile('/tmp/slide.pptx')` then redirect the client to a static URL.
+**Why it's wrong:** Requires tmp directory management, file cleanup, potential race conditions (even on single-user), and an extra request round-trip. Next.js deployments may not have a writable filesystem outside of `public/`.
+**Do this instead:** `pptx.write({ outputType: 'nodebuffer' })` and return the buffer directly in the `NextResponse`. The client creates a blob URL and triggers the download without intermediate storage.
+
+### Anti-Pattern 4: DB Read for Conversation History in the Slide Route
+
+**What people do:** Query `prisma.message.findMany({ where: { projectId } })` inside the slide route instead of reading from the request body.
+**Why it's wrong:** The client already holds the full live message history in state (including any messages that may not yet be persisted due to timing). A DB read adds latency and can miss the most recent turn. The existing chat routes already moved to client-sent history after Phase 9.
+**Do this instead:** Client sends `messages` in the POST body; route uses them directly. Rolling window already caps the payload size.
+
+### Anti-Pattern 5: pptxgenjs in Edge or Middleware
+
+**What people do:** Forget to set `export const runtime = 'nodejs'` and let Next.js default to Edge on certain deployment targets.
+**Why it's wrong:** pptxgenjs uses Node.js-specific APIs (Buffer, JSZip with Node streams). It will throw at runtime in the Edge runtime.
+**Do this instead:** Always declare `export const runtime = 'nodejs'` in the slide route — same as all existing chat routes.
+
+---
+
+## Scaling Considerations
+
+This is a single-user application. The pptxgenjs buffer pattern holds the generated PPTX (~50–200 KB) in server memory for the ~2–4 seconds the combined `generateObject` + build takes. Acceptable at any realistic single-user load.
+
+If v3 adds multi-user: the buffer approach scales fine until concurrent slide generations exhaust Node.js heap. At that point, offload generation to a background job queue and return a job ID for polling.
 
 ---
 
 ## Sources
 
-- Next.js Route Handlers official docs (verified 2026-03-21): https://nextjs.org/docs/app/api-reference/file-conventions/route — streaming pattern confirmed, `runtime = 'nodejs'` requirement confirmed
-- Next.js streaming guide: iterator-to-ReadableStream pattern confirmed in official docs
-- `@google-cloud/vertexai` Node SDK — `startChat()`, `sendMessageStream()`, `systemInstruction` field (HIGH confidence from training knowledge, SDK stable since v1.0)
-- Google Cloud ADC documentation — credential resolution order (HIGH confidence, stable behavior)
-- Prisma SQLite quickstart — schema syntax, singleton pattern (HIGH confidence)
-- System prompt character count analysis: `FUND_II_Trend_Mapper_System_Prompt.txt` is ~5,000 words / ~7,000 tokens; megatrend docs estimated 30,000–50,000 tokens total
+- `generateObject` parameter signature: `/node_modules/ai/dist/index.d.ts` lines 681–701, ai@6.0.134, installed and read directly
+- pptxgenjs export methods: [Saving Presentations | PptxGenJS](https://gitbrent.github.io/PptxGenJS/docs/usage-saving/) — `write({ outputType: 'nodebuffer' })` returns `Promise<Buffer>`, confirmed
+- pptxgenjs version 4.0.1: [npm pptxgenjs](https://www.npmjs.com/package/pptxgenjs)
+- Existing Trend Mapper chat route pattern: `app/api/chat/[projectId]/route.ts`, read directly from repo
+- Existing client history pattern: `src/components/UnifiedChatWindow.tsx`, read directly from repo
+- AI SDK 6 release: [https://vercel.com/blog/ai-sdk-6](https://vercel.com/blog/ai-sdk-6)
+
+---
+
+*Architecture research for: Slide generation integration — FUND II AI Agent Platform v2.1*
+*Researched: 2026-03-22*
