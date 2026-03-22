@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hud-bg: #d2edea;
+  --color-hud-fg: #1a2024;
+  --color-hud-accent: #ebff00;
+  --color-hud-panel: #b1dbd8;
+  --font-sans: var(--font-rajdhani), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --radius: 0;
+}
+
+:root {
+  --bg-main: #d2edea;
+  --bg-secondary: #b1dbd8;
+  --bg-dark: #1a2024;
+  --text-main: #1a2024;
+  --accent: #ebff00;
+  --border: #1a2024;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(177,219,216,0.12) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.mono {
+  font-family: var(--font-jetbrains-mono), 'Courier New', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(177, 219, 216, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(235, 255, 0, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
