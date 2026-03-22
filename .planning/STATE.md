@@ -61,16 +61,26 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 - MessageBubble wired into ChatWindow (maps 'assistant' → 'model' for prop type)
 - Branch: ralph/phase-4-ui-polish
 
+## Phase 10 Progress
+
+| Plan | Name | Status |
+|------|------|--------|
+| 10-01 | Design Foundation — next/font, Tailwind v4 @theme HUD Tokens, HUD Primitive Library | ✅ Complete |
+| 10-02 | Dashboard Redesign — 2-Column HUD Layout, Instrument Panel Cards, Accent Header | ✅ Complete |
+
+## Decisions (Phase 10)
+
+- Used Rajdhani via next/font/google with discrete weights (non-variable font)
+- Tailwind v4 @theme block provides HUD token classes: bg-hud-fg, bg-hud-accent, bg-hud-panel, bg-hud-bg
+- All border-radius tokens zeroed globally via @theme — flat UI enforced without per-element classes
+- HUDPanel primitive encapsulates crosshair accent corners — replaces manual span patterns in ProjectCard
+- 2-column dashboard: w-56 sidebar with DotGrid background + flex-1 main area
+- HUDAccentBlock used as neon yellow header strip satisfying UI-05
+
 ## Next Action
 
-**v2.0 ready to execute:** Run `/gsd:plan-phase 5` to plan Phase 5 (Multi-Agent Platform Shell).
-
-**Also outstanding (v1.0):** Manual pedagogical QA for AGENT-04/05:
-1. `npm run dev` in `/Users/rajas/Desktop/AntiGravity/Fund2Updated`
-2. Open the app and create a test project
-3. Work through `GUARDRAIL_QA.md` — test all guardrails, modes, and terminology rules
-4. After sign-off: set `passes: true` for US-006 in `scripts/ralph/phase-4/prd-group-a.json`
+**Phase 10 plans 01 and 02 complete.** Remaining plans (10-03+) cover workspace/chat/agent panel restyling.
 
 ---
 *Initialized: 2026-03-21*
-*Last updated: 2026-03-21 after v2.0 planning complete*
+*Last updated: 2026-03-22 after Phase 10 Plan 02 complete*
