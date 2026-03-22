@@ -1,23 +1,25 @@
-import type { Metadata } from "next";
-import { Rajdhani, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Rajdhani, JetBrains_Mono } from 'next/font/google'
+import './globals.css'
 
 const rajdhani = Rajdhani({
   weight: ['300', '400', '500', '600', '700'],
   subsets: ['latin'],
   variable: '--font-rajdhani',
-});
+  display: 'swap',
+})
 
 const jetbrainsMono = JetBrains_Mono({
   weight: 'variable',
   subsets: ['latin'],
   variable: '--font-jetbrains-mono',
-});
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: "FUND II — Trend Intelligence Platform",
-  description: "AntiGravity Fund II | Aerospace-grade trend analysis",
-};
+  title: 'FUND II — Trend Intelligence Platform',
+  description: 'AntiGravity Fund II | Aerospace-grade trend analysis',
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,5 +28,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
       </body>
     </html>
-  );
+  )
 }

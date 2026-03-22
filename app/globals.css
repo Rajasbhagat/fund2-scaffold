@@ -6,7 +6,15 @@
   --color-hud-accent: #ebff00;
   --color-hud-panel: #b1dbd8;
   --font-sans: var(--font-rajdhani), sans-serif;
-  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-mono: var(--font-jetbrains-mono), 'Courier New', monospace;
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-2xl: 0;
+  --radius-3xl: 0;
+  --radius-4xl: 0;
   --radius: 0;
 }
 
@@ -30,8 +38,9 @@ html, body {
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-main);
+  background-color: var(--bg-dark);
+  color: var(--bg-main);
+  font-family: var(--font-rajdhani), sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
