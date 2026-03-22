@@ -19,6 +19,7 @@ interface UnifiedChatWindowProps {
   activeAgent: string
   onAgentChange: (agent: string) => void
   currentSession: number
+  onMessagesChange?: (messages: UnifiedMessage[]) => void
 }
 
 const AGENT_DISPLAY_NAMES: Record<string, string> = {
@@ -97,8 +98,14 @@ export default function UnifiedChatWindow({
   activeAgent,
   onAgentChange,
   currentSession,
+  onMessagesChange,
 }: UnifiedChatWindowProps) {
   const [messages, setMessages] = useState<UnifiedMessage[]>(initialMessages)
+
+  // Notify parent whenever messages change
+  useEffect(() => {
+    onMessagesChange?.(messages)
+  }, [messages, onMessagesChange])
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [lastUserText, setLastUserText] = useState<string>('')
