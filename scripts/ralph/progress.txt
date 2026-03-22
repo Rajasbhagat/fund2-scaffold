@@ -1,20 +1,58 @@
-## Codebase Patterns
-- All Vertex AI routes use `export const runtime = 'nodejs'`
-- Prisma client imported from `@/lib/prisma` (singleton)
-- Context loaded via `getSystemContext()` from `@/lib/context` (Trend Mapper) or `getFAROContext()` (FARO)
-- Rolling window: FIRST_KEEP=4, LAST_KEEP=40 messages
-- `vertex.tools.urlContext({})` is available in the installed SDK version
-
 # Ralph Progress Log
-Started: Sat Mar 21 21:05:28 CET 2026
+Started: Sun Mar 22 01:56:09 CET 2026
+---
+## 2026-03-22 - US-001
+- Made `agentType` nullable on the Message model (`String?` — removed `@default("trend-mapper")`)
+- Ran `npx prisma migrate dev --name make-agentType-nullable` — migration used table-recreate strategy (SQLite ALTER COLUMN limitation)
+- Regenerated Prisma client with `npx prisma generate`
+- Fixed pre-existing type error in `MessageBubble.tsx`: `children` prop must be optional in li renderer to match react-markdown's ExtraProps interface
+- Cleared stale `.next` cache that referenced deleted `src/app/` files
+- Files changed: `prisma/schema.prisma`, `prisma/migrations/20260322005628_make_agent_type_nullable/migration.sql`, `src/generated/prisma/`, `src/components/MessageBubble.tsx`
+- **Learnings for future iterations:**
+  - SQLite does not support `ALTER COLUMN` — Prisma recreates the table; existing data is preserved
+  - The `.next/types/` directory causes stale TS errors when route files are moved/deleted — delete `.next/` before running `tsc --noEmit`
+  - react-markdown component props must have optional `children` to match `ExtraProps` interface from `@types/mdast`
 ---
 
-## 2026-03-21 - US-001
-- Implemented FARO route handler at `src/app/api/chat/faro/[projectId]/route.ts`
-- Nearly identical to Trend Mapper route — key differences: `getFAROContext()` instead of `getSystemContext()`, hardcoded `AGENT_TYPE = 'faro'`, added `export const dynamic = 'force-dynamic'`
-- Confirmed `vertex.tools.urlContext({})` is exported in the installed SDK (`@ai-sdk/google-vertex/dist/index.d.ts` line 118)
-- Files changed: `src/app/api/chat/faro/[projectId]/route.ts` (created), `scripts/ralph/prd.json`, `scripts/ralph/progress.txt`
+## 2026-03-22 - US-002
+- Refactored all 4 route handlers to accept full `clientHistory` from client instead of reloading from DB
+- Added `mergeConsecutiveSameRole` helper to each route (handles Vertex AI consecutive same-role rejection)
+- Applied rolling window to `clientHistory`, then merged, then sliced history excluding last message
+- Persisted user message with `agentType` set to each route's AGENT_TYPE constant
+- Removed all `prisma.message.findMany` history loading calls from chat routes
+- Files changed: `app/api/chat/[projectId]/route.ts`, `app/api/chat/faro/[projectId]/route.ts`, `app/api/chat/value-designer/[projectId]/route.ts`, `app/api/chat/spi/[projectId]/route.ts`
 - **Learnings for future iterations:**
-  - The tmp repo has no node_modules; run tsc checks via `/Users/rajas/Desktop/AntiGravity/Fund2Updated/node_modules/.bin/tsc` pointing at the Fund2Updated tsconfig
-  - FARO route filters messages by `agentType: AGENT_TYPE` so history is isolated per agent
+  - Routes live in `app/api/chat/` not `src/app/api/chat/` — this project uses the `app/` dir for routes
+  - Sending `windowed.slice(0, -1)` as history and the user message separately matches Vertex AI's turn-based structure
+---
+
+## 2026-03-22 - US-003
+- Updated `app/projects/[projectId]/page.tsx`: replaced 4 parallel agentType-filtered queries with one `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`
+- Normalized role 'model' -> 'assistant' in the result
+- Passed `initialMessages` (flat array) instead of `initialMessagesByAgent` (Record) to AgentWorkspace
+- Updated `src/components/AgentWorkspace.tsx`: removed AgentTabs import and per-agent panel map, added placeholder div for UnifiedChatWindow, kept `useState('trend-mapper')` for activeAgent
+- Defined `UnifiedMessage` interface in AgentWorkspace.tsx and exported it
+- Files changed: `app/projects/[projectId]/page.tsx`, `src/components/AgentWorkspace.tsx`
+---
+
+## 2026-03-22 - US-004
+- Created `src/components/AgentPicker.tsx` with 4 pill buttons: TREND MAPPER, VALUE DESIGNER, SPI, FARO
+- Active pill: `bg-[#ebff00] text-[#1a2024]`; Inactive: `border border-[#b1dbd8]/20 text-[#b1dbd8]/40`
+- Container: `flex gap-2 px-4 pt-2 pb-1`, Rajdhani font, tracking-[0.2em]
+- Files changed: `src/components/AgentPicker.tsx`
+---
+
+## 2026-03-22 - US-005
+- Created `src/components/UnifiedChatWindow.tsx` — single shared message thread for all agents
+- Exported `UnifiedMessage` type from UnifiedChatWindow, re-exported from AgentWorkspace
+- Renders AgentPicker above message list, ChatInput below (column flex)
+- Each assistant message shows agent label from msg.agentType (falls back to activeAgent display name)
+- POST body sends full messages array with role/content/agentType, endpoint derived from activeAgent
+- Streaming pattern identical to ChatWindow (getReader loop with optimistic appending)
+- Empty state: "Select an agent above and start a conversation"
+- Updated AgentWorkspace to render UnifiedChatWindow replacing placeholder
+- Files changed: `src/components/UnifiedChatWindow.tsx`, `src/components/AgentWorkspace.tsx`
+- **Learnings for future iterations:**
+  - UnifiedChatWindow captures `updatedMessages` snapshot at send time for the POST body (avoids stale closure)
+  - AgentPicker placed between message area and ChatInput for natural flow
 ---
