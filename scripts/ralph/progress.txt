@@ -1,63 +1,30 @@
 # Ralph Progress Log
-Started: Sun Mar 22 01:56:09 CET 2026
+Started: Sun Mar 22 09:41:32 CET 2026
+
+## Codebase Patterns
+- Active app dir is ROOT-LEVEL `app/` NOT `src/app/` — always edit `app/layout.tsx`, `app/globals.css`, `app/page.tsx`
+- Tailwind v4 CSS-first: no tailwind.config.js; tokens go in `@theme {}` block in `app/globals.css`
+- HUD color tokens: bg-hud-bg (#d2edea), bg-hud-fg (#1a2024), bg-hud-accent (#ebff00), bg-hud-panel (#b1dbd8)
+- Font variables: --font-rajdhani (sans), --font-jetbrains-mono (mono); applied via CSS `--font-sans` and `--font-mono` in @theme
+- Use `bg-hud-*`, `text-hud-*`, `border-hud-*` token classes — NOT hardcoded hex arbitrary values like `bg-[#1a2024]`
 ---
+
 ## 2026-03-22 - US-001
-- Made `agentType` nullable on the Message model (`String?` — removed `@default("trend-mapper")`)
-- Ran `npx prisma migrate dev --name make-agentType-nullable` — migration used table-recreate strategy (SQLite ALTER COLUMN limitation)
-- Regenerated Prisma client with `npx prisma generate`
-- Fixed pre-existing type error in `MessageBubble.tsx`: `children` prop must be optional in li renderer to match react-markdown's ExtraProps interface
-- Cleared stale `.next` cache that referenced deleted `src/app/` files
-- Files changed: `prisma/schema.prisma`, `prisma/migrations/20260322005628_make_agent_type_nullable/migration.sql`, `src/generated/prisma/`, `src/components/MessageBubble.tsx`
+- Implemented HUD design foundation: next/font/google for Rajdhani + JetBrains_Mono, Tailwind v4 @theme color/font/radius tokens
+- Files changed: app/layout.tsx, app/globals.css
 - **Learnings for future iterations:**
-  - SQLite does not support `ALTER COLUMN` — Prisma recreates the table; existing data is preserved
-  - The `.next/types/` directory causes stale TS errors when route files are moved/deleted — delete `.next/` before running `tsc --noEmit`
-  - react-markdown component props must have optional `children` to match `ExtraProps` interface from `@types/mdast`
+  - JetBrains_Mono uses `weight: 'variable'` (variable font), Rajdhani uses explicit weight array
+  - Font variables set on `<html>` element via `rajdhani.variable` and `jetbrainsMono.variable` classNames
+  - @theme block must be placed right after `@import "tailwindcss"` in globals.css
+  - `--radius: 0` in @theme gives flat zero-radius aesthetic to all Tailwind radius utilities
 ---
 
 ## 2026-03-22 - US-002
-- Refactored all 4 route handlers to accept full `clientHistory` from client instead of reloading from DB
-- Added `mergeConsecutiveSameRole` helper to each route (handles Vertex AI consecutive same-role rejection)
-- Applied rolling window to `clientHistory`, then merged, then sliced history excluding last message
-- Persisted user message with `agentType` set to each route's AGENT_TYPE constant
-- Removed all `prisma.message.findMany` history loading calls from chat routes
-- Files changed: `app/api/chat/[projectId]/route.ts`, `app/api/chat/faro/[projectId]/route.ts`, `app/api/chat/value-designer/[projectId]/route.ts`, `app/api/chat/spi/[projectId]/route.ts`
+- Created src/components/hud/index.tsx with 6 HUD primitive components: HUDPanel, HUDLabel, HUDValue, HUDAccentBlock, Barcode, DotGrid
+- Files changed: src/components/hud/index.tsx (new file)
 - **Learnings for future iterations:**
-  - Routes live in `app/api/chat/` not `src/app/api/chat/` — this project uses the `app/` dir for routes
-  - Sending `windowed.slice(0, -1)` as history and the user message separately matches Vertex AI's turn-based structure
----
-
-## 2026-03-22 - US-003
-- Updated `app/projects/[projectId]/page.tsx`: replaced 4 parallel agentType-filtered queries with one `prisma.message.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })`
-- Normalized role 'model' -> 'assistant' in the result
-- Passed `initialMessages` (flat array) instead of `initialMessagesByAgent` (Record) to AgentWorkspace
-- Updated `src/components/AgentWorkspace.tsx`: removed AgentTabs import and per-agent panel map, added placeholder div for UnifiedChatWindow, kept `useState('trend-mapper')` for activeAgent
-- Defined `UnifiedMessage` interface in AgentWorkspace.tsx and exported it
-- Files changed: `app/projects/[projectId]/page.tsx`, `src/components/AgentWorkspace.tsx`
----
-
-## 2026-03-22 - US-004
-- Created `src/components/AgentPicker.tsx` with 4 pill buttons: TREND MAPPER, VALUE DESIGNER, SPI, FARO
-- Active pill: `bg-[#ebff00] text-[#1a2024]`; Inactive: `border border-[#b1dbd8]/20 text-[#b1dbd8]/40`
-- Container: `flex gap-2 px-4 pt-2 pb-1`, Rajdhani font, tracking-[0.2em]
-- Files changed: `src/components/AgentPicker.tsx`
----
-
-## 2026-03-22 - US-005
-- Created `src/components/UnifiedChatWindow.tsx` — single shared message thread for all agents
-- Exported `UnifiedMessage` type from UnifiedChatWindow, re-exported from AgentWorkspace
-- Renders AgentPicker above message list, ChatInput below (column flex)
-- Each assistant message shows agent label from msg.agentType (falls back to activeAgent display name)
-- POST body sends full messages array with role/content/agentType, endpoint derived from activeAgent
-- Streaming pattern identical to ChatWindow (getReader loop with optimistic appending)
-- Empty state: "Select an agent above and start a conversation"
-- Updated AgentWorkspace to render UnifiedChatWindow replacing placeholder
-- Files changed: `src/components/UnifiedChatWindow.tsx`, `src/components/AgentWorkspace.tsx`
-- **Learnings for future iterations:**
-  - UnifiedChatWindow captures `updatedMessages` snapshot at send time for the POST body (avoids stale closure)
-  - AgentPicker placed between message area and ChatInput for natural flow
----
-
-## 2026-03-22 - Phase 9 Complete
-- All 5 US stories implemented
-- Files changed: prisma/schema.prisma, all 4 route handlers, project page Server Component, AgentWorkspace.tsx, new AgentPicker.tsx, new UnifiedChatWindow.tsx
+  - HUDPanel uses `border-hud-accent/60` token class (NOT `border-[#ebff00]/60`) for corner spans
+  - DotGrid just adds className `dot-grid` — relies on existing CSS in globals.css
+  - Barcode renders a decorative bar pattern using bg-hud-panel/60 strips
+  - All components accept optional `className` for composability
 ---
