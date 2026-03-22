@@ -1,30 +1,24 @@
 # Ralph Progress Log
-Started: Sun Mar 22 09:41:32 CET 2026
-
-## Codebase Patterns
-- Active app dir is ROOT-LEVEL `app/` NOT `src/app/` — always edit `app/layout.tsx`, `app/globals.css`, `app/page.tsx`
-- Tailwind v4 CSS-first: no tailwind.config.js; tokens go in `@theme {}` block in `app/globals.css`
-- HUD color tokens: bg-hud-bg (#d2edea), bg-hud-fg (#1a2024), bg-hud-accent (#ebff00), bg-hud-panel (#b1dbd8)
-- Font variables: --font-rajdhani (sans), --font-jetbrains-mono (mono); applied via CSS `--font-sans` and `--font-mono` in @theme
-- Use `bg-hud-*`, `text-hud-*`, `border-hud-*` token classes — NOT hardcoded hex arbitrary values like `bg-[#1a2024]`
+Started: Sun Mar 22 14:58:50 CET 2026
 ---
 
 ## 2026-03-22 - US-001
-- Implemented HUD design foundation: next/font/google for Rajdhani + JetBrains_Mono, Tailwind v4 @theme color/font/radius tokens
-- Files changed: app/layout.tsx, app/globals.css
+- Installed pptxgenjs@^4.0.1
+- Created src/lib/slides/schemas.ts with 5 Zod schemas (all fields nullable): trendMapperSlideSchema, opportunitySlideSchema, valuePropSlideSchema, customerSegmentSlideSchema, businessModelSlideSchema
+- Created src/lib/slides/thresholds.ts with SLIDE_THRESHOLDS record and SlideType union type
 - **Learnings for future iterations:**
-  - JetBrains_Mono uses `weight: 'variable'` (variable font), Rajdhani uses explicit weight array
-  - Font variables set on `<html>` element via `rajdhani.variable` and `jetbrainsMono.variable` classNames
-  - @theme block must be placed right after `@import "tailwindcss"` in globals.css
-  - `--radius: 0` in @theme gives flat zero-radius aesthetic to all Tailwind radius utilities
+  - Zod is v4 in this project — .nullable() API works the same as v3
+  - server-only import must be first line in server-only modules
+  - pptxgenjs@4.0.1 installs cleanly with npm
 ---
 
 ## 2026-03-22 - US-002
-- Created src/components/hud/index.tsx with 6 HUD primitive components: HUDPanel, HUDLabel, HUDValue, HUDAccentBlock, Barcode, DotGrid
-- Files changed: src/components/hud/index.tsx (new file)
+- Created src/lib/slides/prompts.ts with SLIDE_PROMPTS Record<SlideType, string> for all 5 slide types
+- Created src/lib/slides/utils.ts with filterMessagesForSlide() and getAgentTypeForSlide()
+- filterMessagesForSlide: includes all user messages + assistant messages matching agentType + null agentType only for 'trend-mapper'
+- getAgentTypeForSlide: maps 'trend-mapper' → 'trend-mapper', all other types → 'value-designer'
 - **Learnings for future iterations:**
-  - HUDPanel uses `border-hud-accent/60` token class (NOT `border-[#ebff00]/60`) for corner spans
-  - DotGrid just adds className `dot-grid` — relies on existing CSS in globals.css
-  - Barcode renders a decorative bar pattern using bg-hud-panel/60 strips
-  - All components accept optional `className` for composability
+  - null agentType legacy handling: use `m.agentType == null` (loose equality) to catch both null and undefined
+  - Each prompt ends with "Output only valid JSON matching the schema, no additional text" to prevent Gemini preamble
+  - topBenefits null handling: explicitly tell Gemini to return null (not empty array) for absent array fields
 ---
