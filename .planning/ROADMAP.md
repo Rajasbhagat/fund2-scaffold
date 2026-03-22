@@ -191,7 +191,7 @@ These are known uncertainties from the research phase. Each must be resolved dur
 #### Phase 5: Multi-Agent Platform Shell
 **Goal**: Every project has 4 agent tabs with isolated but persistent chat histories; a global session selector (1–10) is visible in the UI and stored in the DB; the current session number is injected into every agent's system prompt; a Deep Research toggle is available per message
 **Depends on**: Phase 4
-**Requirements**: PLAT-01, PLAT-02, PLAT-03, AGENT-09, SEARCH-02
+**Requirements**: PLAT-01, PLAT-02, PLAT-03, PLAT-04, AGENT-09, SEARCH-02
 **Success Criteria**:
   1. A project page shows 4 tabs: Trend Mapper, Value Designer, SPI, FARO — each with its own message thread
   2. Switching tabs does not clear chat history; returning to a tab shows the full prior conversation
@@ -199,6 +199,7 @@ These are known uncertainties from the research phase. Each must be resolved dur
   4. Every agent route handler receives the current session number and includes it in the system prompt
   5. Trend Mapper's existing messages migrate cleanly — messages get `agentType: 'trend-mapper'` and continue working
   6. A "Deep Research" toggle button is visible in the chat input area; when active, the POST body includes `deepResearch: true` and the route handler switches to gemini-2.5-pro + urlContext tool
+  7. Agent tabs for locked agents (Trend Mapper at Session 2, Value Designer at Session 3, SPI at Session 7) are visibly disabled with an "Unlocks at Session X" label when the current session is below their threshold; FARO is always active
 
 **Plans**: 3 plans
 - [ ] 05-01: Prisma migration — add `agentType String @default("trend-mapper")` to `Message` model; add `AppSettings` model (`id`, `sessionNumber Int @default(1)`); run `prisma migrate dev`; seed one AppSettings row; update all existing Trend Mapper queries to filter by `agentType: 'trend-mapper'`
@@ -323,6 +324,7 @@ These are known uncertainties from the research phase. Each must be resolved dur
 | PLAT-01 | Agent tab switching with persistent chat histories | Phase 5 |
 | PLAT-02 | Global session tracker (1–10) settable from UI | Phase 5 |
 | PLAT-03 | Session number injected into all agent system prompts | Phase 5 |
+| PLAT-04 | Session-gated agent tabs (locked/disabled below unlock threshold) | Phase 5 |
 | AGENT-06 | Value Designer agent — 6-activity facilitation, no web search | Phase 6 |
 | AGENT-07 | SPI agent — persona generation, in-character interview, debrief, no web search | Phase 6 |
 | AGENT-08 | FARO agent — course navigation, syllabi knowledge base + web search | Phase 7 |
@@ -357,7 +359,132 @@ These are known uncertainties from the research phase. Each must be resolved dur
 
 ---
 
+---
+
+## Milestone: v2.1 — AI-Powered Slide Generation
+
+**Goal:** Students can generate polished, personalized PowerPoint slides directly from their agent conversations — one Trend Mapper slide covering the full 6-part output structure, and four Value Designer slides (Opportunity, Value Prop, Customer Segment, Business Model). Each slide type has a "Generate" button that unlocks progressively as conversation content becomes sufficient, ensuring generation only happens when the conversation is ready.
+
+**Done when:** All 3 phases complete, all 5 slide types generate valid `.pptx` files that open in PowerPoint/Google Slides, buttons unlock correctly based on conversation depth, and slides are visually consistent with the HUD design system.
+
+---
+
+### Phases
+
+- [ ] **Phase 11: Slide Schemas, Prompts, and Thresholds** — 5 flat Zod schemas (one per slide type) validated against real Gemini calls, 5 extraction system prompts, message-count unlock thresholds per slide type; the complete data contract before any rendering code is written
+- [ ] **Phase 12: Slide Generation API Routes and PPTX Builders** — Full server-side pipeline: `app/api/slides/[type]/[projectId]/route.ts` with structured extraction via `generateText` + `Output.object()`, inline completeness check (422 early return), pptxgenjs HUD-styled builders for all 5 slide types, binary buffer response with correct MIME headers
+- [ ] **Phase 13: Slide UI and AgentWorkspace Integration** — `SlideGenerateButton` component with two-stage unlock state, `SlidePanel` with one-way ready latch and debounce, wired into `AgentWorkspace` for Trend Mapper and Value Designer agents
+- [ ] **Phase 14: Landing Page Prompt Generator** — "Create Landing Page" button unlocks after all 6 Value Designer milestones are complete; Gemini synthesizes a comprehensive vibe-coding prompt from all agent conversations; displayed in a modal with copy-to-clipboard
+
+---
+
+### Phase Details
+
+#### Phase 11: Slide Schemas, Prompts, and Thresholds
+**Goal**: The complete data contract for slide generation exists as validated TypeScript — 5 flat Zod schemas accepted by Vertex AI structured output, 5 extraction prompts that guide Gemini to fill those schemas from conversation content, and unlock threshold constants per slide type; all schemas verified with real Gemini calls before any rendering code is written
+**Depends on**: Phase 10 (HUD design tokens exist for reference in builder phase)
+**Requirements**: SLIDE-01 (threshold constants), SLIDE-07 (venture name field in schemas)
+**Success Criteria** (what must be TRUE):
+  1. Each of the 5 Zod schemas passes a real `generateText` + `Output.object()` call against Gemini 2.5 Flash without a `NoObjectGeneratedError` — validated with a test script or curl before Phase 12 begins
+  2. All schema fields that may be absent from an early conversation are marked `.nullable()` — no required fields that Gemini would hallucinate content to satisfy
+  3. Each schema includes a `ventureName` (or equivalent) nullable field so the venture name/topic can be extracted from the conversation and surfaced on the slide
+  4. `src/lib/slides/thresholds.ts` exports named constants for each slide type's minimum message count — values are easy to change without touching other files
+  5. `src/lib/slides/prompts.ts` exports extraction system prompts that instruct Gemini to return null for any field not yet evidenced in the conversation rather than inventing plausible content
+
+**Plans**: TBD
+
+---
+
+#### Phase 12: Slide Generation API Routes and PPTX Builders
+**Goal**: Students' conversations can be turned into downloadable `.pptx` files — the server pipeline filters messages by agent type, extracts structured slide content via Gemini, builds a HUD-styled PPTX in memory with pptxgenjs, and returns a binary buffer that the browser downloads directly; all 5 slide types verified to open correctly in PowerPoint and LibreOffice before UI is built
+**Depends on**: Phase 11
+**Requirements**: SLIDE-02, SLIDE-03, SLIDE-04, SLIDE-05, SLIDE-06, SLIDE-07, SLIDE-08
+**Success Criteria** (what must be TRUE):
+  1. `POST /api/slides/trend-mapper/[projectId]` with a sufficient conversation in the request body returns a `.pptx` binary response that opens in PowerPoint with HUD styling — neon yellow (#ebff00) header block, icy blue (#d2edea) body, dark (#1a2024) text
+  2. The same endpoint returns a `422` with a human-readable `reason` field (and a `missingElements` array) when the conversation does not yet have enough content for extraction — not a 500, not a silent failure
+  3. All 4 Value Designer slide endpoints (opportunity, value-prop, customer-segment, business-model) return valid `.pptx` files under the same conditions
+  4. Each generated slide prominently displays the venture name or topic extracted from the conversation — the slide is identifiably about the student's specific project, not a generic template
+  5. Null fields (content not yet in the conversation) render as `[Not yet defined — continue the conversation]` placeholder text rather than being omitted or hallucinated
+
+**Plans**: TBD
+
+---
+
+#### Phase 13: Slide UI and AgentWorkspace Integration
+**Goal**: Students can trigger slide generation from inside the agent workspace — a "Generate Slide" button per slide type appears when the active agent is Trend Mapper or Value Designer, is disabled with a tooltip until the message-count threshold is met, triggers a Gemini completeness check on first click after the threshold passes, and immediately downloads the `.pptx` if the check passes or shows a "keep chatting" message with missing elements if it does not; the button never re-locks once it has unlocked
+**Depends on**: Phase 12
+**Requirements**: SLIDE-01
+**Success Criteria** (what must be TRUE):
+  1. In a fresh Trend Mapper conversation with fewer messages than the threshold, the "Generate Trend Mapper Slide" button is visible but disabled — hovering it shows a tooltip explaining what content is needed
+  2. After the conversation crosses the message-count threshold, the button becomes active; clicking it triggers the generation route and shows a loading state (not a spinner on the chat input — a distinct slide generation indicator)
+  3. If the Gemini completeness check returns 422, the button remains enabled but shows an inline message listing the missing elements — the student is not left guessing what to add
+  4. If generation succeeds, the browser downloads a `.pptx` file immediately — no intermediate save/open dialog beyond the browser's native download behavior
+  5. Once a slide type has passed its completeness check, the button does not revert to disabled even if earlier messages are re-rendered — the one-way latch prevents re-locking
+
+**Plans**: TBD
+
+---
+
+#### Phase 14: Landing Page Prompt Generator
+**Goal**: After all 6 Value Designer milestones are complete, a "Create Landing Page" button appears in the SlidePanel. Clicking it calls a Gemini API that reads all agent conversations — Trend Mapper context, Value Designer persona/JTBD/solution, and SPI debrief if present — and synthesizes a comprehensive, copy-ready vibe-coding prompt. The student can copy the prompt and paste it directly into Bolt, Lovable, Cursor, or v0 to scaffold their venture's landing page.
+**Depends on**: Phases 6, 13 (Value Designer agent + SlidePanel exist)
+**Requirements**: LP-01, LP-02, LP-03, LP-04, LP-05
+**Success Criteria** (what must be TRUE):
+  1. The "Create Landing Page" button is NOT visible when fewer than 6 Value Designer milestones are complete; it becomes visible and enabled only when all 6/6 VD milestones are complete
+  2. Clicking the button shows a loading state while Gemini processes the conversation; the button is disabled during generation
+  3. The generated prompt contains: venture name, target user description, core value proposition, minimum 5 landing page sections with copy guidance, a feature list with at least 5 items, design aesthetic (colors, tone, visual style), and a routing/component scaffold for the chosen vibe-coding platform
+  4. The prompt is formatted as clean markdown that can be pasted directly into a vibe-coding platform — no extra UI wrapper text leaks into the prompt
+  5. A "Copy to Clipboard" button copies the full prompt; a toast confirms the copy
+
+**Plans**: 2 plans
+
+Plans:
+- [ ] 14-01-PLAN.md — System prompt module + POST /api/landing-prompt/[projectId] route (Gemini synthesis from all agent conversations)
+- [ ] 14-02-PLAN.md — LandingPromptModal component + SlidePanel VD milestone gate wiring
+
+---
+
+## v2.1 Progress
+
+**Execution Order:** 11 → 12 → 13
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 11. Slide Schemas, Prompts, and Thresholds | 0/TBD | ○ Not started | - |
+| 12. Slide Generation API Routes and PPTX Builders | 0/TBD | ○ Not started | - |
+| 13. Slide UI and AgentWorkspace Integration | 0/TBD | ○ Not started | - |
+| 14. Landing Page Prompt Generator | 0/2 | ○ Not started | - |
+
+---
+
+## v2.1 Requirement Coverage
+
+**v2.1 requirements: 8 total | Mapped: 8 | Unmapped: 0**
+
+| Requirement | Description | Phase |
+|-------------|-------------|-------|
+| SLIDE-01 | Two-stage unlock: message-count heuristic + Gemini completeness check | Phase 11 (thresholds) + Phase 13 (UX) |
+| SLIDE-02 | Trend Mapper slide (.pptx, 6-part structure) | Phase 12 |
+| SLIDE-03 | Value Designer Opportunity slide (.pptx) | Phase 12 |
+| SLIDE-04 | Value Designer Value Proposition slide (.pptx) | Phase 12 |
+| SLIDE-05 | Value Designer Customer Segment slide (.pptx) | Phase 12 |
+| SLIDE-06 | Value Designer Business Model slide (.pptx) | Phase 12 |
+| SLIDE-07 | Venture name extracted from conversation and featured on each slide | Phase 11 (schema field) + Phase 12 (rendered) |
+| SLIDE-08 | Generated slides use HUD design language (#ebff00, #d2edea, #1a2024) | Phase 12 |
+
+---
+
+## v2.1 Research Flags
+
+- **Phase 11 execution:** Validate each Zod schema with a real `generateText` + `Output.object()` call before writing any pptxgenjs builder. If a schema fails Vertex AI structured output validation, flatten it further (remove nesting, reduce field count) and re-test before proceeding. Complex schemas are silently rejected; flat is always safer.
+- **Phase 12 (Plan for binary response):** Verify `new Response(buffer)` vs `new Response(new Uint8Array(buffer))` on the installed Node.js version. PITFALLS.md flags this as a known gotcha; test at the start of Phase 12 before building all 5 builders.
+- **Phase 12 — `generateText` import path:** `generateObject` is deprecated in `ai@6.0.134`. The correct pattern is `generateText` with `Output.object({ schema })`. Verify the exact import path from `node_modules/ai/` before writing any extraction route.
+- **Phase 13 — agentType filter for legacy messages:** Trend Mapper messages from v1.0 may have `agentType: null`. The slide route must use `OR: [{ agentType: 'trend-mapper' }, { agentType: null }]` when filtering — not just `agentType: 'trend-mapper'`. Missing this causes slide extraction to silently use zero messages from legacy projects.
+
+---
+
 *Roadmap created: 2026-03-21*
 *Milestone: MVP v1.0 — complete*
 *Milestone: MVP v2.0 — added 2026-03-21*
-*Last updated: 2026-03-22 after Phase 10 (HUD UI Redesign) added as parallel phase*
+*Milestone: v2.1 AI-Powered Slide Generation — added 2026-03-22*
+*Last updated: 2026-03-22 after v2.1 roadmap (Phases 11–13) added*
