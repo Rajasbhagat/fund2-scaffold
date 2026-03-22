@@ -11,17 +11,31 @@ datasource db {
 }
 
 model Project {
-  id        String    @id @default(cuid())
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  messages  Message[]
+  id            String         @id @default(cuid())
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  messages      Message[]
+  uploadedFiles UploadedFile[]
+}
+
+model UploadedFile {
+  id            String   @id @default(cuid())
+  projectId     String
+  filename      String
+  originalName  String
+  mimeType      String
+  extractedText String
+  createdAt     DateTime @default(now())
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
 
 model Message {
   id        String   @id @default(cuid())
   projectId String
-  agentType String   @default("trend-mapper")
+  agentType String?
   role      String
   content   String
   createdAt DateTime @default(now())
