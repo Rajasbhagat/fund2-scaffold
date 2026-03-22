@@ -1,5 +1,8 @@
 import 'server-only'
 import pptxgen from 'pptxgenjs'
+import JSZip from 'jszip'
+import fs from 'fs'
+import path from 'path'
 import { z } from 'zod'
 import {
   trendMapperSlideSchema,
@@ -9,35 +12,79 @@ import {
   businessModelSlideSchema,
 } from './schemas'
 
-// HUD color constants (no # prefix for pptxgenjs)
-const HUD_ACCENT = 'EBFF00'  // neon yellow
-const HUD_BG = 'D2EDEA'      // icy blue
-const HUD_FG = '1A2024'      // dark slate
-const HUD_PANEL = 'B1DBD8'   // panel accent (muted)
+const MISSING = '[Not defined — continue the conversation]'
 
-const PLACEHOLDER = '[Not yet defined — continue the conversation]'
-
-function val(v: string | null | undefined): string {
-  return v ?? PLACEHOLDER
+/** Escape a string for safe insertion into XML attribute/text content */
+function escXml(v: string | null, fallback = MISSING): string {
+  return (v ?? fallback)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
-// Helper: create a standard HUD slide layout
+/**
+ * Build the Trend Mapper slide by filling the official template PPTX.
+ * The template lives at public/templates/trend-mapper-template.pptx and has
+ * 7 named shapes whose text we replace via XML string substitution.
+ */
+export async function buildTrendMapperSlide(
+  data: z.infer<typeof trendMapperSlideSchema>,
+): Promise<Buffer> {
+  const templatePath = path.join(process.cwd(), 'public', 'templates', 'trend-mapper-template.pptx')
+  const templateBuffer = fs.readFileSync(templatePath)
+  const zip = await JSZip.loadAsync(templateBuffer)
+
+  const slideFile = zip.file('ppt/slides/slide1.xml')
+  if (!slideFile) throw new Error('Template PPTX is missing ppt/slides/slide1.xml')
+  let xml = await slideFile.async('string')
+
+  // Replace each named shape's placeholder text.
+  // Pattern: ><a:t>PLACEHOLDER_TEXT</a:t>  →  ><a:t>REPLACEMENT</a:t>
+  // [target user] appears in both Item1Text and Item5Text — replaceAll handles both.
+  xml = xml.replace(/>Trend Title</g, `>${escXml(data.trendTitle)}<`)
+  xml = xml.replace(/>Student Name</g, `>${escXml(data.ventureName)}<`)
+  xml = xml.replace(/>\[industry\]</g, `>${escXml(data.industry)}<`)
+  xml = xml.replace(/>\[complete\]</g, `>${escXml(data.trendBehavior)}<`)
+  xml = xml.replace(/>\[target user\]</g, `>${escXml(data.targetUser)}<`)
+  xml = xml.replace(/>Data #1</g, `>${escXml(data.dataPoint1)}<`)
+  xml = xml.replace(/>Data #2</g, `>${escXml(data.dataPoint2)}<`)
+  xml = xml.replace(/>Data #3</g, `>${escXml(data.dataPoint3)}<`)
+  xml = xml.replace(/>\[three drivers\]</g, `>${escXml(data.drivers)}<`)
+  xml = xml.replace(/>\[behavior\/market\/industry impact\]</g, `>${escXml(data.futureImpact)}<`)
+  xml = xml.replace(/>\[new risks, opportunities, etc\]</g, `>${escXml(data.opportunitiesRisks)}<`)
+  xml = xml.replace(/>\[need or goal\]</g, `>${escXml(data.hmwGoal)}<`)
+  xml = xml.replace(/>\[this trend\]</g, `>${escXml(data.hmwTrend)}<`)
+
+  zip.file('ppt/slides/slide1.xml', xml)
+  return zip.generateAsync({ type: 'nodebuffer' }) as Promise<Buffer>
+}
+
+// ── HUD helpers for pptxgenjs-based slides (non-trend-mapper) ─────────────────
+
+const HUD_ACCENT = 'EBFF00'
+const HUD_BG = 'D2EDEA'
+const HUD_FG = '1A2024'
+const HUD_PANEL = 'B1DBD8'
+const PLACEHOLDER_TEXT = '[Not yet defined — continue the conversation]'
+
+function val(v: string | null | undefined): string {
+  return v ?? PLACEHOLDER_TEXT
+}
+
 function createHUDSlide(pptx: pptxgen, slideLabel: string, ventureName: string | null) {
   const slide = pptx.addSlide()
-  // Icy blue background
   slide.background = { color: HUD_BG }
-  // Neon yellow header strip (full width, top)
   slide.addShape(pptx.ShapeType.rect, {
     x: 0, y: 0, w: '100%', h: 0.7,
     fill: { color: HUD_ACCENT },
     line: { color: HUD_ACCENT },
   })
-  // Slide type label in header
   slide.addText(slideLabel, {
     x: 0.3, y: 0.05, w: 6, h: 0.6,
     fontSize: 14, bold: true, color: HUD_FG, fontFace: 'Calibri',
   })
-  // Venture name in header (right side)
   if (ventureName) {
     slide.addText(ventureName.toUpperCase(), {
       x: 6.3, y: 0.05, w: 3.3, h: 0.6,
@@ -47,7 +94,6 @@ function createHUDSlide(pptx: pptxgen, slideLabel: string, ventureName: string |
   return slide
 }
 
-// Helper: add a labeled field row
 function addField(
   slide: pptxgen.Slide,
   label: string,
@@ -58,8 +104,7 @@ function addField(
 ) {
   slide.addText(label.toUpperCase(), {
     x, y, w, h: 0.22,
-    fontSize: 7, color: HUD_FG, fontFace: 'Calibri',
-    charSpacing: 2, bold: true,
+    fontSize: 7, color: HUD_FG, fontFace: 'Calibri', charSpacing: 2, bold: true,
   })
   slide.addText(val(value), {
     x, y: y + 0.23, w, h: 0.45,
@@ -68,22 +113,6 @@ function addField(
     fontFace: 'Calibri',
     italic: !value,
   })
-}
-
-export async function buildTrendMapperSlide(
-  data: z.infer<typeof trendMapperSlideSchema>,
-): Promise<Buffer> {
-  const pptx = new pptxgen()
-  pptx.layout = 'LAYOUT_WIDE'
-  const slide = createHUDSlide(pptx, 'TREND MAPPER', data.ventureName ?? null)
-  // Layout: 2 columns × 3 rows of fields
-  addField(slide, 'Trend Area', data.trendArea, 0.3, 0.9, 4.5)
-  addField(slide, 'Key Insight', data.keyInsight, 5.1, 0.9, 4.5)
-  addField(slide, 'S-Curve Position', data.sCurvePosition, 0.3, 2.0, 4.5)
-  addField(slide, 'Opportunity Map', data.opportunityMap, 5.1, 2.0, 4.5)
-  addField(slide, 'Supporting Evidence', data.supportingEvidence, 0.3, 3.1, 4.5)
-  addField(slide, 'Next Step', data.nextStep, 5.1, 3.1, 4.5)
-  return (await pptx.write({ outputType: 'nodebuffer' })) as Buffer
 }
 
 export async function buildOpportunitySlide(

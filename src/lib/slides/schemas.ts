@@ -1,14 +1,27 @@
 import 'server-only'
 import { z } from 'zod'
 
+// Matches the 7 named shapes in the template PPTX exactly
 export const trendMapperSlideSchema = z.object({
-  ventureName: z.string().nullable(),
-  trendArea: z.string().nullable(),
-  keyInsight: z.string().nullable(),
-  sCurvePosition: z.string().nullable(),
-  opportunityMap: z.string().nullable(),
-  supportingEvidence: z.string().nullable(),
-  nextStep: z.string().nullable(),
+  // Header shapes
+  trendTitle: z.string().nullable(),        // "Trend Title" shape
+  ventureName: z.string().nullable(),       // "Student Name" shape
+  // Item 1 — observation sentence
+  industry: z.string().nullable(),          // [industry]
+  trendBehavior: z.string().nullable(),     // [complete] — what's becoming common
+  targetUser: z.string().nullable(),        // [target user] (reused in item 5)
+  // Item 2 — supporting evidence bullets
+  dataPoint1: z.string().nullable(),        // Data #1
+  dataPoint2: z.string().nullable(),        // Data #2
+  dataPoint3: z.string().nullable(),        // Data #3
+  // Item 3 — drivers
+  drivers: z.string().nullable(),           // [three drivers]
+  // Item 4 — future impact
+  futureImpact: z.string().nullable(),      // [behavior/market/industry impact]
+  opportunitiesRisks: z.string().nullable(),// [new risks, opportunities, etc]
+  // Item 5 — HMW question
+  hmwGoal: z.string().nullable(),           // [need or goal]
+  hmwTrend: z.string().nullable(),          // [this trend]
 })
 
 export const opportunitySlideSchema = z.object({

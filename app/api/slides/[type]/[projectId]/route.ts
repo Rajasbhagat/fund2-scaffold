@@ -7,6 +7,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { filterMessagesForSlide } from '@/lib/slides/utils';
 import { SLIDE_PROMPTS } from '@/lib/slides/prompts';
+import { validateTrendMapperFields, getOverflowedFields } from '@/lib/slides/validation';
+import { condenseTrendMapperFields } from '@/lib/slides/condenser';
 import {
   trendMapperSlideSchema,
   opportunitySlideSchema,
@@ -37,23 +39,32 @@ function isValidSlideType(type: string): type is SlideType {
 
 function getSchemaForSlideType(type: SlideType) {
   switch (type) {
-    case 'trend-mapper':
-      return trendMapperSlideSchema;
-    case 'opportunity':
-      return opportunitySlideSchema;
-    case 'value-prop':
-      return valuePropSlideSchema;
-    case 'customer-segment':
-      return customerSegmentSlideSchema;
-    case 'business-model':
-      return businessModelSlideSchema;
+    case 'trend-mapper': return trendMapperSlideSchema;
+    case 'opportunity': return opportunitySlideSchema;
+    case 'value-prop': return valuePropSlideSchema;
+    case 'customer-segment': return customerSegmentSlideSchema;
+    case 'business-model': return businessModelSlideSchema;
   }
 }
 
 function isAllCoreFieldsNull(data: Record<string, unknown>): boolean {
   return Object.entries(data)
-    .filter(([key]) => key !== 'ventureName')
+    .filter(([key]) => key !== 'ventureName' && key !== 'trendTitle')
     .every(([, value]) => value === null);
+}
+
+/**
+ * Returns which of the 5 template items are missing for the trend-mapper slide.
+ * Each item requires at least its primary field to be non-null.
+ */
+function getTrendMapperMissing(data: z.infer<typeof trendMapperSlideSchema>): string[] {
+  const missing: string[] = [];
+  if (!data.industry || !data.trendBehavior || !data.targetUser) missing.push('Trend Observation (item 1)');
+  if (!data.dataPoint1) missing.push('Supporting Evidence (item 2)');
+  if (!data.drivers) missing.push('Key Drivers (item 3)');
+  if (!data.futureImpact) missing.push('Future Impact (item 4)');
+  if (!data.hmwGoal || !data.hmwTrend) missing.push('HMW Question (item 5)');
+  return missing;
 }
 
 async function buildSlide(type: SlideType, data: unknown): Promise<Buffer> {
@@ -83,17 +94,38 @@ export async function POST(
   const { type: rawType } = await params;
 
   if (!isValidSlideType(rawType)) {
-    return NextResponse.json(
-      { error: `Unknown slide type: ${rawType}` },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: `Unknown slide type: ${rawType}` }, { status: 400 });
   }
 
   const type: SlideType = rawType;
-  const { messages } = await request.json();
+  const body = await request.json() as { phase?: string; messages?: unknown[]; data?: unknown };
+  const { phase, messages } = body;
 
-  const filteredMessages = filterMessagesForSlide(messages, type);
+  // ── Trend-mapper: phase=generate — build PPTX from pre-confirmed client data ──
+  if (type === 'trend-mapper' && phase === 'generate') {
+    try {
+      const parsed = trendMapperSlideSchema.parse(body.data);
+      const buffer = await buildTrendMapperSlide(parsed);
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'Content-Disposition': 'attachment; filename="fund2-trend-mapper-slide.pptx"',
+          'Content-Length': String(buffer.byteLength),
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
 
+  // ── Common: run Gemini extraction ──
+  if (!messages) {
+    return NextResponse.json({ error: 'messages required' }, { status: 400 });
+  }
+
+  const filteredMessages = filterMessagesForSlide(messages as Parameters<typeof filterMessagesForSlide>[0], type);
   const schema = getSchemaForSlideType(type);
 
   try {
@@ -110,6 +142,20 @@ export async function POST(
 
     const data = result.output as Record<string, unknown>;
 
+    // ── Trend-mapper: phase=extract — validate alignment + condense, return for confirmation ──
+    if (type === 'trend-mapper' && phase === 'extract') {
+      const extracted = data as z.infer<typeof trendMapperSlideSchema>;
+      const missing = getTrendMapperMissing(extracted);
+
+      // Run field-length validation and condense any overflow with Gemini
+      const checks = validateTrendMapperFields(extracted);
+      const overflowed = getOverflowedFields(checks);
+      const { data: validatedData, condensedFields } = await condenseTrendMapperFields(extracted, overflowed);
+
+      return NextResponse.json({ data: validatedData, missing, condensedFields });
+    }
+
+    // ── All other slide types: check + build immediately ──
     if (isAllCoreFieldsNull(data)) {
       return NextResponse.json(
         {
@@ -121,7 +167,6 @@ export async function POST(
     }
 
     const buffer = await buildSlide(type, data);
-
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
@@ -132,10 +177,7 @@ export async function POST(
     });
   } catch (err) {
     if (err instanceof NoObjectGeneratedError) {
-      return NextResponse.json(
-        { ready: false, reason: err.message },
-        { status: 422 }
-      );
+      return NextResponse.json({ ready: false, reason: err.message }, { status: 422 });
     }
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 500 });
