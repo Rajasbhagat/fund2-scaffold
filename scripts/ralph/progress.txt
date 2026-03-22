@@ -1,3 +1,34 @@
 # Ralph Progress Log
-Started: 2026-03-22
+Started: Sun Mar 22 19:52:42 CET 2026
+---
+
+## Codebase Patterns
+- All Vertex AI routes use `export const runtime = 'nodejs'`
+- Prisma client imported from `@/lib/prisma` (singleton)
+- HUD components (HUDLabel, HUDPanel, etc.) exported from `@/components/hud`
+- Vertex AI client initialized with `createVertex({ project, location })` from `@ai-sdk/google-vertex`
+- Use `generateText` (not `generateObject`) for free-text generation; access result via `result.text`
+- Route handlers use `params: Promise<{ id: string }>` pattern (Next.js 15 async params)
+- `useRef` with function type needs explicit `undefined` initial value: `useRef<(() => void) | undefined>(undefined)`
+
+---
+
+## 2026-03-22 - US-001, US-002, US-003, US-004
+- Implemented full Landing Page Prompt Generator feature across 4 user stories
+- **US-001**: Created `src/lib/landing-prompt/system-prompt.ts` — server-only module exporting `LANDING_PROMPT_SYSTEM` with 7-section vibe-coding brief format targeting Bolt/Lovable/Cursor/v0
+- **US-002**: Created `app/api/landing-prompt/[projectId]/route.ts` — POST handler loading all project messages, labeling by agentType prefix, calling `gemini-2.5-flash` via Vertex AI, returning `{ prompt: string }`
+- **US-003**: Created `src/components/LandingPromptModal.tsx` — HUD-styled modal with loading/done/error states, copy-to-clipboard, markdown download, abort/retry
+- **US-004**: Updated `src/components/SlidePanel.tsx` — added `computeAgentProgress` milestone gate, `CREATE LANDING PAGE` button gated on both TM+VD milestones complete, `LandingPromptModal` rendered conditionally
+
+Files changed:
+- `src/lib/landing-prompt/system-prompt.ts` (new)
+- `app/api/landing-prompt/[projectId]/route.ts` (new)
+- `src/components/LandingPromptModal.tsx` (new)
+- `src/components/SlidePanel.tsx` (modified)
+- `scripts/ralph/prd.json` (updated passes: true for all stories)
+
+**Learnings for future iterations:**
+- TypeScript strict mode requires `useRef<T | undefined>(undefined)` — `useRef<T>()` fails
+- `server-only` package import at top of file prevents accidental client-side imports
+- Keep `generate()` in a ref to avoid stale closure issues in useEffect with empty deps
 ---
