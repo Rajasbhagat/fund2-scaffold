@@ -28,8 +28,8 @@ const AGENT_DISPLAY_NAMES: Record<string, string> = {
   faro: 'FARO',
 }
 
-function getEndpoint(agentType: string, projectId: string): string {
-  switch (agentType) {
+function getEndpoint(agentId: string, projectId: string): string {
+  switch (agentId) {
     case 'value-designer': return `/api/chat/value-designer/${projectId}`
     case 'spi': return `/api/chat/spi/${projectId}`
     case 'faro': return `/api/chat/faro/${projectId}`
@@ -71,14 +71,24 @@ function EmptyState() {
         <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#ebff00]/30" />
         <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#ebff00]/30" />
         <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#ebff00]/30" />
-        <span className="text-[#ebff00]/20 text-xl" style={{ fontFamily: "'Rajdhani', sans-serif" }}>◈</span>
+        <span className="text-[#ebff00]/20 text-xl" style={{ fontFamily: "'Rajdhani', sans-serif" }}>&#9672;</span>
       </div>
       <div className="text-center space-y-2">
         <div
-          className="text-xs text-[#b1dbd8]/20 max-w-[240px] leading-relaxed"
+          className="text-[11px] tracking-[0.3em] text-[#d2edea]/25 uppercase"
+          style={{ fontFamily: "'Rajdhani', sans-serif" }}
         >
+          UNIFIED THREAD
+        </div>
+        <div className="text-xs text-[#b1dbd8]/20 max-w-[220px] leading-relaxed">
           Select an agent above and start a conversation
         </div>
+      </div>
+      <div
+        className="text-[9px] tracking-[0.3em] text-[#b1dbd8]/15 uppercase"
+        style={{ fontFamily: "'Rajdhani', sans-serif" }}
+      >
+        AWAITING INPUT
       </div>
     </div>
   )
@@ -123,11 +133,7 @@ export default function UnifiedChatWindow({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: updatedMessages.map((m) => ({
-            role: m.role,
-            content: m.content,
-            agentType: m.agentType,
-          })),
+          messages: updatedMessages.map((m) => ({ role: m.role, content: m.content, agentType: m.agentType })),
           currentSession,
           deepResearch,
         }),
@@ -195,6 +201,9 @@ export default function UnifiedChatWindow({
 
   return (
     <div className="flex flex-col h-full">
+      {/* Agent Picker */}
+      <AgentPicker activeAgent={activeAgent} onAgentChange={onAgentChange} />
+
       {/* Message area */}
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 && !isLoading ? (
@@ -203,9 +212,7 @@ export default function UnifiedChatWindow({
           <div className="px-6 py-6 space-y-8 max-w-4xl mx-auto">
             {messages.map((msg) => {
               const isUser = msg.role === 'user'
-              const msgAgentName = msg.agentType
-                ? (AGENT_DISPLAY_NAMES[msg.agentType] ?? 'AGENT')
-                : agentDisplayName
+              const label = isUser ? 'YOU' : (AGENT_DISPLAY_NAMES[msg.agentType ?? ''] ?? 'AGENT')
               return (
                 <div
                   key={msg.id}
@@ -219,7 +226,7 @@ export default function UnifiedChatWindow({
                       color: isUser ? 'rgba(210,237,234,0.35)' : 'rgba(235,255,0,0.55)',
                     }}
                   >
-                    {isUser ? 'YOU' : msgAgentName}
+                    {label}
                   </span>
 
                   {/* Bubble */}
@@ -250,9 +257,6 @@ export default function UnifiedChatWindow({
           </div>
         )}
       </div>
-
-      {/* Agent picker */}
-      <AgentPicker activeAgent={activeAgent} onAgentChange={onAgentChange} />
 
       {/* Input */}
       <ChatInput
