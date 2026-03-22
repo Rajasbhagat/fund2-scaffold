@@ -22,3 +22,36 @@ Started: Sun Mar 22 14:58:50 CET 2026
   - Each prompt ends with "Output only valid JSON matching the schema, no additional text" to prevent Gemini preamble
   - topBenefits null handling: explicitly tell Gemini to return null (not empty array) for absent array fields
 ---
+
+## 2026-03-22 - US-005
+- Created src/lib/slides/thresholds-client.ts — client-safe re-export of SLIDE_THRESHOLDS and SLIDE_LABELS constants (no server-only import)
+- Created src/components/SlideGenerateButton.tsx — 'use client' component with two-stage unlock, POST /api/slides/[slideType]/[projectId], blob download, 422 error display, HUD styling
+- Typecheck: 0 errors in new files (2 pre-existing errors in route.ts unrelated to this story)
+- **Learnings for future iterations:**
+  - server-only modules cannot be imported in 'use client' components — extract shared constants to a separate *-client.ts file
+  - threshold check counts assistant messages where agentType matches OR is null (for trend-mapper)
+  - unlocked prop acts as one-way override from parent SlidePanel — component itself does not latch state
+---
+
+## 2026-03-22 - US-003
+- Fixed typecheck error in app/api/slides/[type]/[projectId]/route.ts
+- filterMessagesForSlide() signature takes SlideType as second arg (not string agentType) — route was passing agentType string. Fixed by passing `type` (SlideType) directly and removing getAgentTypeForSlide call from route
+- Removed unused import of getAgentTypeForSlide
+- Typecheck: 0 errors
+- **Learnings for future iterations:**
+  - filterMessagesForSlide takes SlideType as second arg (derives agentType internally)
+  - Always check function signatures match when utils are refactored
+---
+
+## 2026-03-22 - US-006
+- Created src/components/SlidePanel.tsx with one-way latch logic
+- Component maintains unlockedSlides Set<string> in useState — once a slide type is unlocked it stays unlocked even if message count later drops
+- useEffect watches messages + activeAgent; adds to Set when count >= SLIDE_THRESHOLDS[slideType]
+- Renders 1 button for trend-mapper agent, 4 buttons for value-designer agent, null for all others
+- HUDLabel accepts className prop (confirmed from src/components/hud/index.tsx)
+- Typecheck passed clean (npx tsc --noEmit)
+- **Learnings for future iterations:**
+  - Set state updates must return prev unchanged (early return) if already has item — avoids unnecessary re-renders
+  - AGENT_SLIDES map is the source of truth for which slide types belong to which agent
+---
+

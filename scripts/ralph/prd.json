@@ -71,7 +71,7 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "CRITICAL: Read app/api/chat/[projectId]/route.ts to see the existing createVertex() pattern — reuse the same import and vertex initialization. CRITICAL: generateObject is DEPRECATED in ai@6.0.134. Use: import { generateText, Output } from 'ai' and then output: Output.object({ schema: slideSchema }) in the generateText call. Verify the exact API by reading node_modules/ai/dist/index.d.ts around lines 681-701. The route does NOT read from the database — it uses messages from the request body only. The 422 check: if the extracted object has all core content fields null (everything except ventureName), it means the conversation hasn't covered this slide yet."
     },
     {
@@ -125,7 +125,7 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "CRITICAL: SLIDE_THRESHOLDS is in a server-only module — if importing it into a client component causes a build error, move only the threshold constants to a separate non-server-only file like src/lib/slides/thresholds-client.ts. The threshold check on the client side counts: messages.filter(m => m.role === 'assistant' && (m.agentType === agentType || (agentType === 'trend-mapper' && m.agentType == null))).length. The one-way latch (never re-lock once unlocked) is NOT needed in this component — that concern lives in SlidePanel. This component just derives thresholdMet from the messages prop on each render."
     },
     {
@@ -145,7 +145,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "The one-way latch works by maintaining the unlockedSlides Set in state. In a useEffect (or useMemo) that runs when messages change: for each relevant slide type, if filterMessages gives enough assistant messages, add to unlockedSlides. Pass unlockedSlides into SlideGenerateButton or use it to override the disabled state — button is enabled if slideType is in unlockedSlides OR if thresholdMet. This way a button that was once enabled cannot go back to disabled. Relevant agents: only 'trend-mapper' and 'value-designer' have slides — show panel only for these two agents."
     },
     {
