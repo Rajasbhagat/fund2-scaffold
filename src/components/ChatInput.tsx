@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, KeyboardEvent } from 'react'
+import { useState, useRef, KeyboardEvent } from 'react'
 
 interface ChatInputProps {
   onSubmit: (message: string) => void
@@ -18,12 +18,29 @@ export default function ChatInput({
   showDeepResearch,
 }: ChatInputProps) {
   const [text, setText] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  function autoResize() {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setText(e.target.value)
+    autoResize()
+  }
 
   function handleSubmit() {
     const trimmed = text.trim()
     if (!trimmed) return
     onSubmit(trimmed)
     setText('')
+    // Reset height after clear
+    requestAnimationFrame(() => {
+      if (textareaRef.current) textareaRef.current.style.height = 'auto'
+    })
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -34,34 +51,64 @@ export default function ChatInput({
   }
 
   return (
-    <div className="flex gap-2 p-4 border-t border-gray-200">
-      <textarea
-        className="flex-1 resize-none rounded border border-gray-300 p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-        rows={2}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        disabled={disabled}
-        placeholder="Type a message..."
-      />
-      {showDeepResearch && (
-        <button
-          onClick={onDeepResearchToggle}
+    <div className="border-t border-hud-panel/15 bg-hud-fg shrink-0">
+      <div className="flex gap-2 px-4 pt-3 pb-2">
+        <textarea
+          ref={textareaRef}
+          className="
+            flex-1 resize-none bg-transparent border border-hud-panel/20 px-3 py-2.5
+            text-sm text-hud-bg placeholder:text-hud-panel/25
+            focus:outline-none focus:border-hud-accent/40
+            disabled:opacity-40 disabled:cursor-not-allowed
+            transition-colors leading-relaxed
+          "
+          style={{ minHeight: '44px', maxHeight: '160px' }}
+          rows={1}
+          value={text}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
           disabled={disabled}
-          className={`px-3 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
-            deepResearch ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'
-          }`}
+          placeholder="ENTER QUERY..."
+        />
+        <div className="flex flex-col gap-1.5 justify-end">
+          {showDeepResearch && (
+            <button
+              onClick={onDeepResearchToggle}
+              disabled={disabled}
+              className={`
+                px-3 py-1.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-colors
+                disabled:opacity-30 disabled:cursor-not-allowed
+                ${
+                  deepResearch
+                    ? 'bg-hud-accent text-hud-fg'
+                    : 'border border-hud-panel/20 text-hud-panel/40 hover:text-hud-panel hover:border-hud-panel/40'
+                }
+              `}
+              title="Enable deep web research"
+            >
+              DEEP
+            </button>
+          )}
+          <button
+            className="
+              px-5 py-1.5 bg-hud-accent text-hud-fg text-[10px] font-bold tracking-[0.2em] uppercase
+              hover:bg-hud-accent/90 disabled:opacity-30 disabled:cursor-not-allowed
+              transition-colors
+            "
+            onClick={handleSubmit}
+            disabled={disabled}
+          >
+            {disabled ? '···' : 'SEND'}
+          </button>
+        </div>
+      </div>
+      <div className="px-4 pb-2 flex items-center justify-end">
+        <span
+          className="text-[9px] text-hud-panel/25 tracking-wider"
         >
-          Deep Research
-        </button>
-      )}
-      <button
-        className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={handleSubmit}
-        disabled={disabled}
-      >
-        {disabled ? 'Thinking...' : 'Send'}
-      </button>
+          ENTER TO SEND · SHIFT+ENTER FOR NEW LINE
+        </span>
+      </div>
     </div>
   )
 }

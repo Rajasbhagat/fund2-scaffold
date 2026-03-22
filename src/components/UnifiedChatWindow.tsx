@@ -41,8 +41,7 @@ function ThinkingIndicator({ agentDisplayName }: { agentDisplayName: string }) {
   return (
     <div className="flex flex-col items-start gap-1.5">
       <span
-        className="text-[10px] tracking-[0.2em] text-[#ebff00]/50 uppercase"
-        style={{ fontFamily: "'Rajdhani', sans-serif" }}
+        className="text-[10px] tracking-[0.2em] text-hud-accent/50 uppercase"
       >
         {agentDisplayName}
       </span>
@@ -50,11 +49,11 @@ function ThinkingIndicator({ agentDisplayName }: { agentDisplayName: string }) {
         className="flex items-center gap-2 px-3 py-2"
         style={{ border: '1px solid rgba(235,255,0,0.12)', background: 'rgba(235,255,0,0.03)' }}
       >
-        <span className="w-1.5 h-1.5 bg-[#ebff00]/60 animate-bounce [animation-delay:0ms]" />
-        <span className="w-1.5 h-1.5 bg-[#ebff00]/60 animate-bounce [animation-delay:150ms]" />
-        <span className="w-1.5 h-1.5 bg-[#ebff00]/60 animate-bounce [animation-delay:300ms]" />
+        <span className="w-1.5 h-1.5 bg-hud-accent/60 animate-bounce [animation-delay:0ms]" />
+        <span className="w-1.5 h-1.5 bg-hud-accent/60 animate-bounce [animation-delay:150ms]" />
+        <span className="w-1.5 h-1.5 bg-hud-accent/60 animate-bounce [animation-delay:300ms]" />
         <span
-          className="text-[9px] text-[#ebff00]/30 mono tracking-[0.2em] ml-1"
+          className="text-[9px] text-hud-accent/30 mono tracking-[0.2em] ml-1"
         >
           PROCESSING
         </span>
@@ -67,26 +66,24 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-5 pb-16 select-none">
       <div className="relative flex items-center justify-center w-14 h-14">
-        <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#ebff00]/30" />
-        <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#ebff00]/30" />
-        <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#ebff00]/30" />
-        <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#ebff00]/30" />
-        <span className="text-[#ebff00]/20 text-xl" style={{ fontFamily: "'Rajdhani', sans-serif" }}>&#9672;</span>
+        <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-hud-accent/30" />
+        <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-hud-accent/30" />
+        <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-hud-accent/30" />
+        <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-hud-accent/30" />
+        <span className="text-hud-accent/20 text-xl">&#9672;</span>
       </div>
       <div className="text-center space-y-2">
         <div
-          className="text-[11px] tracking-[0.3em] text-[#d2edea]/25 uppercase"
-          style={{ fontFamily: "'Rajdhani', sans-serif" }}
+          className="text-[11px] tracking-[0.3em] text-hud-bg/25 uppercase"
         >
           UNIFIED THREAD
         </div>
-        <div className="text-xs text-[#b1dbd8]/20 max-w-[220px] leading-relaxed">
+        <div className="text-xs text-hud-panel/20 max-w-[220px] leading-relaxed">
           Select an agent above and start a conversation
         </div>
       </div>
       <div
-        className="text-[9px] tracking-[0.3em] text-[#b1dbd8]/15 uppercase"
-        style={{ fontFamily: "'Rajdhani', sans-serif" }}
+        className="text-[9px] tracking-[0.3em] text-hud-panel/15 uppercase"
       >
         AWAITING INPUT
       </div>
@@ -220,11 +217,7 @@ export default function UnifiedChatWindow({
                 >
                   {/* Role label */}
                   <span
-                    className="text-[10px] tracking-[0.2em] uppercase"
-                    style={{
-                      fontFamily: "'Rajdhani', sans-serif",
-                      color: isUser ? 'rgba(210,237,234,0.35)' : 'rgba(235,255,0,0.55)',
-                    }}
+                    className={`text-[10px] tracking-[0.2em] uppercase ${isUser ? 'text-hud-bg/35' : 'text-hud-accent/55'}`}
                   >
                     {label}
                   </span>
@@ -240,7 +233,6 @@ export default function UnifiedChatWindow({
                         onClick={handleRetry}
                         disabled={isStreaming}
                         className="mt-2 text-[10px] text-red-400/50 tracking-[0.2em] uppercase hover:text-red-400 disabled:opacity-40 transition-colors"
-                        style={{ fontFamily: "'Rajdhani', sans-serif" }}
                       >
                         RETRY
                       </button>

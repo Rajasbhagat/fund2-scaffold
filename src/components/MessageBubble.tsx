@@ -12,9 +12,8 @@ interface MessageBubbleProps {
 const mdComponents: Components = {
   h1: ({ children }) => (
     <h1
-      className="text-[15px] font-bold tracking-[0.08em] uppercase mt-5 mb-3 pb-1.5"
+      className="text-[15px] font-bold tracking-[0.08em] uppercase mt-5 mb-3 pb-1.5 font-sans"
       style={{
-        fontFamily: "'Rajdhani', sans-serif",
         color: '#ebff00',
         borderBottom: '1px solid rgba(235,255,0,0.2)',
       }}
@@ -24,16 +23,16 @@ const mdComponents: Components = {
   ),
   h2: ({ children }) => (
     <h2
-      className="text-sm font-semibold tracking-[0.06em] uppercase mt-4 mb-2"
-      style={{ fontFamily: "'Rajdhani', sans-serif", color: 'rgba(235,255,0,0.75)' }}
+      className="text-sm font-semibold tracking-[0.06em] uppercase mt-4 mb-2 font-sans"
+      style={{ color: 'rgba(235,255,0,0.75)' }}
     >
       {children}
     </h2>
   ),
   h3: ({ children }) => (
     <h3
-      className="text-sm font-semibold mt-3 mb-1.5"
-      style={{ fontFamily: "'Rajdhani', sans-serif", color: '#d2edea' }}
+      className="text-sm font-semibold mt-3 mb-1.5 font-sans"
+      style={{ color: '#d2edea' }}
     >
       {children}
     </h3>
@@ -56,15 +55,15 @@ const mdComponents: Components = {
   code: ({ children, className }) => {
     if (className) {
       // inside a <pre>, just render passthrough
-      return <code className={`mono text-xs`} style={{ color: '#d2edea' }}>{children}</code>
+      return <code className={`font-mono text-xs`} style={{ color: '#d2edea' }}>{children}</code>
     }
     return (
       <code
-        className="mono text-[0.8em] px-1.5 py-0.5"
+        className="font-mono text-[0.8em] px-1.5 py-0.5"
         style={{
           color: '#ebff00',
           background: 'rgba(235,255,0,0.08)',
-          borderRadius: 2,
+          borderRadius: 0,
         }}
       >
         {children}
@@ -74,11 +73,11 @@ const mdComponents: Components = {
 
   pre: ({ children }) => (
     <pre
-      className="mono text-xs leading-relaxed my-3 p-4 overflow-x-auto"
+      className="font-mono text-xs leading-relaxed my-3 p-4 overflow-x-auto"
       style={{
         background: '#0d1117',
         border: '1px solid rgba(177,219,216,0.15)',
-        borderRadius: 2,
+        borderRadius: 0,
         color: '#d2edea',
       }}
     >
@@ -99,7 +98,7 @@ const mdComponents: Components = {
   li: ({ children, ordered, index }: { children?: React.ReactNode; ordered?: boolean; index?: number }) => (
     <li className="flex gap-2.5 text-sm leading-[1.7]" style={{ color: '#d2edea' }}>
       {!ordered && (
-        <span className="shrink-0 mt-1 text-[10px] mono" style={{ color: 'rgba(235,255,0,0.5)' }}>
+        <span className="shrink-0 mt-1 text-[10px] font-mono" style={{ color: 'rgba(235,255,0,0.5)' }}>
           —
         </span>
       )}
@@ -151,8 +150,8 @@ const mdComponents: Components = {
   ),
   th: ({ children }) => (
     <th
-      className="text-left px-3 py-2 text-[10px] tracking-[0.15em] uppercase font-semibold"
-      style={{ fontFamily: "'Rajdhani', sans-serif", color: 'rgba(235,255,0,0.65)' }}
+      className="text-left px-3 py-2 text-[10px] tracking-[0.15em] uppercase font-semibold font-sans"
+      style={{ color: 'rgba(235,255,0,0.65)' }}
     >
       {children}
     </th>
