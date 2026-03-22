@@ -1,0 +1,14 @@
+## Codebase Patterns
+- All Vertex AI routes use `export const runtime = 'nodejs'`
+- Prisma client imported from `@/lib/prisma` (singleton)
+- Context loaded via `getSystemContext()` from `@/lib/context` (Trend Mapper) or `getFAROContext()` (FARO)
+- Rolling window: FIRST_KEEP=4, LAST_KEEP=40 messages
+- `vertex.tools.urlContext({})` is available in the installed SDK version
+- Route files live in `app/api/chat/` (not `src/app/api/chat/`) — check both locations when globbing
+- DB stores role as 'model'; AI SDK and client use 'assistant' — normalize on read from DB
+- TypeScript check: use `npx tsc --noEmit` from project root (node_modules/.bin/tsc)
+- SQLite nullable migration: Prisma recreates table (ALTER COLUMN not supported) — safe, data preserved
+
+# Ralph Progress Log
+Started: Sun Mar 22 2026
+---

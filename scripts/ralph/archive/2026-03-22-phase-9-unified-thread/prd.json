@@ -1,0 +1,151 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-10-hud-ui-redesign",
+  "description": "Phase 10: Aerospace HUD UI Redesign — retheme entire app with Sci-Fi HUD design system (pale icy blue, neon yellow accents, deep slate, Rajdhani font, flat brutalist grid)",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Wire next/font/google fonts + Tailwind v4 @theme HUD tokens",
+      "description": "As a developer, I need to establish the HUD design foundation by loading fonts via next/font and defining all color/radius tokens in the Tailwind v4 @theme block so all downstream components can use token classes instead of hardcoded hex values.",
+      "acceptanceCriteria": [
+        "app/layout.tsx imports Rajdhani and JetBrains_Mono from 'next/font/google'",
+        "Rajdhani configured with weight: ['300', '400', '500', '600', '700'] and variable: '--font-rajdhani'",
+        "JetBrains_Mono configured with weight: 'variable' and variable: '--font-jetbrains-mono'",
+        "app/layout.tsx <html> has both font variable classNames: rajdhani.variable and jetbrainsMono.variable",
+        "app/layout.tsx <body> uses bg-hud-fg text-hud-bg font-sans (not hardcoded hex)",
+        "app/globals.css does NOT contain @import url('https://fonts.googleapis.com')",
+        "app/globals.css contains @theme { block with --color-hud-bg: #d2edea;",
+        "app/globals.css contains --color-hud-fg: #1a2024;",
+        "app/globals.css contains --color-hud-accent: #ebff00;",
+        "app/globals.css contains --color-hud-panel: #b1dbd8;",
+        "app/globals.css contains --font-sans: var(--font-rajdhani), sans-serif;",
+        "app/globals.css contains --font-mono: var(--font-jetbrains-mono)",
+        "app/globals.css contains --radius: 0; (zero radius for flat aesthetic)",
+        "app/globals.css does NOT contain 'Space Grotesk'",
+        "npx next build succeeds without errors",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "CRITICAL: Read node_modules/next/dist/docs/01-app/01-getting-started/13-fonts.md before writing. Active app dir is root-level app/ NOT src/app/. Tailwind v4 uses CSS-first @theme block in globals.css — there is NO tailwind.config.js."
+    },
+    {
+      "id": "US-002",
+      "title": "Build HUD primitive component library",
+      "description": "As a developer, I need 6 reusable HUD primitive components (HUDPanel, HUDLabel, HUDValue, HUDAccentBlock, Barcode, DotGrid) exported from src/components/hud/index.tsx so all pages and workspace components can compose the HUD aesthetic consistently.",
+      "acceptanceCriteria": [
+        "src/components/hud/index.tsx file exists",
+        "File exports: export function HUDPanel",
+        "File exports: export function HUDLabel",
+        "File exports: export function HUDValue",
+        "File exports: export function HUDAccentBlock",
+        "File exports: export function Barcode",
+        "File exports: export function DotGrid",
+        "HUDPanel has accentCorners prop defaulting to true with 4 absolute corner span decorations using border-hud-accent/60",
+        "HUDLabel uses text-[10px] tracking-[0.2em] uppercase font-sans classes",
+        "HUDAccentBlock uses bg-hud-accent text-hud-fg classes",
+        "DotGrid wraps children in a div with className dot-grid",
+        "All components use Tailwind token classes (bg-hud-*, text-hud-*, border-hud-*) NOT hardcoded hex arbitrary values like bg-[#ebff00]",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Use token classes from US-001 @theme block. HUDPanel extracts the crosshair corner pattern already in ProjectCard.tsx (lines 63-66). DotGrid uses the existing .dot-grid CSS class from globals.css."
+    },
+    {
+      "id": "US-003",
+      "title": "Restyle dashboard page with 2-column HUD layout",
+      "description": "As a student, I want the dashboard to look like a mission control instrument panel with a sidebar and main area separated by a 1px rule, a neon yellow accent header, and a dot-grid perforated background in the sidebar.",
+      "acceptanceCriteria": [
+        "app/page.tsx imports HUDAccentBlock, DotGrid, HUDLabel, HUDValue, Barcode from '@/components/hud'",
+        "app/page.tsx renders a header containing HUDAccentBlock with the FUND II branding",
+        "app/page.tsx renders a sidebar element with w-56 (or similar fixed width) separated by border-r from the main area",
+        "app/page.tsx sidebar is wrapped in DotGrid for perforated background",
+        "app/page.tsx does NOT contain style={{ fontFamily inline props",
+        "app/page.tsx does NOT contain bg-[#1a2024] — uses bg-hud-fg",
+        "app/page.tsx does NOT contain text-[#ebff00] — uses text-hud-accent",
+        "app/page.tsx does NOT contain text-[#d2edea] — uses text-hud-bg",
+        "src/components/ProjectList.tsx imports HUDLabel from '@/components/hud'",
+        "src/components/ProjectList.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/ProjectList.tsx does NOT contain bg-[#1a2024]",
+        "npx next build succeeds",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Depends on US-001 (tokens) and US-002 (HUD primitives). Active file is app/page.tsx at ROOT level — NOT src/app/page.tsx. Read the current app/page.tsx before modifying."
+    },
+    {
+      "id": "US-004",
+      "title": "Restyle ProjectCard and CreateProjectForm as HUD instruments",
+      "description": "As a student, I want project cards to look like instrument panels with crosshair corners and a neon yellow accent strip, and the create form to look like a flat command input zone.",
+      "acceptanceCriteria": [
+        "src/components/ProjectCard.tsx imports HUDPanel from '@/components/hud'",
+        "src/components/ProjectCard.tsx uses <HUDPanel JSX element wrapping the card",
+        "src/components/ProjectCard.tsx does NOT contain the manual corner span pattern (4 absolute span elements for crosshairs) — HUDPanel handles this",
+        "src/components/ProjectCard.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/ProjectCard.tsx does NOT contain bg-[#1a2024]",
+        "src/components/ProjectCard.tsx does NOT contain text-[#ebff00] — uses text-hud-accent",
+        "src/components/CreateProjectForm.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/CreateProjectForm.tsx does NOT contain bg-[#ebff00] — uses bg-hud-accent",
+        "src/components/CreateProjectForm.tsx does NOT contain text-[#1a2024] — uses text-hud-fg",
+        "npx next build succeeds",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Depends on US-002 (HUDPanel primitive). Each card should also have a 2px bg-hud-accent/60 strip at the top inside HUDPanel for the accent indicator."
+    },
+    {
+      "id": "US-005",
+      "title": "Restyle AgentTabs with bracket decoration and ProjectLayout session telemetry grid",
+      "description": "As a student, I want the active agent tab to show bracket decoration [ AGENT NAME ] and the session selector to be a 10-cell numbered grid with neon yellow active state instead of a plain dropdown.",
+      "acceptanceCriteria": [
+        "src/components/AgentTabs.tsx contains bracket pattern: [ ${agent.label} ] for active tab",
+        "src/components/AgentTabs.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/AgentTabs.tsx does NOT contain border-[#ebff00] — uses border-hud-accent",
+        "src/components/AgentTabs.tsx does NOT contain text-[#ebff00] — uses text-hud-accent",
+        "src/components/AgentWorkspace.tsx does NOT contain bg-[#1a2024] — uses bg-hud-fg",
+        "src/components/ProjectLayout.tsx does NOT contain <select element (replaced with 10-cell grid)",
+        "src/components/ProjectLayout.tsx contains grid grid-cols-5 for the session selector",
+        "src/components/ProjectLayout.tsx contains bg-hud-accent for active session cell styling",
+        "src/components/ProjectLayout.tsx contains font-mono class usage",
+        "src/components/ProjectLayout.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/ProjectLayout.tsx does NOT contain bg-[#1a2024]",
+        "npx next build succeeds",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Depends on US-001 (tokens). Session selector: grid of 10 buttons (grid grid-cols-5), each button is a square cell with font-mono, active cell gets bg-hud-accent text-hud-fg. Add HUDLabel 'SESSION' above the grid and SES-{padded number} monospace readout."
+    },
+    {
+      "id": "US-006",
+      "title": "Restyle ChatWindow, ChatInput, MessageBubble, FileUploadPanel with HUD tokens",
+      "description": "As a student, I want the chat area to look like a telemetry stream with flat command console input, zero rounded corners on code blocks, and the file upload panel styled as a data intake module.",
+      "acceptanceCriteria": [
+        "src/components/MessageBubble.tsx contains borderRadius: 0 (NOT borderRadius: 2) — both occurrences",
+        "src/components/MessageBubble.tsx does NOT contain borderRadius: 2",
+        "src/components/MessageBubble.tsx markdown h1/h2/h3/th elements use font-sans className instead of inline fontFamily style",
+        "src/components/ChatInput.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/ChatInput.tsx does NOT contain bg-[#ebff00] — uses bg-hud-accent",
+        "src/components/ChatInput.tsx does NOT contain bg-[#1a2024] — uses bg-hud-fg",
+        "src/components/ChatInput.tsx does NOT contain focus:border-[#ebff00] — uses focus:border-hud-accent",
+        "src/components/ChatWindow.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/ChatWindow.tsx does NOT contain text-[#ebff00] at component level — uses text-hud-accent",
+        "src/components/FileUploadPanel.tsx does NOT contain style={{ fontFamily inline props",
+        "src/components/FileUploadPanel.tsx does NOT contain bg-[#1a2024] — uses bg-hud-fg",
+        "npx next build succeeds",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "CRITICAL for UI-09: MessageBubble.tsx has borderRadius: 2 on lines ~67 (inline code) and ~81 (pre block) — both MUST become borderRadius: 0. React-markdown component overrides use style props and cannot use Tailwind classes — keep hex color values in those style props but remove fontFamily from them. Also update UnifiedChatWindow.tsx with same token migration pattern."
+    }
+  ]
+}

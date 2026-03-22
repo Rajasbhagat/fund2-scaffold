@@ -1,0 +1,84 @@
+# Ralph Progress Log
+Started: Sun Mar 22 14:58:50 CET 2026
+---
+
+## 2026-03-22 - US-001
+- Installed pptxgenjs@^4.0.1
+- Created src/lib/slides/schemas.ts with 5 Zod schemas (all fields nullable): trendMapperSlideSchema, opportunitySlideSchema, valuePropSlideSchema, customerSegmentSlideSchema, businessModelSlideSchema
+- Created src/lib/slides/thresholds.ts with SLIDE_THRESHOLDS record and SlideType union type
+- **Learnings for future iterations:**
+  - Zod is v4 in this project — .nullable() API works the same as v3
+  - server-only import must be first line in server-only modules
+  - pptxgenjs@4.0.1 installs cleanly with npm
+---
+
+## 2026-03-22 - US-002
+- Created src/lib/slides/prompts.ts with SLIDE_PROMPTS Record<SlideType, string> for all 5 slide types
+- Created src/lib/slides/utils.ts with filterMessagesForSlide() and getAgentTypeForSlide()
+- filterMessagesForSlide: includes all user messages + assistant messages matching agentType + null agentType only for 'trend-mapper'
+- getAgentTypeForSlide: maps 'trend-mapper' → 'trend-mapper', all other types → 'value-designer'
+- **Learnings for future iterations:**
+  - null agentType legacy handling: use `m.agentType == null` (loose equality) to catch both null and undefined
+  - Each prompt ends with "Output only valid JSON matching the schema, no additional text" to prevent Gemini preamble
+  - topBenefits null handling: explicitly tell Gemini to return null (not empty array) for absent array fields
+---
+
+## 2026-03-22 - US-005
+- Created src/lib/slides/thresholds-client.ts — client-safe re-export of SLIDE_THRESHOLDS and SLIDE_LABELS constants (no server-only import)
+- Created src/components/SlideGenerateButton.tsx — 'use client' component with two-stage unlock, POST /api/slides/[slideType]/[projectId], blob download, 422 error display, HUD styling
+- Typecheck: 0 errors in new files (2 pre-existing errors in route.ts unrelated to this story)
+- **Learnings for future iterations:**
+  - server-only modules cannot be imported in 'use client' components — extract shared constants to a separate *-client.ts file
+  - threshold check counts assistant messages where agentType matches OR is null (for trend-mapper)
+  - unlocked prop acts as one-way override from parent SlidePanel — component itself does not latch state
+---
+
+## 2026-03-22 - US-003
+- Fixed typecheck error in app/api/slides/[type]/[projectId]/route.ts
+- filterMessagesForSlide() signature takes SlideType as second arg (not string agentType) — route was passing agentType string. Fixed by passing `type` (SlideType) directly and removing getAgentTypeForSlide call from route
+- Removed unused import of getAgentTypeForSlide
+- Typecheck: 0 errors
+- **Learnings for future iterations:**
+  - filterMessagesForSlide takes SlideType as second arg (derives agentType internally)
+  - Always check function signatures match when utils are refactored
+---
+
+## 2026-03-22 - US-006
+- Created src/components/SlidePanel.tsx with one-way latch logic
+- Component maintains unlockedSlides Set<string> in useState — once a slide type is unlocked it stays unlocked even if message count later drops
+- useEffect watches messages + activeAgent; adds to Set when count >= SLIDE_THRESHOLDS[slideType]
+- Renders 1 button for trend-mapper agent, 4 buttons for value-designer agent, null for all others
+- HUDLabel accepts className prop (confirmed from src/components/hud/index.tsx)
+- Typecheck passed clean (npx tsc --noEmit)
+- **Learnings for future iterations:**
+  - Set state updates must return prev unchanged (early return) if already has item — avoids unnecessary re-renders
+  - AGENT_SLIDES map is the source of truth for which slide types belong to which agent
+---
+
+## 2026-03-22 - US-004
+- Created src/lib/slides/builders.ts with 5 HUD-styled pptxgenjs builder functions
+- Each builder: LAYOUT_WIDE, icy blue background (D2EDEA), neon yellow header strip (EBFF00), dark text (1A2024)
+- createHUDSlide helper adds header strip shape + slide label + venture name (right-aligned)
+- addField helper renders uppercase label row + value row (italic/muted for null placeholder)
+- Null/undefined fields render as '[Not yet defined — continue the conversation]'
+- Updated app/api/slides/[type]/[projectId]/route.ts: added buildSlide() dispatch, replaced JSON success response with binary NextResponse using new Uint8Array(buffer)
+- Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation
+- Content-Disposition: attachment; filename="fund2-[type]-slide.pptx"
+- **Learnings for future iterations:**
+  - pptx.write({ outputType: 'nodebuffer' }) returns Promise<Buffer> — cast result as Buffer
+  - Use new NextResponse(new Uint8Array(buffer), { headers }) not NextResponse directly with Buffer
+  - pptxgen.Slide is the type for slide returned by pptx.addSlide()
+  - slide.background = { color: 'XXXXXX' } sets slide background (no # prefix)
+---
+
+
+## 2026-03-22 - US-007
+- Wired SlidePanel into AgentWorkspace — all implementation was already present from previous session
+- AgentWorkspace: messages state + handleMessagesChange callback + SlidePanel rendered between UnifiedChatWindow and FileUploadPanel
+- UnifiedChatWindow: onMessagesChange prop destructured, useEffect calls it on every messages change
+- npx next build: ✅ clean — /api/slides/[type]/[projectId] route visible in output
+- Typecheck: 0 errors
+- **Learnings for future iterations:**
+  - useCallback for onMessagesChange in parent avoids unnecessary re-renders from stale closures
+  - SlidePanel returns null for agents without slides (spi, faro) — no extra conditional needed in AgentWorkspace
+---

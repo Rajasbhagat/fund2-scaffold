@@ -1,0 +1,169 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-11-13-slide-generation",
+  "description": "v2.1 AI-Powered Slide Generation — students can generate HUD-styled, venture-personalized PowerPoint slides from their Trend Mapper and Value Designer conversations. 5 slide types, two-stage unlock, pptxgenjs + Gemini structured extraction.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Install pptxgenjs and scaffold slide lib with Zod schemas + thresholds",
+      "description": "As a developer, I need pptxgenjs installed and src/lib/slides/ scaffolded with 5 flat Zod schemas (all fields nullable) and message-count unlock thresholds so all downstream slide work has a verified data contract.",
+      "acceptanceCriteria": [
+        "pptxgenjs@^4.0.1 is in package.json dependencies",
+        "node_modules/pptxgenjs/ exists (npm install ran successfully)",
+        "src/lib/slides/schemas.ts file exists",
+        "schemas.ts first line is: import 'server-only'",
+        "schemas.ts exports: export const trendMapperSlideSchema — z.object with nullable fields: ventureName, trendArea, keyInsight, sCurvePosition, opportunityMap, supportingEvidence, nextStep",
+        "schemas.ts exports: export const opportunitySlideSchema — z.object with nullable fields: ventureName, problemStatement, targetCustomer, currentAlternatives, proposedSolution, keyBenefit",
+        "schemas.ts exports: export const valuePropSlideSchema — z.object with nullable fields: ventureName, headline, topBenefits (z.array of nullable strings), keyDifferentiator, proofPoint",
+        "schemas.ts exports: export const customerSegmentSlideSchema — z.object with nullable fields: ventureName, segmentName, demographics, behaviors, painPoints, gainCreators",
+        "schemas.ts exports: export const businessModelSlideSchema — z.object with nullable fields: ventureName, revenueModel, keyPartners, keyActivities, costStructure, unfairAdvantage",
+        "ALL schema fields are marked .nullable() — no required fields that Gemini might hallucinate",
+        "src/lib/slides/thresholds.ts file exists",
+        "thresholds.ts first line is: import 'server-only'",
+        "thresholds.ts exports: export const SLIDE_THRESHOLDS — object with keys: 'trend-mapper', 'opportunity', 'value-prop', 'customer-segment', 'business-model' — all values are numbers (minimum assistant message count to enable button)",
+        "thresholds.ts exports: export type SlideType = 'trend-mapper' | 'opportunity' | 'value-prop' | 'customer-segment' | 'business-model'",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "CRITICAL: Read AGENTS.md before writing any code — this Next.js has breaking changes. pptxgenjs is Node.js only (never runs in browser or edge runtime). All schema fields MUST be .nullable() — required fields cause Gemini hallucination on partial conversations. Reasonable starting thresholds: trend-mapper=4, opportunity=3, value-prop=3, customer-segment=3, business-model=5 (these can be tuned later). The schema field names should match what a Gemini call reading the agent system prompt would naturally extract. Research files are in .planning/research/ if needed."
+    },
+    {
+      "id": "US-002",
+      "title": "Create slide extraction prompts and message filter utils",
+      "description": "As a developer, I need extraction system prompts for all 5 slide types and a shared message filter utility that handles legacy null agentType so every slide route has clean, agent-scoped message history to pass to Gemini.",
+      "acceptanceCriteria": [
+        "src/lib/slides/prompts.ts file exists",
+        "prompts.ts first line is: import 'server-only'",
+        "prompts.ts exports: export const SLIDE_PROMPTS — Record<SlideType, string> with an entry for each of the 5 slide types",
+        "Each prompt instructs Gemini to extract structured data from the conversation, return null for any field where information is absent or unclear, and never invent or assume information not explicitly discussed",
+        "Each prompt references the specific fields in its corresponding Zod schema",
+        "src/lib/slides/utils.ts file exists",
+        "utils.ts first line is: import 'server-only'",
+        "utils.ts exports: export function filterMessagesForSlide(messages: Array<{ role: string; content: string; agentType?: string | null }>, agentType: string) — returns messages filtered to: all user messages PLUS assistant messages where agentType matches OR agentType is null (legacy v1.0 trend-mapper messages)",
+        "The null agentType filter only applies when agentType === 'trend-mapper' (legacy messages are Trend Mapper only)",
+        "utils.ts exports: export function getAgentTypeForSlide(slideType: SlideType): string — maps slide type to its agent: 'trend-mapper' → 'trend-mapper', all VD slides → 'value-designer'",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "The null agentType legacy handling is critical for Trend Mapper: v1.0 messages were stored without agentType (null). The filter should include agentType = null ONLY for trend-mapper slides. For value-designer slides, filter strictly to agentType = 'value-designer'. User messages (role='user') are always included regardless of agentType since they provide context. The prompts should be concise — instruct Gemini to extract from the conversation and return null (not empty string) for absent fields."
+    },
+    {
+      "id": "US-003",
+      "title": "Slide API route returning structured JSON (extraction prototype)",
+      "description": "As a developer, I need app/api/slides/[type]/[projectId]/route.ts to accept a POST with the message history, run Gemini structured extraction, and return the extracted data as JSON so the extraction pipeline can be verified before pptxgenjs is introduced.",
+      "acceptanceCriteria": [
+        "app/api/slides/[type]/[projectId]/route.ts file exists",
+        "Route exports: export const runtime = 'nodejs'",
+        "Route exports: export const maxDuration = 60",
+        "Route has POST handler only (no GET)",
+        "POST reads [type] from params and validates it is one of: 'trend-mapper', 'opportunity', 'value-prop', 'customer-segment', 'business-model' — returns 400 for unknown types",
+        "POST reads messages array from request body",
+        "POST calls filterMessagesForSlide() from @/lib/slides/utils with appropriate agentType",
+        "POST uses generateText from 'ai' package with output: Output.object({ schema }) pattern — NOT generateObject (deprecated in ai@6)",
+        "POST uses the vertex model (same createVertex instance pattern as existing chat routes — read app/api/chat/[projectId]/route.ts to see the pattern)",
+        "POST uses SLIDE_PROMPTS[type] from @/lib/slides/prompts as the system prompt",
+        "POST uses the correct Zod schema from @/lib/slides/schemas for the given slide type",
+        "If Gemini returns an object where all non-ventureName fields are null, POST returns 422 with JSON body: { ready: false, reason: 'string describing what is missing' }",
+        "On success, POST currently returns 200 with JSON body: { ok: true, data: <extracted object> }",
+        "NoObjectGeneratedError is caught and returns 422 with reason message",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "CRITICAL: Read app/api/chat/[projectId]/route.ts to see the existing createVertex() pattern — reuse the same import and vertex initialization. CRITICAL: generateObject is DEPRECATED in ai@6.0.134. Use: import { generateText, Output } from 'ai' and then output: Output.object({ schema: slideSchema }) in the generateText call. Verify the exact API by reading node_modules/ai/dist/index.d.ts around lines 681-701. The route does NOT read from the database — it uses messages from the request body only. The 422 check: if the extracted object has all core content fields null (everything except ventureName), it means the conversation hasn't covered this slide yet."
+    },
+    {
+      "id": "US-004",
+      "title": "pptxgenjs slide builders and wire binary .pptx response",
+      "description": "As a developer, I need src/lib/slides/builders.ts with 5 HUD-styled pptxgenjs builder functions and the slide route updated to return actual .pptx binary files with correct MIME headers so students get a downloadable PowerPoint.",
+      "acceptanceCriteria": [
+        "src/lib/slides/builders.ts file exists",
+        "builders.ts first line is: import 'server-only'",
+        "builders.ts imports pptxgenjs with: import pptxgen from 'pptxgenjs'",
+        "builders.ts exports: export async function buildTrendMapperSlide(data: z.infer<typeof trendMapperSlideSchema>): Promise<Buffer>",
+        "builders.ts exports: export async function buildOpportunitySlide(data: z.infer<typeof opportunitySlideSchema>): Promise<Buffer>",
+        "builders.ts exports: export async function buildValuePropSlide(data: z.infer<typeof valuePropSlideSchema>): Promise<Buffer>",
+        "builders.ts exports: export async function buildCustomerSegmentSlide(data: z.infer<typeof customerSegmentSlideSchema>): Promise<Buffer>",
+        "builders.ts exports: export async function buildBusinessModelSlide(data: z.infer<typeof businessModelSlideSchema>): Promise<Buffer>",
+        "Each builder creates a 16:9 widescreen slide (pptx.layout = 'LAYOUT_WIDE')",
+        "Each slide has a neon yellow header strip (fill: { color: 'EBFF00' }) containing the slide type label and venture name",
+        "Each slide uses icy blue background (fill: { color: 'D2EDEA' }) on the main content area",
+        "Each slide uses dark text (color: '1A2024') for all content",
+        "Null fields render as placeholder text: '[Not yet defined — continue the conversation]' in italic or muted style",
+        "Each builder uses pptx.write({ outputType: 'nodebuffer' }) and returns the buffer",
+        "app/api/slides/[type]/[projectId]/route.ts is updated to call the appropriate builder after successful extraction",
+        "Route now returns 200 with Buffer body and headers: Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation, Content-Disposition: attachment; filename=fund2-[type]-slide.pptx",
+        "Route does NOT use NextResponse.json() for the binary response — uses new NextResponse(buffer, { headers })",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "CRITICAL: pptxgenjs uses pptx.write({ outputType: 'nodebuffer' }) which returns Promise<Buffer>. Do NOT use pptx.writeFile() (writes to disk) or pptx.stream() (deprecated). CRITICAL: Do not pass the Buffer directly to new Response() — use new NextResponse(new Uint8Array(buffer), { headers }) to ensure compatibility. Slide design: neon yellow (#EBFF00) header strip at top with slide title + ventureName, icy blue (#D2EDEA) background for content area, dark (#1A2024) text. Keep layout simple — a header strip, a title row, then labeled content fields below. Font fallback: use 'Calibri' (pptxgenjs default) since Rajdhani is not available in PowerPoint."
+    },
+    {
+      "id": "US-005",
+      "title": "SlideGenerateButton component with two-stage unlock and download",
+      "description": "As a student, I want a Generate Slide button that is disabled until my conversation has enough content, shows a loading state while generating, downloads the .pptx on success, and tells me what I'm missing if content is insufficient.",
+      "acceptanceCriteria": [
+        "src/components/SlideGenerateButton.tsx file exists",
+        "Component is a 'use client' component",
+        "Component accepts props: slideType (SlideType), messages (UnifiedMessage[]), projectId (string), agentType (string)",
+        "Component imports SLIDE_THRESHOLDS from '@/lib/slides/thresholds' — NOTE: this is a server-only module so import only the constants needed, or move SLIDE_THRESHOLDS to a shared non-server-only file if typecheck fails",
+        "Button is disabled when the count of assistant messages with matching agentType (or null for trend-mapper) is below SLIDE_THRESHOLDS[slideType]",
+        "Button shows a disabled tooltip/label like 'Continue the conversation to unlock' when below threshold",
+        "Button is enabled when threshold is met and not currently generating",
+        "Clicking the enabled button sets isGenerating = true, POSTs to /api/slides/[slideType]/[projectId] with body: { messages }",
+        "On 200 response: response.blob() → URL.createObjectURL(blob) → synthetic <a>.click() with download attribute → URL.revokeObjectURL(url) → setIsGenerating(false)",
+        "On 422 response: parse { reason } from JSON → setLastError(reason) → setIsGenerating(false)",
+        "On network error: setLastError('Generation failed — please try again') → setIsGenerating(false)",
+        "Button shows a loading indicator (spinner or text) while isGenerating is true",
+        "lastError message is shown inline below the button when non-null",
+        "Button uses HUD styling: flat, bg-hud-accent text-hud-fg when enabled; bg-hud-panel/30 text-hud-fg/40 when disabled — no rounded corners",
+        "Slide type label is shown on the button (e.g. 'TREND MAPPER SLIDE', 'OPPORTUNITY SLIDE')",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "CRITICAL: SLIDE_THRESHOLDS is in a server-only module — if importing it into a client component causes a build error, move only the threshold constants to a separate non-server-only file like src/lib/slides/thresholds-client.ts. The threshold check on the client side counts: messages.filter(m => m.role === 'assistant' && (m.agentType === agentType || (agentType === 'trend-mapper' && m.agentType == null))).length. The one-way latch (never re-lock once unlocked) is NOT needed in this component — that concern lives in SlidePanel. This component just derives thresholdMet from the messages prop on each render."
+    },
+    {
+      "id": "US-006",
+      "title": "SlidePanel component with one-way latch",
+      "description": "As a student, I want a panel showing all relevant Generate Slide buttons for the active agent, where buttons that have been unlocked once never go back to disabled even if earlier messages are removed, giving me a stable and predictable UI.",
+      "acceptanceCriteria": [
+        "src/components/SlidePanel.tsx file exists",
+        "Component is a 'use client' component",
+        "Component accepts props: messages (UnifiedMessage[]), activeAgent (string), projectId (string)",
+        "Component maintains a Set<SlideType> in useState called unlockedSlides (initialized empty)",
+        "On every render, for each slide type relevant to activeAgent: if thresholdMet (message count >= threshold), add the slideType to unlockedSlides set — the set only grows, never shrinks",
+        "Component renders SlideGenerateButton only for slide types relevant to the active agent: trend-mapper agent shows 1 button (trend-mapper slide); value-designer agent shows 4 buttons (opportunity, value-prop, customer-segment, business-model); other agents show nothing (return null)",
+        "Each SlideGenerateButton receives: slideType, messages, projectId, agentType",
+        "SlidePanel renders with a HUD panel border and a SLIDE GENERATOR label (HUDLabel style: uppercase, 10px, tracked)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "The one-way latch works by maintaining the unlockedSlides Set in state. In a useEffect (or useMemo) that runs when messages change: for each relevant slide type, if filterMessages gives enough assistant messages, add to unlockedSlides. Pass unlockedSlides into SlideGenerateButton or use it to override the disabled state — button is enabled if slideType is in unlockedSlides OR if thresholdMet. This way a button that was once enabled cannot go back to disabled. Relevant agents: only 'trend-mapper' and 'value-designer' have slides — show panel only for these two agents."
+    },
+    {
+      "id": "US-007",
+      "title": "Wire SlidePanel into AgentWorkspace — end-to-end integration",
+      "description": "As a student, I want the Generate Slide buttons to appear in my workspace when I'm chatting with Trend Mapper or Value Designer, positioned below the chat window, so I can generate slides without leaving the app.",
+      "acceptanceCriteria": [
+        "src/components/AgentWorkspace.tsx imports SlidePanel from '@/components/SlidePanel'",
+        "AgentWorkspace passes messages state to SlidePanel — this requires lifting messages state from UnifiedChatWindow up to AgentWorkspace OR reading messages from a shared state/context",
+        "AgentWorkspace renders <SlidePanel messages={messages} activeAgent={activeAgent} projectId={projectId} /> positioned between UnifiedChatWindow and FileUploadPanel",
+        "SlidePanel only renders visible content when activeAgent is 'trend-mapper' or 'value-designer' (panel is null/hidden for spi and faro)",
+        "npx next build succeeds",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill — navigate to a project, switch to Trend Mapper, verify Slide panel appears but button is disabled in a fresh conversation; switch to SPI, verify no slide panel; switch to Value Designer, verify 4 slide buttons appear"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "IMPORTANT: UnifiedChatWindow currently owns its messages state internally. To share messages with SlidePanel, AgentWorkspace needs to lift that state up OR UnifiedChatWindow needs an onMessagesChange callback prop. Read src/components/UnifiedChatWindow.tsx to understand the current messages state shape. The cleanest approach: add an onMessagesChange?: (messages: UnifiedMessage[]) => void prop to UnifiedChatWindow, call it whenever messages state changes, and store a copy in AgentWorkspace state to pass to SlidePanel. This avoids a context provider and keeps the change minimal."
+    }
+  ]
+}

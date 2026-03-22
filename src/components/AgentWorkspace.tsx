@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import FileUploadPanel from '@/components/FileUploadPanel'
 import UnifiedChatWindow, { type UnifiedMessage } from '@/components/UnifiedChatWindow'
 import SlidePanel from '@/components/SlidePanel'
+import ProgressPanel from '@/components/ProgressPanel'
 import { useSession } from '@/contexts/SessionContext'
 
 export type { UnifiedMessage }
@@ -23,23 +24,31 @@ export default function AgentWorkspace({ projectId, initialMessages }: AgentWork
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-hud-fg">
-      <div className="flex-1 overflow-hidden">
-        <UnifiedChatWindow
-          projectId={projectId}
-          initialMessages={initialMessages}
+    <div className="flex h-full bg-hud-fg">
+      {/* ── Left: chat + slide + upload ── */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
+          <UnifiedChatWindow
+            projectId={projectId}
+            initialMessages={initialMessages}
+            activeAgent={activeAgent}
+            onAgentChange={setActiveAgent}
+            currentSession={sessionNumber}
+            onMessagesChange={handleMessagesChange}
+          />
+        </div>
+        <SlidePanel
+          messages={messages}
           activeAgent={activeAgent}
-          onAgentChange={setActiveAgent}
-          currentSession={sessionNumber}
-          onMessagesChange={handleMessagesChange}
+          projectId={projectId}
         />
+        <FileUploadPanel projectId={projectId} />
       </div>
-      <SlidePanel
-        messages={messages}
-        activeAgent={activeAgent}
-        projectId={projectId}
-      />
-      <FileUploadPanel projectId={projectId} />
+
+      {/* ── Right: mission status panel (lg+ only) ── */}
+      <div className="hidden lg:flex lg:h-full">
+        <ProgressPanel messages={messages} />
+      </div>
     </div>
   )
 }

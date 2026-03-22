@@ -1,0 +1,34 @@
+{
+  "project": "FUND II AI Agent Platform",
+  "branchName": "ralph/phase-7-wave2-02",
+  "description": "Phase 7 Wave 2 — Plan 02: FARO route handler with web search + deep research (gemini-2.5-pro + urlContext). Base branch: ralph/phase-7-merged.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Implement FARO route handler at /api/chat/faro/[projectId] with web search + deep research",
+      "description": "As a student, I need to send messages in the FARO tab and receive streamed responses from the FARO course navigator with access to web search for supplemental lookups.",
+      "acceptanceCriteria": [
+        "Create directory `src/app/api/chat/faro/[projectId]/` and file `route.ts`",
+        "Route has `export const runtime = 'nodejs'` at top",
+        "Route has `export const dynamic = 'force-dynamic'`",
+        "Route imports and calls `getFAROContext()` from `@/lib/context`",
+        "Route reads `currentSession` and `deepResearch` from POST body (defaults: 1, false)",
+        "Route injects session: `const systemWithSession = \\`${faroContext}\\n\\n[Current FUND II Session: ${currentSession} of 10]\\``",
+        "Route uses `const AGENT_TYPE = 'faro'` as a constant",
+        "Standard mode (deepResearch=false): `model: vertex('gemini-2.5-flash')`, tools: `{ google_search: vertex.tools.googleSearch({}) }`",
+        "Deep research mode (deepResearch=true): `model: vertex('gemini-2.5-pro')`, tools: `{ google_search: vertex.tools.googleSearch({}), url_context: vertex.tools.urlContext({}) }`",
+        "BEFORE using vertex.tools.urlContext({}), check `node_modules/@ai-sdk/google-vertex/dist/index.d.ts` to confirm urlContext is exported from vertex.tools. If not found, implement deep research as model swap only (gemini-2.5-pro + googleSearch, no urlContext) and add a comment: `// urlContext not available in this SDK version`",
+        "Route filters message history: `prisma.message.findMany({ where: { projectId, agentType: AGENT_TYPE }, orderBy: { createdAt: 'asc' } })`",
+        "Route persists user and assistant messages with `agentType: AGENT_TYPE`",
+        "Route uses the same rolling window logic as Trend Mapper",
+        "Route uses the same streaming response headers as Trend Mapper",
+        "src/app/api/chat/faro/[projectId]/route.ts contains `vertex('gemini-2.5-pro')`",
+        "src/app/api/chat/faro/[projectId]/route.ts contains `googleSearch`",
+        "`npx tsc --noEmit` passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Read src/app/api/chat/[projectId]/route.ts fully — FARO's route is nearly identical to Trend Mapper's updated route (which already handles deepResearch and currentSession from Phase 5). The key differences: (1) use getFAROContext() instead of getSystemContext(), (2) hardcode AGENT_TYPE = 'faro'. Check the TypeScript type definitions for urlContext before using it."
+    }
+  ]
+}
