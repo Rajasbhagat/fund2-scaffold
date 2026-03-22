@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import CreateProjectForm from './CreateProjectForm'
 import ProjectCard from './ProjectCard'
+import { HUDLabel } from '@/components/hud'
 
 interface Project {
   id: string
@@ -33,11 +34,21 @@ export default function ProjectList({ initialProjects }: ProjectListProps) {
 
   return (
     <div>
+      {/* Section header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-px w-5 bg-hud-accent" />
+        <HUDLabel>INTELLIGENCE NODES</HUDLabel>
+        <span className="text-[10px] font-mono text-hud-panel/60">[{projects.length}]</span>
+      </div>
+
       <CreateProjectForm onCreate={handleCreate} />
+
       {projects.length === 0 ? (
-        <p>No projects yet</p>
+        <div className="mt-16 text-center">
+          <HUDLabel>NO ACTIVE NODES — INITIALIZE FIRST NODE ABOVE</HUDLabel>
+        </div>
       ) : (
-        <ul>
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}
