@@ -99,7 +99,7 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "CRITICAL: pptxgenjs uses pptx.write({ outputType: 'nodebuffer' }) which returns Promise<Buffer>. Do NOT use pptx.writeFile() (writes to disk) or pptx.stream() (deprecated). CRITICAL: Do not pass the Buffer directly to new Response() — use new NextResponse(new Uint8Array(buffer), { headers }) to ensure compatibility. Slide design: neon yellow (#EBFF00) header strip at top with slide title + ventureName, icy blue (#D2EDEA) background for content area, dark (#1A2024) text. Keep layout simple — a header strip, a title row, then labeled content fields below. Font fallback: use 'Calibri' (pptxgenjs default) since Rajdhani is not available in PowerPoint."
     },
     {

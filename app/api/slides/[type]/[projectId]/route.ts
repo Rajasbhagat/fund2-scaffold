@@ -4,6 +4,7 @@ export const maxDuration = 60;
 import { generateText, Output, NoObjectGeneratedError } from 'ai';
 import { createVertex } from '@ai-sdk/google-vertex';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { filterMessagesForSlide } from '@/lib/slides/utils';
 import { SLIDE_PROMPTS } from '@/lib/slides/prompts';
 import {
@@ -13,6 +14,13 @@ import {
   customerSegmentSlideSchema,
   businessModelSlideSchema,
 } from '@/lib/slides/schemas';
+import {
+  buildTrendMapperSlide,
+  buildOpportunitySlide,
+  buildValuePropSlide,
+  buildCustomerSegmentSlide,
+  buildBusinessModelSlide,
+} from '@/lib/slides/builders';
 import type { SlideType } from '@/lib/slides/thresholds';
 
 const VALID_SLIDE_TYPES: SlideType[] = [
@@ -46,6 +54,21 @@ function isAllCoreFieldsNull(data: Record<string, unknown>): boolean {
   return Object.entries(data)
     .filter(([key]) => key !== 'ventureName')
     .every(([, value]) => value === null);
+}
+
+async function buildSlide(type: SlideType, data: unknown): Promise<Buffer> {
+  switch (type) {
+    case 'trend-mapper':
+      return buildTrendMapperSlide(data as z.infer<typeof trendMapperSlideSchema>);
+    case 'opportunity':
+      return buildOpportunitySlide(data as z.infer<typeof opportunitySlideSchema>);
+    case 'value-prop':
+      return buildValuePropSlide(data as z.infer<typeof valuePropSlideSchema>);
+    case 'customer-segment':
+      return buildCustomerSegmentSlide(data as z.infer<typeof customerSegmentSlideSchema>);
+    case 'business-model':
+      return buildBusinessModelSlide(data as z.infer<typeof businessModelSlideSchema>);
+  }
 }
 
 const vertex = createVertex({
@@ -97,7 +120,16 @@ export async function POST(
       );
     }
 
-    return NextResponse.json({ ok: true, data });
+    const buffer = await buildSlide(type, data);
+
+    return new NextResponse(new Uint8Array(buffer), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'Content-Disposition': `attachment; filename="fund2-${type}-slide.pptx"`,
+        'Content-Length': String(buffer.byteLength),
+      },
+    });
   } catch (err) {
     if (err instanceof NoObjectGeneratedError) {
       return NextResponse.json(

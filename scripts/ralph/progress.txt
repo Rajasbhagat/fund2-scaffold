@@ -55,3 +55,19 @@ Started: Sun Mar 22 14:58:50 CET 2026
   - AGENT_SLIDES map is the source of truth for which slide types belong to which agent
 ---
 
+## 2026-03-22 - US-004
+- Created src/lib/slides/builders.ts with 5 HUD-styled pptxgenjs builder functions
+- Each builder: LAYOUT_WIDE, icy blue background (D2EDEA), neon yellow header strip (EBFF00), dark text (1A2024)
+- createHUDSlide helper adds header strip shape + slide label + venture name (right-aligned)
+- addField helper renders uppercase label row + value row (italic/muted for null placeholder)
+- Null/undefined fields render as '[Not yet defined — continue the conversation]'
+- Updated app/api/slides/[type]/[projectId]/route.ts: added buildSlide() dispatch, replaced JSON success response with binary NextResponse using new Uint8Array(buffer)
+- Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation
+- Content-Disposition: attachment; filename="fund2-[type]-slide.pptx"
+- **Learnings for future iterations:**
+  - pptx.write({ outputType: 'nodebuffer' }) returns Promise<Buffer> — cast result as Buffer
+  - Use new NextResponse(new Uint8Array(buffer), { headers }) not NextResponse directly with Buffer
+  - pptxgen.Slide is the type for slide returned by pptx.addSlide()
+  - slide.background = { color: 'XXXXXX' } sets slide background (no # prefix)
+---
+
