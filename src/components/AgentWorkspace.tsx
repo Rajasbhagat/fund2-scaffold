@@ -1,47 +1,38 @@
 'use client'
 
 import { useState } from 'react'
-import AgentTabs from '@/components/AgentTabs'
-import ChatWindow from '@/components/ChatWindow'
+import FileUploadPanel from '@/components/FileUploadPanel'
 import { useSession } from '@/contexts/SessionContext'
 
-interface Message {
+export interface UnifiedMessage {
   id: string
   role: string
   content: string
+  agentType?: string | null
   isError?: boolean
 }
 
 interface AgentWorkspaceProps {
   projectId: string
-  initialMessagesByAgent: Record<string, Message[]>
+  initialMessages: UnifiedMessage[]
 }
 
-const AGENTS = ['trend-mapper', 'value-designer', 'spi', 'faro']
-
-export default function AgentWorkspace({ projectId, initialMessagesByAgent }: AgentWorkspaceProps) {
+export default function AgentWorkspace({ projectId, initialMessages }: AgentWorkspaceProps) {
   const [activeAgent, setActiveAgent] = useState('trend-mapper')
   const { sessionNumber } = useSession()
 
   return (
-    <div className="flex flex-col h-full">
-      <AgentTabs activeAgent={activeAgent} onTabChange={setActiveAgent} />
-      <div className="flex-1 overflow-hidden relative">
-        {AGENTS.map((agent) => (
-          <div
-            key={agent}
-            className={`absolute inset-0 ${activeAgent === agent ? 'block h-full' : 'hidden'}`}
-          >
-            <ChatWindow
-              projectId={projectId}
-              initialMessages={initialMessagesByAgent[agent] ?? []}
-              agentType={agent}
-              currentSession={sessionNumber}
-              showDeepResearch={agent === 'trend-mapper'}
-            />
-          </div>
-        ))}
+    <div className="flex flex-col h-full bg-[#1a2024]">
+      <div className="flex-1 overflow-hidden">
+        {/* UnifiedChatWindow will be rendered here in US-005 */}
+        <div
+          className="flex items-center justify-center h-full text-[#b1dbd8]/40 text-sm"
+          style={{ fontFamily: "'Rajdhani', sans-serif" }}
+        >
+          Loading unified chat...
+        </div>
       </div>
+      <FileUploadPanel projectId={projectId} />
     </div>
   )
 }
