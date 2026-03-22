@@ -13,21 +13,31 @@ interface Project {
 function SessionSelector() {
   const { sessionNumber, setSessionNumber } = useSession()
   return (
-    <div className="p-4 border-t border-gray-200">
-      <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-        FUND II Session
-      </label>
-      <select
-        value={sessionNumber}
-        onChange={(e) => setSessionNumber(Number(e.target.value))}
-        className="w-full text-sm border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
+    <div className="px-4 py-3 border-t border-hud-panel/15">
+      <p className="text-[10px] tracking-[0.2em] text-hud-panel/40 uppercase mb-1.5 font-sans">
+        SESSION
+      </p>
+      <div className="grid grid-cols-5 gap-0.5 mb-1.5">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-          <option key={n} value={n}>
-            Session {n}
-          </option>
+          <button
+            key={n}
+            onClick={() => setSessionNumber(n)}
+            className={`
+              font-mono text-[10px] py-1 text-center transition-colors border
+              ${
+                sessionNumber === n
+                  ? 'bg-hud-accent text-hud-fg border-hud-accent'
+                  : 'bg-transparent text-hud-panel/40 border-hud-panel/15 hover:text-hud-panel hover:border-hud-panel/30'
+              }
+            `}
+          >
+            {String(n).padStart(2, '0')}
+          </button>
         ))}
-      </select>
+      </div>
+      <p className="font-mono text-[10px] text-hud-panel/40">
+        SES-{String(sessionNumber).padStart(2, '0')}
+      </p>
     </div>
   )
 }
@@ -44,74 +54,90 @@ export default function ProjectLayout({
 
   return (
     <SessionProvider>
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <aside
-        className={`
-          ${sidebarOpen ? 'flex' : 'hidden'}
-          lg:flex
-          flex-col w-64 shrink-0 border-r border-gray-200 bg-gray-50 overflow-y-auto
-        `}
-      >
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <Link href="/" className="text-sm font-semibold text-gray-700 hover:text-gray-900">
-            ← Dashboard
-          </Link>
-          <button
-            className="lg:hidden text-gray-500 hover:text-gray-700 p-1"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            ✕
-          </button>
-        </div>
-        <nav className="p-2 flex-1">
-          <p className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Projects
-          </p>
-          <ul className="mt-1 space-y-0.5">
-            {projects.map((project) => {
-              const isActive = pathname === `/projects/${project.id}`
-              return (
-                <li key={project.id}>
-                  <Link
-                    href={`/projects/${project.id}`}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`
-                      block px-3 py-2 rounded-md text-sm truncate
-                      ${
-                        isActive
-                          ? 'bg-blue-100 text-blue-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-200'
-                      }
-                    `}
-                  >
-                    {project.name}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-        <SessionSelector />
-      </aside>
+      <div className="flex h-screen overflow-hidden bg-hud-fg">
+        {/* Sidebar */}
+        <aside
+          className={`
+            ${sidebarOpen ? 'flex' : 'hidden'}
+            lg:flex
+            flex-col w-52 shrink-0 border-r border-hud-panel/15 bg-hud-fg overflow-y-auto
+          `}
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-hud-panel/15 flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-[10px] tracking-[0.2em] text-hud-panel/50 uppercase hover:text-hud-accent transition-colors font-sans"
+            >
+              ← DASHBOARD
+            </Link>
+            <button
+              className="lg:hidden text-hud-panel/50 hover:text-hud-bg p-1"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+          </div>
 
-      {/* Main content */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Mobile header with toggle */}
-        <div className="lg:hidden flex items-center gap-2 px-4 py-2 border-b border-gray-200 bg-white shrink-0">
-          <button
-            className="p-1 text-gray-600 hover:text-gray-900"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open sidebar"
-          >
-            ☰
-          </button>
-          <span className="text-sm font-medium text-gray-700">Projects</span>
+          {/* Nav */}
+          <nav className="p-2 flex-1">
+            <p className="px-2 py-2 text-[10px] tracking-[0.2em] text-hud-panel/30 uppercase font-sans">
+              NODES
+            </p>
+            <ul className="space-y-0.5">
+              {projects.map((project) => {
+                const isActive = pathname === `/projects/${project.id}`
+                return (
+                  <li key={project.id}>
+                    <Link
+                      href={`/projects/${project.id}`}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        block px-3 py-2 text-xs truncate transition-colors tracking-wide border-l-2
+                        ${
+                          isActive
+                            ? 'text-hud-accent border-hud-accent bg-hud-accent/5'
+                            : 'text-hud-panel/60 border-transparent hover:text-hud-bg hover:border-hud-panel/30'
+                        }
+                      `}
+                    >
+                      {project.name}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+
+          {/* Brand mark */}
+          <div className="px-4 py-2">
+            <span className="text-[10px] tracking-[0.25em] text-hud-panel/15 uppercase font-sans">
+              ◈ FUND II
+            </span>
+          </div>
+
+          <SessionSelector />
+        </aside>
+
+        {/* Main content */}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          {/* Mobile toggle */}
+          <div className="lg:hidden flex items-center gap-3 px-4 py-2 border-b border-hud-panel/15 bg-hud-fg shrink-0">
+            <button
+              className="text-hud-panel/50 hover:text-hud-bg transition-colors"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              ☰
+            </button>
+            <span className="text-[10px] tracking-[0.2em] text-hud-panel/40 uppercase font-sans">
+              NODES
+            </span>
+          </div>
+          <div className="flex-1 overflow-hidden">{children}</div>
         </div>
-        <div className="flex-1 overflow-hidden">{children}</div>
       </div>
-    </div>
     </SessionProvider>
   )
 }

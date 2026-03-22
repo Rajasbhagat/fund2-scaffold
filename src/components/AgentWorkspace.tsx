@@ -17,7 +17,7 @@ export default function AgentWorkspace({ projectId, initialMessages }: AgentWork
   const { sessionNumber } = useSession()
 
   return (
-    <div className="flex flex-col h-full bg-[#1a2024]">
+    <div className="flex flex-col h-full bg-hud-fg">
       <div className="flex-1 overflow-hidden">
         <UnifiedChatWindow
           projectId={projectId}
