@@ -2,6 +2,8 @@
 
 A multi-agent AI co-pilot suite designed for IESE MBA students enrolled in Fundamentals of Entrepreneurial Management II (FUND II). The platform gives student teams a single, persistent workspace with four specialized AI agents that guide them through the hackathon course from trend exploration to final pitch.
 
+Created by [Rajas Bhagat](https://www.rajasb.com) with the [IESE AI Club](https://www.ieseai.com).
+
 ## 🚀 Features
 
 * **Multi-Agent Co-Pilot Suite**: Four specialized AI agents tailored to different phases of the entrepreneurial journey:
